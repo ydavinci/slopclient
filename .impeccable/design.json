@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-18T00:00:00Z",
+  "title": "Design System: DaClient",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Night Ink", "canonical": "#0b0912", "tonalRamp": ["#0b0912", "#17121f", "#211a2e", "#2d2440", "#4a3d63", "#7a7392", "#aaa3c2", "#ece9f5"] },
+      "stone": { "role": "neutral", "displayName": "Stone", "canonical": "#17121f", "tonalRamp": ["#07050c", "#0b0912", "#17121f", "#211a2e", "#2d2440", "#4a3d63", "#7a7392", "#aaa3c2"] },
+      "stone-2": { "role": "neutral", "displayName": "Stone 2", "canonical": "#211a2e" },
+      "stone-3": { "role": "neutral", "displayName": "Stone 3 (button face)", "canonical": "#2d2440" },
+      "inset": { "role": "neutral", "displayName": "Inset Black", "canonical": "#07050c" },
+      "edge": { "role": "neutral", "displayName": "Edge Black", "canonical": "#000000" },
+      "text": { "role": "neutral", "displayName": "Bone White", "canonical": "#ece9f5" },
+      "muted": { "role": "neutral", "displayName": "Lavender Grey", "canonical": "#aaa3c2" },
+      "dim": { "role": "neutral", "displayName": "Dusk Grey", "canonical": "#7a7392" },
+      "accent": { "role": "primary", "displayName": "Amethyst Violet", "canonical": "#8b5cf6", "tonalRamp": ["#1a0f33", "#3a2577", "#5b3bb0", "#7c4ef0", "#8b5cf6", "#a98bf7", "#c084fc", "#f1eaff"] },
+      "accent-2": { "role": "primary", "displayName": "Light Amethyst", "canonical": "#c084fc" },
+      "accent-deep": { "role": "primary", "displayName": "Deep Amethyst", "canonical": "#5b3bb0" },
+      "splash": { "role": "secondary", "displayName": "Splash Yellow", "canonical": "#ffff55" },
+      "on": { "role": "secondary", "displayName": "Chat Green", "canonical": "#55ff55" },
+      "soon": { "role": "secondary", "displayName": "Warning Gold", "canonical": "#ffd75e" },
+      "tip-bg": { "role": "tertiary", "displayName": "Tooltip Void", "canonical": "#100010" },
+      "tip-a": { "role": "tertiary", "displayName": "Tooltip Violet", "canonical": "#5000ff" },
+      "tip-b": { "role": "tertiary", "displayName": "Tooltip Indigo", "canonical": "#28007f" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The wordmark only: stroke plus five-step stacked violet extrusion." },
+      "headline": { "displayName": "Headline", "purpose": "Centred sub-screen title in the header band." },
+      "title": { "displayName": "Title", "purpose": "Section headings inside reading wells." },
+      "body": { "displayName": "Body", "purpose": "Running text, 60 to 68ch columns." },
+      "label": { "displayName": "Label", "purpose": "Button labels with a hard 2px text shadow." },
+      "splash": { "displayName": "Splash", "purpose": "The rotated, pulsing yellow splash line." },
+      "mono": { "displayName": "Mono", "purpose": "Codes, paths, counts, numerals only." }
+    },
+    "shadows": [
+      { "name": "bevel-raised", "value": "inset 2px 2px 0 rgba(255,255,255,0.2), inset -2px -3px 0 rgba(0,0,0,0.6)", "purpose": "Buttons and raised panels at rest." },
+      { "name": "bevel-pressed", "value": "inset -2px -2px 0 rgba(255,255,255,0.2), inset 2px 3px 0 rgba(0,0,0,0.6)", "purpose": "Button :active." },
+      { "name": "bevel-inset", "value": "inset 2px 2px 0 rgba(0,0,0,0.6), inset -2px -2px 0 rgba(255,255,255,0.07)", "purpose": "Wells and the search field." },
+      { "name": "edge-line", "value": "0 2px 0 rgba(255,255,255,0.05)", "purpose": "Paired with a 2px black border on bands and screen separators." },
+      { "name": "float-lift", "value": "0 24px 60px rgba(0,0,0,0.55)", "purpose": "Only under surfaces floating above the page, added after the bevel." },
+      { "name": "text-hard", "value": "0 2px 0 rgba(0,0,0,0.55)", "purpose": "Game text shadow on button labels and text over the panorama." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrances, reveals, the fixed bar slide, toast." },
+      { "name": "button-state", "value": "120ms", "purpose": "Button background and colour change." },
+      { "name": "reveal", "value": "700ms", "purpose": "Scroll reveal: 12px rise, 0.985 scale, 4px blur to clear." },
+      { "name": "splash-pulse", "value": "0.55s ease-in-out infinite alternate, scale 1 to 1.09", "purpose": "Splash line pulse." },
+      { "name": "toast", "value": "260ms", "purpose": "Tooltip toast fade and rise." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "560px" },
+      { "name": "medium", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "GUI Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The one control language: bevelled, black-edged, violet face on hover, focus and selected.",
+      "html": "<button class=\"ds-btn\">Install mods</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 18px; font: 600 15px/1 'Sora', system-ui, sans-serif; letter-spacing: 0.01em; color: #ece9f5; text-shadow: 0 2px 0 rgba(0,0,0,0.55); background: #2d2440; border: 2px solid #000; border-radius: 0; box-shadow: inset 2px 2px 0 rgba(255,255,255,0.2), inset -2px -3px 0 rgba(0,0,0,0.6); cursor: pointer; transition: background-color 120ms, color 120ms; } .ds-btn:hover, .ds-btn:focus-visible, .ds-btn[aria-selected='true'], .ds-btn[aria-pressed='true'] { background: #8b5cf6; color: #fff; outline: 2px solid #fff; outline-offset: -2px; } .ds-btn:active { box-shadow: inset -2px -2px 0 rgba(255,255,255,0.2), inset 2px 3px 0 rgba(0,0,0,0.6); }"
+    },
+    {
+      "name": "Disabled Button",
+      "kind": "button",
+      "refersTo": "button-disabled",
+      "description": "Unavailable control: darker face, dim label, no outline.",
+      "html": "<button class=\"ds-btn-off\" disabled>Install</button>",
+      "css": ".ds-btn-off { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; min-width: 116px; padding: 0 18px; font: 600 14px/1 'Sora', system-ui, sans-serif; color: #7a7392; background: #1a1622; border: 2px solid #000; border-radius: 0; box-shadow: inset 2px 2px 0 rgba(255,255,255,0.2), inset -2px -3px 0 rgba(0,0,0,0.6); cursor: not-allowed; }"
+    },
+    {
+      "name": "Square Icon Button",
+      "kind": "button",
+      "refersTo": "button-square",
+      "description": "44px icon-only button carrying a pixel icon.",
+      "html": "<button class=\"ds-btn-sq\" aria-label=\"Button sounds\"><svg viewBox=\"0 0 16 16\" width=\"20\" height=\"20\" shape-rendering=\"crispEdges\" fill=\"currentColor\"><path d=\"M2 6h3v4H2zM5 5h1v6H5zM6 4h1v8H6zM7 3h1v10H7zM10 5h1v6h-1zM12 3h1v10h-1zM11 4h1v1h-1zM11 11h1v1h-1z\"/></svg></button>",
+      "css": ".ds-btn-sq { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; color: #ece9f5; background: #2d2440; border: 2px solid #000; border-radius: 0; box-shadow: inset 2px 2px 0 rgba(255,255,255,0.2), inset -2px -3px 0 rgba(0,0,0,0.6); cursor: pointer; transition: background-color 120ms; } .ds-btn-sq:hover, .ds-btn-sq:focus-visible { background: #8b5cf6; color: #fff; outline: 2px solid #fff; outline-offset: -2px; } .ds-btn-sq:active { box-shadow: inset -2px -2px 0 rgba(255,255,255,0.2), inset 2px 3px 0 rgba(0,0,0,0.6); }"
+    },
+    {
+      "name": "Search Well",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Search input recessed into a well, pixel magnifier, yellow caret.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 16 16\" width=\"18\" height=\"18\" shape-rendering=\"crispEdges\" fill=\"currentColor\"><path d=\"M5 2h4v1H5zM4 3h1v1H4zM9 3h1v1H9zM3 4h1v4H3zM10 4h1v4h-1zM4 8h1v1H4zM9 8h1v1H9zM5 9h4v1H5zM10 10h1v1h-1zM11 11h1v1h-1zM12 12h1v1h-1z\"/></svg><input type=\"search\" placeholder=\"Search mods…\"></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; color: #7a7392; background: rgba(7,5,12,0.88); border: 2px solid #000; box-shadow: inset 2px 2px 0 rgba(0,0,0,0.6), inset -2px -2px 0 rgba(255,255,255,0.07); } .ds-search:focus-within { outline: 2px solid #fff; outline-offset: -2px; color: #ece9f5; } .ds-search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: #ece9f5; font: 400 15px 'Sora', system-ui, sans-serif; caret-color: #ffff55; } .ds-search input::placeholder { color: #7a7392; }"
+    },
+    {
+      "name": "List Well",
+      "kind": "card",
+      "refersTo": "well",
+      "description": "Recessed list of content rows with pixel icons and a right-hand action.",
+      "html": "<ul class=\"ds-well\"><li class=\"ds-row\"><svg class=\"ds-row-ic\" viewBox=\"0 0 7 7\" shape-rendering=\"crispEdges\"><rect width=\"7\" height=\"7\" fill=\"hsl(260 40% 18%)\"/><path d=\"M1 1h1v1H1zM5 1h1v1H5zM2 3h3v1H2zM1 5h5v1H1z\" fill=\"hsl(260 70% 68%)\"/></svg><div><b>Sodium</b> <span class=\"ds-by\">by CaffeineMC</span><p>Rewrites the rendering engine for much higher frame rates.</p></div></li></ul>",
+      "css": ".ds-well { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; background: rgba(7,5,12,0.88); border: 2px solid #000; box-shadow: inset 2px 2px 0 rgba(0,0,0,0.6), inset -2px -2px 0 rgba(255,255,255,0.07); color: #ece9f5; font: 400 16px/1.6 'Sora', system-ui, sans-serif; } .ds-row { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: center; padding: 10px 10px 10px 8px; } .ds-row:hover { background: rgba(255,255,255,0.035); } .ds-row-ic { width: 44px; height: 44px; box-shadow: 0 0 0 2px #000; } .ds-row b { font-weight: 600; } .ds-by { font-size: 13px; color: #aaa3c2; } .ds-row p { margin: 0; font-size: 14px; line-height: 1.45; color: #aaa3c2; }"
+    },
+    {
+      "name": "Screen Header Band",
+      "kind": "nav",
+      "refersTo": "screen-head",
+      "description": "Opens every sub-screen: dark band with a small centred title and an edge line.",
+      "html": "<div class=\"ds-head\"><h2>Privacy policy</h2></div>",
+      "css": ".ds-head { padding: 22px 16px; background: rgba(0,0,0,0.35); border-bottom: 2px solid #000; box-shadow: 0 2px 0 rgba(255,255,255,0.05); } .ds-head h2 { margin: 0; text-align: center; color: #ece9f5; font: 700 clamp(22px, 2.6vw, 28px)/1.15 'Sora', system-ui, sans-serif; letter-spacing: -0.02em; text-shadow: 0 3px 0 rgba(0,0,0,0.6); }"
+    },
+    {
+      "name": "Tooltip Toast",
+      "kind": "custom",
+      "refersTo": "tooltip",
+      "description": "Transient status message in the in-game tooltip frame.",
+      "html": "<p class=\"ds-tip\">Iris Shaders needs Sodium. Added automatically.</p>",
+      "css": ".ds-tip { display: inline-block; margin: 0; padding: 12px 16px; font: 600 14px/1.4 'Sora', system-ui, sans-serif; color: #ece9f5; background: #100010; border: 2px solid #100010; box-shadow: inset 0 0 0 2px #28007f, inset 0 2px 0 2px #5000ff, 0 10px 24px rgba(0,0,0,0.5); }"
+    },
+    {
+      "name": "Splash",
+      "kind": "custom",
+      "refersTo": "splash",
+      "description": "Rotated, pulsing yellow splash line pinned to the wordmark.",
+      "html": "<button class=\"ds-splash\" type=\"button\">Fair play only!</button>",
+      "css": ".ds-splash { background: none; border: 0; cursor: pointer; white-space: nowrap; font: 700 22px/1 'Sora', system-ui, sans-serif; color: #ffff55; text-shadow: 0 2px 0 #3f3f15; rotate: -18deg; animation: ds-pulse 0.55s ease-in-out infinite alternate; } .ds-splash:focus-visible { outline: 2px solid #fff; outline-offset: 4px; } @keyframes ds-pulse { from { scale: 1; } to { scale: 1.09; } } @media (prefers-reduced-motion: reduce) { .ds-splash { animation: none; } }"
+    },
+    {
+      "name": "Count Badge",
+      "kind": "chip",
+      "refersTo": "count-badge",
+      "description": "Black block with chat-green mono numerals.",
+      "html": "<span class=\"ds-count\">3</span>",
+      "css": ".ds-count { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 5px; background: #000; color: #55ff55; font: 500 12px 'JetBrains Mono', ui-monospace, monospace; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Title Screen",
+    "overview": "The website is the game screen DaClient's in-game client replaces: a pixel dusk panorama behind a giant extruded wordmark, a stack of bevelled GUI buttons, a splash line in yellow, and a status bar along the bottom. Everything below the fold works like a sub-screen of that menu: a dark tile header band with a small centred title, a working panel, and a \"Done\" button back to the title. The game's GUI supplies the material: purple-tinted stone tile ground, buttons with black edges and light/dark inner bevels, inset wells for lists and reading, and the in-game tooltip for transient messages.\n\nDensity is game-menu density: controls are full-height (44px) and stacked tight (6 to 8px), and reading text sits in narrow centred columns inside wells. Every corner is square; depth comes from inner bevels and 2px black edges, not from radius or blur. Colour is a purple stone field with one violet accent for interaction. The game's own chat colours (yellow, green) are kept for meaning: the splash, ON states and counts.\n\nThe launcher mockup (`design/mockup.html`) shares only the brand commitments (purple accent, Sora). It is a different world and is not governed by this file.",
+    "keyCharacteristics": [
+      "Square everything (0px radius); 2px pure-black edges on every control and panel.",
+      "Bevel depth: light inner edge top-left, dark inner edge bottom-right; it inverts when pressed.",
+      "Purple-tinted 8x8 stone tile as the page ground, scaled up so the pixels stay hard (crisp-edged).",
+      "One interaction colour: violet accent face plus a white 2px outline on hover, focus and selected.",
+      "Sora for everything; JetBrains Mono only for codes, paths, counts and step numerals.",
+      "Pixel-grid art only: icons and illustrations are SVG or canvas on 8x8 or 16x16 grids with `crispEdges`."
+    ],
+    "rules": [
+      { "name": "The State-Only Violet Rule", "body": "The accent marks interaction state (hover, focus, selected, progress). Static surfaces never take violet as a fill.", "section": "colors" },
+      { "name": "The Chat Colour Rule", "body": "Yellow, green and gold carry meaning the game already taught: splash, on/installed, needs/pending. Don't use them as decoration.", "section": "colors" },
+      { "name": "The Hard Shadow Rule", "body": "Text on panorama or bevelled faces gets a 0-blur shadow straight down (1 to 3px, black at 55 to 70%). It is the game's text shadow, never a glow.", "section": "typography" },
+      { "name": "The Mono Is Data Rule", "body": "JetBrains Mono appears only on literal values: hostnames, paths, scopes, counts, numerals.", "section": "typography" },
+      { "name": "The Bevel Not Blur Rule", "body": "If a surface needs to look raised or sunk, it gets the bevel pair inside a black edge. Soft shadow is reserved for things that float over the page.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do build every interactive control from the one bevelled button: 2px black edge, raised bevel, violet face plus inset white outline for hover, focus and selected.",
+      "Do recess lists, search and long reading text into wells.",
+      "Do open sub-screens with the tile header band and end them with a centred Done button back to the title.",
+      "Do draw icons and illustrations on 8x8 or 16x16 pixel grids with `shape-rendering: crispEdges`, ringed in 2px black when listed.",
+      "Do give text over the panorama or button faces a 0-blur drop shadow.",
+      "Do use the ease-out curve `cubic-bezier(0.16, 1, 0.3, 1)` for entrances, and honour reduced motion (the panorama stops, reveals show immediately)."
+    ],
+    "donts": [
+      "Don't round corners anywhere; the radius is 0.",
+      "Don't use soft blur as the main depth cue; bevels make depth, and soft shadow is only for floating layers.",
+      "Don't use icon fonts, emoji or smooth line icons; icons are pixel art.",
+      "Don't set body copy, notes or legal lines in Dusk Grey on the tile or on stone; use Lavender Grey.",
+      "Don't use JetBrains Mono for prose, headings or button labels.",
+      "Don't fill static surfaces with violet; violet means state."
+    ]
+  }
+}

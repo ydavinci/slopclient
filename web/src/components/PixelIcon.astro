@@ -1,0 +1,56 @@
+---
+// Tiny pixel-art icons drawn on an 8x8 (or 16x16) grid, in the game's own grammar.
+interface Props { name: 'grass' | 'nether' | 'amethyst' | 'speaker' | 'speaker-off' | 'check' | 'copy' | 'arrow-up'; size?: number }
+const { name, size = 32 } = Astro.props;
+---
+{name === 'grass' && (
+  <svg width={size} height={size} viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true">
+    <rect width="8" height="8" fill="#7a5233"/>
+    <path fill="#5f3f26" d="M1 4h1v1H1zM4 5h1v1H4zM6 3h1v1H6zM2 6h1v1H2zM6 6h1v1H6z"/>
+    <path fill="#8f6440" d="M3 3h1v1H3zM0 6h1v1H0zM5 7h1v1H5zM7 5h1v1H7z"/>
+    <rect width="8" height="2" fill="#5fa53a"/>
+    <path fill="#5fa53a" d="M0 2h1v1H0zM2 2h1v2H2zM5 2h1v1H5zM7 2h1v2H7z"/>
+    <path fill="#7cc24a" d="M1 0h2v1H1zM5 0h1v1H5zM3 1h1v1H3zM6 1h1v1H6z"/>
+  </svg>
+)}
+{name === 'nether' && (
+  <svg width={size} height={size} viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true">
+    <rect width="8" height="8" fill="#6e2424"/>
+    <path fill="#8c3232" d="M0 0h3v1H0zM4 1h2v1H4zM1 3h2v1H1zM5 3h3v1H5zM0 5h2v1H0zM3 5h2v1H3zM6 6h2v1H6zM1 7h3v1H1z"/>
+    <path fill="#4e1818" d="M3 0h1v1H3zM7 1h1v1H7zM0 2h1v1H0zM4 4h1v1H4zM2 6h1v1H2zM5 7h1v1H5z"/>
+    <path fill="#ff9a3c" d="M6 4h1v1H6z"/>
+  </svg>
+)}
+{name === 'amethyst' && (
+  <svg width={size} height={size} viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true">
+    <rect width="8" height="8" fill="#3b2770"/>
+    <path fill="#8b5cf6" d="M1 1h2v2H1zM4 0h2v1H4zM5 3h2v2H5zM1 5h2v2H1zM4 6h1v2H4z"/>
+    <path fill="#c084fc" d="M1 1h1v1H1zM5 3h1v1H5zM1 5h1v1H1zM4 0h1v1H4z"/>
+    <path fill="#25184a" d="M3 2h1v2H3zM0 4h1v1H0zM6 6h2v1H6zM7 1h1v1H7z"/>
+  </svg>
+)}
+{name === 'speaker' && (
+  <svg width={size} height={size} viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">
+    <path d="M2 6h3v4H2zM5 5h1v6H5zM6 4h1v8H6zM7 3h1v10H7zM10 5h1v6h-1zM12 3h1v10h-1zM11 4h1v1h-1zM11 11h1v1h-1z"/>
+  </svg>
+)}
+{name === 'speaker-off' && (
+  <svg width={size} height={size} viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">
+    <path d="M2 6h3v4H2zM5 5h1v6H5zM6 4h1v8H6zM7 3h1v10H7zM10 6h1v1h-1zM11 7h1v1h-1zM12 8h1v1h-1zM13 9h1v1h-1zM13 6h1v1h-1zM12 7h1v1h-1zM10 9h1v1h-1zM11 8h1v1h-1z"/>
+  </svg>
+)}
+{name === 'check' && (
+  <svg width={size} height={size} viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">
+    <path d="M6 1h1v1H6zM5 2h1v1H5zM4 3h1v1H4zM3 4h1v1H3zM2 5h1v1H2zM1 3h1v1H1zM2 4h1v1H2z"/>
+  </svg>
+)}
+{name === 'copy' && (
+  <svg width={size} height={size} viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">
+    <path d="M5 2h8v1H5zM5 3h1v2H5zM12 3h1v8h-1zM10 10h2v1h-2zM2 5h8v1H2zM2 6h1v8H2zM9 6h1v8H9zM3 13h6v1H3z"/>
+  </svg>
+)}
+{name === 'arrow-up' && (
+  <svg width={size} height={size} viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor">
+    <path d="M7 3h2v11H7zM5 5h2v2H5zM3 7h2v2H3zM9 5h2v2H9zM11 7h2v2h-2z"/>
+  </svg>
+)}

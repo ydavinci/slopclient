@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "web", "run", "dev", "--", "--port", "4321"],
+      "port": 4321
+    },
+    {
+      "name": "launcher-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "launcher", "run", "dev"],
+      "port": 1420
+    }
+  ]
+}

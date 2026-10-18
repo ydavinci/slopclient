@@ -1,3 +1,11 @@
 /target
 *.part
 .env
+/launcher/node_modules
+/launcher/dist
+/launcher/src-tauri/gen
+/web/node_modules
+/web/dist
+/web/.astro
+/.impeccable/review
+/.impeccable/live

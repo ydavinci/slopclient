@@ -1,0 +1,574 @@
+---
+import Base from '../layouts/Base.astro';
+import Panorama from '../components/Panorama.astro';
+import PixelIcon from '../components/PixelIcon.astro';
+
+const CONTACT = ''; // TODO: set the real contact address before submitting the AppID form
+
+const splashes = [
+  'Fair play only!', 'Written in Rust!', 'Now with NeoForge!', 'Encrypted with DPAPI!', 'No telemetry!',
+  'Java included!', 'Also has a HUD editor!', 'Dependencies included!', '0% password!', 'Made for Windows!',
+];
+
+type Item = { id: string; name: string; by: string; text: string; needs?: string[] };
+const catalog: Record<'mods' | 'packs' | 'shaders', Item[]> = {
+  mods: [
+    { id: 'sodium', name: 'Sodium', by: 'CaffeineMC', text: 'Rewrites the rendering engine for much higher frame rates.' },
+    { id: 'lithium', name: 'Lithium', by: 'CaffeineMC', text: 'Optimises game logic: mobs, physics, chunk ticking.' },
+    { id: 'iris', name: 'Iris Shaders', by: 'IrisShaders', text: 'Shader pack support that works together with Sodium.', needs: ['sodium'] },
+    { id: 'modmenu', name: 'Mod Menu', by: 'Prospector', text: 'Lists installed mods in-game and opens their settings.', needs: ['fabric-api'] },
+    { id: 'appleskin', name: 'AppleSkin', by: 'squeek502', text: 'Shows hunger and saturation values on the HUD.', needs: ['fabric-api'] },
+    { id: 'fabric-api', name: 'Fabric API', by: 'FabricMC', text: 'Core library most Fabric mods depend on.' },
+    { id: 'ferritecore', name: 'FerriteCore', by: 'malte0811', text: 'Cuts memory usage, especially in big modpacks.' },
+    { id: 'entityculling', name: 'Entity Culling', by: 'tr7zw', text: 'Skips rendering entities you cannot see.' },
+  ],
+  packs: [
+    { id: 'faithful', name: 'Faithful 32x', by: 'Faithful Team', text: 'The vanilla look at double resolution.' },
+    { id: 'darkmode', name: 'Default Dark Mode', by: 'nebulr', text: 'Dark menus and inventories, same layout.' },
+    { id: 'staytrue', name: 'Stay True', by: 'haylee', text: 'Subtle vanilla-style texture refresh.' },
+  ],
+  shaders: [
+    { id: 'complementary', name: 'Complementary Reimagined', by: 'EminGT', text: 'Vanilla-friendly shaders with a soft, clean look.', needs: ['iris'] },
+    { id: 'bsl', name: 'BSL Shaders', by: 'capttatsu', text: 'Bright, colourful lighting and water.', needs: ['iris'] },
+    { id: 'makeup', name: 'MakeUp Ultra Fast', by: 'XavierFST', text: 'Shader look that runs on weaker GPUs.', needs: ['iris'] },
+  ],
+};
+const all = Object.values(catalog).flat();
+const kindOf = Object.fromEntries(Object.entries(catalog).flatMap(([k, items]) => items.map((i) => [i.id, k])));
+
+// pixel identicon per project: 5x5 mirrored grid in a hue from the name
+function icon(name: string) {
+  let h = 2166136261;
+  for (const c of name) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const hue = Math.abs(h) % 360, cells: string[] = [];
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 3; x++) {
+    if ((h >>> (y * 3 + x)) & 1) {
+      cells.push(`M${x + 1} ${y + 1}h1v1H${x + 1}z`);
+      if (x < 2) cells.push(`M${5 - x} ${y + 1}h1v1H${5 - x}z`);
+    }
+  }
+  return { bg: `hsl(${hue} 40% 18%)`, fg: `hsl(${hue} 70% 68%)`, d: cells.join('') };
+}
+const tabs = [
+  { id: 'mods', label: 'Mods' },
+  { id: 'packs', label: 'Resource packs' },
+  { id: 'shaders', label: 'Shaders' },
+] as const;
+---
+<Base title="DaClient: launcher and client for Minecraft" description="DaClient is a free Minecraft: Java Edition launcher for Windows: instances, mod loaders, managed Java, one-click mods and a fair-play in-game client. Sign-in uses the official Microsoft account flow.">
+<!--
+THESIS: The landing page is DaClient's own title screen, the thing the client mod replaces in-game. Refuses the launcher-site default of headline + screenshot + feature-card grid.
+OWN-WORLD: Purple-tinted stone tile ground, a pixel dusk panorama, bevelled GUI buttons with black edges, inset wells for lists, yellow splash text, in-game tooltip purple. Sora for everything, JetBrains Mono only for codes and paths.
+STORY: Players recognise the title screen, try installing mods, packs and shaders in an interactive content screen, and see dependencies handled for them. Reviewers reach the privacy policy in one click.
+FIRST VIEWPORT: Full-bleed panorama; DaClient wordmark centred with a pulsing splash; one-line description; stacked buttons Install mods / Privacy policy with a sound toggle; status bar with version left, Mojang disclaimer right.
+FORM: Title Screen, own list #2 (pick card), seed b1be820b.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+
+<header class="minibar" data-minibar aria-label="Site">
+  <a class="mini-brand" href="#top"><img src={`${import.meta.env.BASE_URL}favicon.svg`.replace('//', '/')} width="22" height="22" alt="" />DaClient</a>
+  <nav class="mini-nav">
+    <a class="btn" href="#mods">Mods</a>
+    <a class="btn" href="#privacy">Privacy</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ TITLE SCREEN ============ -->
+  <section class="title" id="top">
+    <Panorama />
+    <div class="title-shade" aria-hidden="true"></div>
+
+    <div class="title-center">
+      <div class="wordmark">
+        <h1 class="wm-text">DaClient</h1>
+        <button class="splash" type="button" data-splash data-list={JSON.stringify(splashes)} title="Click for another splash">{splashes[0]}</button>
+      </div>
+      <p class="tagline">A free launcher and in-game client for Minecraft: Java&nbsp;Edition on Windows.</p>
+
+      <nav class="menu" aria-label="Title menu">
+        <a class="btn" href="#mods">Install mods</a>
+        <div class="menu-row">
+          <button class="btn sq" type="button" data-sound aria-pressed="false" aria-label="Button sounds">
+            <span class="ico-off"><PixelIcon name="speaker-off" size={20} /></span>
+            <span class="ico-on"><PixelIcon name="speaker" size={20} /></span>
+          </button>
+          <a class="btn" href="#privacy">Privacy policy</a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="statusbar">
+      <span>DaClient 0.1.0-dev · Windows · in development</span>
+      <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+    </div>
+  </section>
+
+  <!-- ============ MODS ============ -->
+  <section class="screen" id="mods" aria-labelledby="mods-h">
+    <div class="screen-head"><h2 class="screen-title" id="mods-h">Mods, packs and shaders</h2></div>
+    <div class="screen-inner">
+      <p class="screen-lede">Search Modrinth, press install, play. DaClient picks the build that matches your instance and pulls in everything it depends on. Try it below.</p>
+
+      <div class="guide" data-reveal aria-hidden="true">
+        <span class="g" data-g="0">Search</span><span class="g" data-g="1">Install</span><span class="g" data-g="2">Manage</span>
+      </div>
+
+      <div class="store" data-store>
+        <div class="store-bar">
+          <div class="inst-chip"><PixelIcon name="grass" size={28} /><span><b>Survival</b><span>1.21.10 · Fabric</span></span></div>
+          <div class="views" role="tablist" aria-label="View">
+            <button class="btn" role="tab" type="button" data-view="browse" aria-selected="true">Browse</button>
+            <button class="btn" role="tab" type="button" data-view="installed" aria-selected="false">Installed <span class="count" data-count>0</span></button>
+          </div>
+        </div>
+
+        <!-- browse -->
+        <div class="pane" data-pane="browse">
+          <div class="filters">
+            <div class="kinds" role="tablist" aria-label="Content type">
+              {tabs.map((t, i) => <button class="btn" role="tab" type="button" data-kind={t.id} aria-selected={i === 0 ? 'true' : 'false'}>{t.label}</button>)}
+            </div>
+            <label class="search well">
+              <span class="sr-only">Search</span>
+              <svg viewBox="0 0 16 16" width="18" height="18" shape-rendering="crispEdges" aria-hidden="true" fill="currentColor"><path d="M5 2h4v1H5zM4 3h1v1H4zM9 3h1v1H9zM3 4h1v4H3zM10 4h1v4h-1zM4 8h1v1H4zM9 8h1v1H9zM5 9h4v1H5zM10 10h1v1h-1zM11 11h1v1h-1zM12 12h1v1h-1z"/></svg>
+              <input type="search" placeholder="Search mods…" data-search autocomplete="off" spellcheck="false" />
+            </label>
+          </div>
+
+          <ul class="well results" data-results>
+            {all.map((m) => {
+              const ic = icon(m.name);
+              return (
+                <li class="res" data-id={m.id} data-kind={kindOf[m.id]} data-name={m.name.toLowerCase()} data-needs={(m.needs ?? []).join(',')} hidden={kindOf[m.id] !== 'mods'}>
+                  <svg class="res-ic" viewBox="0 0 7 7" shape-rendering="crispEdges" aria-hidden="true"><rect width="7" height="7" fill={ic.bg} /><path d={ic.d} fill={ic.fg} /></svg>
+                  <div class="res-text">
+                    <b>{m.name}</b> <span class="by">by {m.by}</span>
+                    <p>{m.text}</p>
+                    {m.needs && <p class="needs">Needs {m.needs.map((n) => all.find((a) => a.id === n)!.name).join(', ')}</p>}
+                  </div>
+                  <button class="btn install" type="button" data-install>Install</button>
+                </li>
+              );
+            })}
+            <li class="empty" data-empty hidden>Nothing found. Try “sodium” or “shader”.</li>
+          </ul>
+        </div>
+
+        <!-- installed -->
+        <div class="pane" data-pane="installed" hidden>
+          <ul class="well installed" data-installed>
+            <li class="empty" data-empty-installed>Nothing installed yet. Pick something under Browse.</li>
+          </ul>
+        </div>
+
+        <p class="toast" data-toast role="status" aria-live="polite"></p>
+      </div>
+      <p class="note">Demo with a fixed list of real Modrinth projects. Search and install already work in the command-line version; the launcher app is in progress.</p>
+      <div class="done-row"><a class="btn" href="#top">Done</a></div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="screen" id="privacy" aria-labelledby="privacy-h">
+    <div class="screen-head"><h2 class="screen-title" id="privacy-h">Privacy policy</h2></div>
+    <div class="screen-inner">
+      <p class="screen-lede">Last updated 18 October 2026. Applies to the DaClient launcher and the DaClient in-game mod.</p>
+
+      <div class="policy">
+        <nav class="policy-nav" aria-label="Privacy policy sections">
+          <a class="btn" href="#p-short">Summary</a>
+          <a class="btn" href="#p-signin">Microsoft sign-in</a>
+          <a class="btn" href="#p-stored">Stored data</a>
+          <a class="btn" href="#p-services">Services</a>
+          <a class="btn" href="#p-delete">Removing data</a>
+          <a class="btn" href="#p-contact">Contact</a>
+        </nav>
+
+        <article class="well policy-text">
+          <h3 id="p-short">Summary</h3>
+          <p>DaClient runs entirely on your computer. We do not operate servers, collect analytics or sell data. Account data is stored locally and only sent to Microsoft and Mojang to sign you in and start the game.</p>
+
+          <h3 id="p-signin">Microsoft sign-in</h3>
+          <p>You sign in on Microsoft's own website with a one-time code (OAuth 2.0 device code flow), so DaClient never sees your password. It requests two scopes, <code>XboxLive.signin</code> and <code>offline_access</code>. The Microsoft token is exchanged for Xbox Live and XSTS tokens, then for a Minecraft token, which is used to check game ownership, read your profile and start the game.</p>
+
+          <h3 id="p-stored">Data stored on your device</h3>
+          <ul>
+            <li>Microsoft, Xbox Live and Minecraft access and refresh tokens, encrypted with Windows DPAPI so only your Windows user account can read them.</li>
+            <li>Your Minecraft profile: username, UUID and skin.</li>
+            <li>Launcher settings, instances, installed versions, mods and play time.</li>
+          </ul>
+          <p>Everything is kept in <code>%APPDATA%\DaClient</code>. Deleting this folder removes it completely.</p>
+
+          <h3 id="p-services">Services the launcher connects to</h3>
+          <table>
+            <tbody>
+              <tr><th scope="row">Microsoft identity</th><td><code>login.microsoftonline.com</code>, account sign-in</td></tr>
+              <tr><th scope="row">Xbox Live</th><td><code>user.auth.xboxlive.com</code>, <code>xsts.auth.xboxlive.com</code></td></tr>
+              <tr><th scope="row">Minecraft services</th><td><code>api.minecraftservices.com</code>, game token, ownership and profile</td></tr>
+              <tr><th scope="row">Mojang downloads</th><td>Game files, libraries, assets and Java runtimes</td></tr>
+              <tr><th scope="row">Mod loaders</th><td>Fabric, Quilt, Forge and NeoForge metadata and files</td></tr>
+              <tr><th scope="row">Modrinth</th><td><code>api.modrinth.com</code>, <code>cdn.modrinth.com</code>, searching and downloading mods, resource packs, shaders and modpacks</td></tr>
+            </tbody>
+          </table>
+          <p>These requests fall under the privacy policies of the respective providers, including the <a href="https://privacy.microsoft.com/privacystatement">Microsoft Privacy Statement</a>. There is no telemetry, analytics or tracking, in the launcher or on this website, and no data is shared with anyone beyond the services listed above.</p>
+
+          <h3 id="p-delete">Removing your data</h3>
+          <p>Remove an account inside the launcher to delete its tokens, or delete the <code>%APPDATA%\DaClient</code> folder to remove everything. You can also revoke DaClient's access at any time at <a href="https://account.live.com/consent/Manage">account.live.com/consent/Manage</a>.</p>
+
+          <h3 id="p-contact">Contact</h3>
+          <p>Questions about this policy: {CONTACT ? <a href={`mailto:${CONTACT}`}>{CONTACT}</a> : <span class="placeholder">contact address coming soon</span>}</p>
+        </article>
+      </div>
+      <div class="done-row"><a class="btn" href="#top">Done</a></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <a class="btn" href="#top"><PixelIcon name="arrow-up" size={18} />Back to title</a>
+  <p>NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT. Minecraft is a trademark of Mojang AB.</p>
+  <p>© 2026 DaClient</p>
+</footer>
+</Base>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+
+  /* ---------- button sounds (off by default) ---------- */
+  let audio: AudioContext | null = null;
+  let soundOn = false;
+  function blip(pitch = 1, len = 0.08) {
+    if (!soundOn) return;
+    audio ??= new AudioContext();
+    const t = audio.currentTime, o = audio.createOscillator(), g = audio.createGain(), f = audio.createBiquadFilter();
+    o.type = 'square'; o.frequency.setValueAtTime(880 * pitch, t); o.frequency.exponentialRampToValueAtTime(220 * pitch, t + len * 0.75);
+    f.type = 'lowpass'; f.frequency.value = 2400;
+    g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(f).connect(g).connect(audio.destination); o.start(t); o.stop(t + len + 0.01);
+  }
+  const soundBtn = document.querySelector<HTMLButtonElement>('[data-sound]')!;
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn; soundBtn.setAttribute('aria-pressed', String(soundOn));
+    try { localStorage.setItem('dac-sound', soundOn ? '1' : '0'); } catch {}
+    blip(1.2);
+  });
+  try { if (localStorage.getItem('dac-sound') === '1') { soundOn = true; soundBtn.setAttribute('aria-pressed', 'true'); } } catch {}
+  document.addEventListener('click', (e) => {
+    const el = (e.target as Element).closest('.btn, [data-splash]');
+    if (el && el !== soundBtn && !el.hasAttribute('data-install')) blip();
+  });
+
+  /* ---------- splash text ---------- */
+  const splash = document.querySelector<HTMLButtonElement>('[data-splash]')!;
+  const list: string[] = JSON.parse(splash.dataset.list!);
+  let si = 0;
+  splash.addEventListener('click', () => {
+    si = (si + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
+    splash.textContent = list[si];
+    splash.classList.remove('pop'); void splash.offsetWidth; splash.classList.add('pop');
+  });
+
+  /* ---------- mini bar after the title screen ---------- */
+  const bar = document.querySelector<HTMLElement>('[data-minibar]')!;
+  new IntersectionObserver(([e]) => bar.classList.toggle('show', !e.isIntersecting), { rootMargin: '-40% 0px 0px 0px' })
+    .observe(document.querySelector('.title')!);
+
+  /* ---------- reveals ---------- */
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -12% 0px' });
+  document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+
+  /* ---------- content store demo ---------- */
+  const store = document.querySelector<HTMLElement>('[data-store]')!;
+  const rows = [...store.querySelectorAll<HTMLLIElement>('.res')];
+  const byId = new Map(rows.map((r) => [r.dataset.id!, r]));
+  const search = store.querySelector<HTMLInputElement>('[data-search]')!;
+  const empty = store.querySelector<HTMLElement>('[data-empty]')!;
+  const installedList = store.querySelector<HTMLUListElement>('[data-installed]')!;
+  const emptyInstalled = store.querySelector<HTMLElement>('[data-empty-installed]')!;
+  const count = store.querySelector<HTMLElement>('[data-count]')!;
+  const toast = store.querySelector<HTMLElement>('[data-toast]')!;
+  const guide = [...document.querySelectorAll<HTMLElement>('[data-g]')];
+  const installed = new Map<string, { on: boolean; auto: boolean }>();
+  let kind = 'mods';
+
+  const setGuide = (n: number) => guide.forEach((g, i) => { g.classList.toggle('now', i === n); g.classList.toggle('done', i < n); });
+  setGuide(0);
+
+  function filter() {
+    const q = search.value.trim().toLowerCase();
+    let shown = 0;
+    for (const r of rows) {
+      // a query searches every type, an empty query shows the chosen tab
+      const hit = q ? r.dataset.name!.includes(q) || r.textContent!.toLowerCase().includes(q) : r.dataset.kind === kind;
+      r.hidden = !hit; if (hit) shown++;
+    }
+    empty.hidden = shown > 0;
+  }
+  const kindTabs = [...store.querySelectorAll<HTMLButtonElement>('button[data-kind]')];
+  kindTabs.forEach((b) => b.addEventListener('click', () => {
+    kind = b.dataset.kind!; search.value = '';
+    kindTabs.forEach((o) => o.setAttribute('aria-selected', String(o === b)));
+    search.placeholder = `Search ${b.textContent!.toLowerCase()}…`;
+    filter();
+  }));
+  search.addEventListener('input', () => { filter(); if (search.value) setGuide(Math.max(0, guide.findIndex((g) => g.classList.contains('now')))); });
+
+  function setView(v: string) {
+    store.querySelectorAll<HTMLElement>('[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === v)));
+    store.querySelectorAll<HTMLElement>('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== v));
+  }
+  store.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((b) => b.addEventListener('click', () => {
+    setView(b.dataset.view!); if (b.dataset.view === 'installed' && installed.size) setGuide(3);
+  }));
+
+  let toastTimer = 0;
+  function say(msg: string) {
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = window.setTimeout(() => toast.classList.remove('show'), 3800);
+  }
+
+  // resolve the full dependency chain, dependencies first
+  function chain(id: string, out: string[] = []): string[] {
+    for (const d of (byId.get(id)!.dataset.needs || '').split(',').filter(Boolean)) chain(d, out);
+    if (!out.includes(id)) out.push(id);
+    return out;
+  }
+  const nameOf = (id: string) => byId.get(id)!.querySelector('b')!.textContent!;
+
+  async function install(id: string) {
+    const todo = chain(id).filter((x) => !installed.has(x));
+    if (!todo.length) return;
+    const extra = todo.filter((x) => x !== id);
+    if (extra.length) say(`${nameOf(id)} needs ${extra.map(nameOf).join(' and ')}. Added automatically.`);
+    for (const x of todo) {
+      const btn = byId.get(x)!.querySelector<HTMLButtonElement>('[data-install]')!;
+      btn.disabled = true; btn.classList.add('busy'); btn.textContent = '';
+      btn.style.setProperty('--p', '0');
+      for (let k = 1; k <= 10; k++) { await sleep(55); btn.style.setProperty('--p', String(k / 10)); }
+      btn.classList.remove('busy'); btn.textContent = 'Installed'; btn.classList.add('done');
+      installed.set(x, { on: true, auto: x !== id });
+      blip(1.5, 0.06);
+      addInstalled(x);
+    }
+    blip(2, 0.12);
+    if (!extra.length) say(`${nameOf(id)} installed into Survival.`);
+    setGuide(2);
+  }
+
+  function addInstalled(id: string) {
+    const src = byId.get(id)!;
+    const li = document.createElement('li'); li.className = 'inst-row'; li.dataset.id = id;
+    const kindLabel = { mods: 'Mod', packs: 'Resource pack', shaders: 'Shader' }[src.dataset.kind!];
+    li.innerHTML = `${src.querySelector('.res-ic')!.outerHTML}
+      <div class="res-text"><b>${nameOf(id)}</b><p>${kindLabel}${installed.get(id)!.auto ? ' · added as dependency' : ''}</p></div>
+      <button class="btn toggle" type="button" aria-pressed="true">ON</button>
+      <button class="btn sq remove" type="button" aria-label="Remove ${nameOf(id)}">
+        <svg viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true"><path d="M3 3h2v2H3zM5 5h2v2H5zM7 7h2v2H7zM9 9h2v2H9zM11 11h2v2h-2zM11 3h2v2h-2zM9 5h2v2H9zM5 9h2v2H5zM3 11h2v2H3z"/></svg>
+      </button>`;
+    installedList.append(li);
+    emptyInstalled.hidden = true; count.textContent = String(installed.size);
+    count.classList.remove('bump'); void count.offsetWidth; count.classList.add('bump');
+  }
+
+  installedList.addEventListener('click', (e) => {
+    const li = (e.target as Element).closest<HTMLLIElement>('.inst-row'); if (!li) return;
+    const id = li.dataset.id!;
+    if ((e.target as Element).closest('.toggle')) {
+      const st = installed.get(id)!; st.on = !st.on;
+      const t = li.querySelector<HTMLButtonElement>('.toggle')!;
+      t.textContent = st.on ? 'ON' : 'OFF'; t.setAttribute('aria-pressed', String(st.on)); li.classList.toggle('off', !st.on);
+    }
+    if ((e.target as Element).closest('.remove')) {
+      installed.delete(id); li.remove();
+      const btn = byId.get(id)!.querySelector<HTMLButtonElement>('[data-install]')!;
+      btn.disabled = false; btn.classList.remove('done'); btn.textContent = 'Install';
+      count.textContent = String(installed.size); emptyInstalled.hidden = installed.size > 0;
+      say(`${nameOf(id)} removed.`);
+    }
+  });
+
+  rows.forEach((r) => r.querySelector('[data-install]')!.addEventListener('click', () => { setGuide(1); install(r.dataset.id!); }));
+</script>
+
+<style>
+  /* ---------- mini bar ---------- */
+  .minibar {
+    position: fixed; inset: 0 0 auto; z-index: 20; height: 60px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 16px;
+    background: rgba(11, 9, 18, 0.92); border-bottom: 2px solid var(--edge);
+    box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.06), 0 6px 18px rgba(0, 0, 0, 0.4);
+    transform: translateY(-110%); transition: transform 380ms var(--ease-out);
+  }
+  .minibar.show { transform: none; }
+  .mini-brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 700; letter-spacing: 0.01em; }
+  .mini-brand img { image-rendering: pixelated; }
+  .mini-nav { display: flex; gap: 6px; }
+  .mini-nav .btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
+
+  /* ---------- title screen ---------- */
+  .title { position: relative; min-height: 100svh; display: grid; grid-template-rows: 1fr auto; overflow: hidden; isolation: isolate; }
+  .title-shade { position: absolute; inset: 0; background:
+    radial-gradient(70% 55% at 50% 40%, rgba(11, 9, 18, 0.35), rgba(11, 9, 18, 0) 70%),
+    linear-gradient(180deg, rgba(11, 9, 18, 0) 55%, rgba(11, 9, 18, 0.7)); }
+  .title-center { position: relative; align-self: center; display: flex; flex-direction: column; align-items: center; padding: 80px 16px 40px; text-align: center; }
+
+  .wordmark { position: relative; line-height: 0.9; }
+  .wm-text {
+    display: block; font-weight: 800; font-size: clamp(60px, 13vw, 160px); letter-spacing: -0.035em;
+    color: #f1eaff; paint-order: stroke fill; -webkit-text-stroke: 0.06em #1a0f33;
+    text-shadow: 0 0.035em 0 #a98bf7, 0 0.07em 0 #7c4ef0, 0 0.105em 0 #5b3bb0, 0 0.14em 0 #3a2577, 0 0.18em 0 #1a0f33, 0 0.26em 0.2em rgba(0, 0, 0, 0.55);
+    animation: drop 900ms var(--ease-out) both;
+  }
+  @keyframes drop {
+    from { transform: translateY(-0.18em) scale(1.06); opacity: 0; filter: blur(8px); text-shadow: 0 0 0 #1a0f33; }
+    to { transform: none; opacity: 1; filter: none; }
+  }
+  .splash {
+    position: absolute; right: -0.7em; bottom: -0.2em; transform-origin: center;
+    background: none; border: 0; cursor: pointer; white-space: nowrap;
+    font: 700 clamp(15px, 2.1vw, 24px)/1 var(--font); color: var(--splash);
+    text-shadow: 0 2px 0 #3f3f15;
+    rotate: -18deg; animation: splash-in 600ms 650ms var(--ease-out) both, pulse 0.55s 1.25s ease-in-out infinite alternate;
+  }
+  .splash.pop { animation: splash-in 380ms var(--ease-out) both, pulse 0.55s 380ms ease-in-out infinite alternate; }
+  .splash:focus-visible { outline-offset: 4px; }
+  @keyframes splash-in { from { scale: 0; } to { scale: 1; } }
+  @keyframes pulse { from { scale: 1; } to { scale: 1.09; } }
+
+  .tagline { margin-top: clamp(28px, 4vw, 44px); max-width: 34ch; font-size: clamp(16px, 1.6vw, 19px); color: #e4ddf5; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.7); text-wrap: balance; animation: rise 700ms 500ms var(--ease-out) both; }
+  .menu { margin-top: 28px; width: min(420px, 100%); display: grid; gap: 8px; }
+  .menu > * { animation: rise 600ms var(--ease-out) both; }
+  .menu > :nth-child(1) { animation-delay: 650ms; }
+  .menu > :nth-child(2) { animation-delay: 720ms; }
+  .menu .btn { width: 100%; }
+  .menu-row { display: grid; grid-template-columns: 44px 1fr; gap: 8px; }
+  .btn.sq { width: 44px; padding: 0; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  [data-sound] .ico-on { display: none; }
+  [data-sound][aria-pressed='true'] .ico-on { display: block; }
+  [data-sound][aria-pressed='true'] .ico-off { display: none; }
+
+  .statusbar { position: relative; display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding: 10px 16px 14px; font-size: 12.5px; color: #d8d0ea; text-shadow: 0 1px 0 #000; }
+
+  /* ---------- mods ---------- */
+  .guide { display: flex; justify-content: center; gap: 6px; margin-top: 32px; counter-reset: g; }
+  .g { counter-increment: g; display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; font-size: 14px; font-weight: 600; color: var(--dim); transition: color 300ms; }
+  .g::before { content: counter(g); display: grid; place-items: center; width: 26px; height: 26px; background: var(--stone-3); border: 2px solid #000; box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo); font: 500 13px var(--mono); transition: background-color 300ms, color 300ms; }
+  .g.now { color: var(--text); }
+  .g.now::before { background: var(--accent); color: #fff; }
+  .g.done { color: var(--muted); }
+  .g.done::before { background: #1f6b2e; color: #fff; }
+
+  .store {
+    position: relative; max-width: 880px; margin: 20px auto 0;
+    background: var(--stone-2); border: 2px solid #000;
+    box-shadow: inset 2px 2px 0 var(--hi), inset -2px -3px 0 var(--lo), 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+  .store-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; background: var(--stone-3); border-bottom: 2px solid #000; }
+  .inst-chip { display: flex; align-items: center; gap: 10px; }
+  .inst-chip :global(svg) { image-rendering: pixelated; box-shadow: 0 0 0 2px #000; }
+  .inst-chip > span { display: grid; line-height: 1.25; }
+  .inst-chip > span span { font-size: 13px; color: var(--muted); }
+  .views { display: flex; gap: 6px; }
+  .views .btn { min-height: 38px; font-size: 14px; }
+  .count { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 5px; background: #000; color: var(--on); font: 500 12px var(--mono); }
+  .count.bump { animation: bump 400ms var(--ease-out); }
+  @keyframes bump { 30% { transform: scale(1.35); } }
+
+  .pane { padding: 14px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .kinds { display: flex; gap: 6px; flex-wrap: wrap; }
+  .kinds .btn { min-height: 40px; font-size: 14px; padding: 0 14px; }
+  .search { flex: 1 1 220px; display: flex; align-items: center; gap: 10px; padding: 0 12px; min-height: 40px; color: var(--dim); }
+  .search:focus-within { outline: 2px solid #fff; outline-offset: -2px; color: var(--text); }
+  .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: 400 15px var(--font); caret-color: var(--splash); }
+  .search input::placeholder { color: var(--dim); }
+  .search input::-webkit-search-cancel-button { filter: grayscale(1) brightness(1.6); }
+
+  .results, .installed { list-style: none; padding: 6px; display: grid; gap: 2px; height: 420px; overflow: auto; align-content: start; }
+  .res, :global(.inst-row) { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 10px 10px 10px 8px; border: 2px solid transparent; }
+  :global(.inst-row) { grid-template-columns: 44px 1fr auto auto; animation: slide-in 420ms var(--ease-out) both; }
+  .res:hover, :global(.inst-row:hover) { background: rgba(255, 255, 255, 0.035); }
+  .res-ic, :global(.inst-row .res-ic) { width: 44px; height: 44px; image-rendering: pixelated; box-shadow: 0 0 0 2px #000; }
+  .res-text { min-width: 0; }
+  :global(.inst-row .res-text b), .res-text b { font-weight: 600; }
+  .by { font-size: 13px; color: var(--dim); }
+  .res-text p, :global(.inst-row .res-text p) { font-size: 14px; color: var(--muted); line-height: 1.45; }
+  .res-text .needs { color: var(--soon); font-size: 13px; margin-top: 2px; }
+  .install { min-width: 116px; min-height: 40px; font-size: 14px; overflow: hidden; }
+  .install.busy { --face: #000; outline: none; box-shadow: inset 0 0 0 2px #fff; }
+  .install.busy::before { content: ''; position: absolute; inset: 4px; background: var(--accent); box-shadow: inset 0 2px 0 var(--accent-2); transform: scaleX(var(--p, 0)); transform-origin: left; transition: transform 60ms linear; }
+  .install.done[disabled] { --face: #173d22; color: var(--on); }
+  :global(.inst-row .toggle) { min-width: 64px; min-height: 36px; font-size: 13px; color: var(--on); }
+  :global(.inst-row.off .toggle) { color: #ff6b6b; }
+  :global(.inst-row.off) .res-ic, :global(.inst-row.off .res-ic), :global(.inst-row.off .res-text) { opacity: 0.45; }
+  :global(.inst-row .remove) { min-height: 36px; width: 36px; }
+  .empty { padding: 32px 16px; text-align: center; color: var(--dim); }
+  @keyframes slide-in { from { opacity: 0; transform: translateX(-14px); clip-path: inset(0 100% 0 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+
+  .toast {
+    position: absolute; left: 50%; bottom: 18px; translate: -50% 12px; width: max-content; max-width: calc(100% - 32px);
+    padding: 12px 16px; font-size: 14px; font-weight: 600; color: var(--text); text-align: center;
+    background: var(--tip-bg); border: 2px solid var(--tip-bg);
+    box-shadow: inset 0 0 0 2px var(--tip-b), inset 0 2px 0 2px var(--tip-a), 0 10px 24px rgba(0, 0, 0, 0.5);
+    opacity: 0; pointer-events: none; transition: opacity 260ms var(--ease-out), translate 260ms var(--ease-out);
+  }
+  .toast:empty { display: none; }
+  .toast.show { opacity: 1; translate: -50% 0; }
+  .placeholder { color: var(--soon); }
+  .note { text-align: center; margin-top: 16px; font-size: 13.5px; color: var(--muted); }
+
+  /* ---------- privacy ---------- */
+  .policy { display: grid; grid-template-columns: 220px 1fr; gap: 24px; margin-top: 40px; align-items: start; }
+  .policy-nav { position: sticky; top: 84px; display: grid; gap: 6px; }
+  .policy-nav .btn { justify-content: flex-start; min-height: 40px; font-size: 14px; }
+  .policy-text { padding: 28px clamp(18px, 3vw, 40px) 32px; }
+  .policy-text > * { max-width: 68ch; }
+  .policy-text h3 { font-size: 19px; font-weight: 700; margin: 34px 0 8px; scroll-margin-top: 84px; }
+  .policy-text h3:first-child { margin-top: 0; }
+  .policy-text p, .policy-text li, .policy-text td { color: #cbc4de; }
+  .policy-text p + p { margin-top: 10px; }
+  .policy-text ul { padding-left: 20px; margin: 8px 0 10px; }
+  .policy-text li { margin: 4px 0; }
+  .policy-text li::marker { color: var(--accent-2); content: '■  '; font-size: 0.7em; }
+  .policy-text table { width: 100%; border-collapse: collapse; margin: 10px 0 12px; font-size: 14.5px; }
+  .policy-text th { text-align: left; font-weight: 600; padding: 10px 16px 10px 0; vertical-align: top; white-space: nowrap; color: var(--text); }
+  .policy-text td { padding: 10px 0; }
+  .policy-text tr + tr > * { border-top: 2px solid rgba(255, 255, 255, 0.06); }
+
+  /* ---------- footer ---------- */
+  .foot { border-top: 2px solid #000; box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.05); padding: 48px 16px 56px; display: grid; justify-items: center; gap: 18px; text-align: center; font-size: 13px; color: var(--muted); }
+  .foot .btn { min-width: min(320px, 100%); font-size: 15px; }
+  .foot p { max-width: 70ch; }
+  .dim { color: var(--dim) !important; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .policy { grid-template-columns: 1fr; }
+    .policy-nav { position: static; grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .policy-nav { grid-template-columns: 1fr 1fr; }
+    .statusbar { font-size: 11.5px; }
+    .splash { right: 0; bottom: -0.9em; }
+    .tagline { margin-top: 44px; }
+    .policy-text th { white-space: normal; }
+    .store-bar { padding: 10px; }
+    .views { width: 100%; }
+    .views .btn { flex: 1; }
+    .kinds { width: 100%; }
+    .kinds .btn { flex: 1; padding: 0 8px; font-size: 13px; }
+    .pane { padding: 10px; }
+    .res { grid-template-columns: 36px 1fr; gap: 10px; }
+    .res .install { grid-column: 1 / -1; }
+    .res-ic { width: 36px; height: 36px; }
+    :global(.inst-row) { grid-template-columns: 36px 1fr auto auto; gap: 8px; }
+    :global(.inst-row .res-ic) { width: 36px; height: 36px; }
+    .results, .installed { height: 460px; }
+  }
+</style>

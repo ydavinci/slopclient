@@ -1,0 +1,139 @@
+---
+// Title-screen panorama: a procedurally generated block landscape at dusk,
+// rendered at low resolution and scaled up so every block stays a hard pixel.
+---
+<canvas class="panorama" aria-hidden="true" width="384" height="216"></canvas>
+
+<style>
+  .panorama {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    image-rendering: pixelated; object-fit: cover;
+    filter: blur(1px) saturate(1.1) brightness(1.15);
+    transform: scale(1.04);
+  }
+</style>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>('canvas.panorama')!;
+  const ctx = canvas.getContext('2d')!;
+  const W = canvas.width, H = canvas.height, B = 4; // block size in canvas px
+
+  // deterministic noise so the world is the same on every visit
+  let seed = 1337;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const PERIOD = 256; // columns before the world repeats (seamless pan)
+  const smooth = (amp: number, freq: number) => {
+    const pts = Array.from({ length: Math.ceil(PERIOD / freq) }, () => rand());
+    return (i: number) => {
+      const x = (i % PERIOD) / freq, a = Math.floor(x), t = x - a;
+      const p0 = pts[a % pts.length], p1 = pts[(a + 1) % pts.length];
+      return (p0 + (p1 - p0) * (3 - 2 * t) * t * t) * amp;
+    };
+  };
+
+  type Layer = { speed: number; base: number; h: (i: number) => number; body: string; top: string; side: string; trees?: boolean; haze: number };
+  const layers: Layer[] = [
+    { speed: 0.12, base: 132, h: smooth(34, 22), body: '#4a3580', top: '#6a52a6', side: '#55408c', haze: 0.55 },
+    { speed: 0.28, base: 150, h: smooth(28, 14), body: '#33255f', top: '#7656c4', side: '#4a3584', haze: 0.3, trees: true },
+    { speed: 0.6, base: 172, h: smooth(22, 10), body: '#221839', top: '#8c66e4', side: '#5b3fa0', haze: 0, trees: true },
+  ];
+  const treeAt = layers.map(() => Array.from({ length: PERIOD }, () => rand() < 0.07));
+  const hash = (n: number) => { n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const stars = Array.from({ length: 90 }, () => ({ x: rand() * W * 2, y: rand() * 110, p: rand() * 6.28 }));
+  const clouds = Array.from({ length: 7 }, () => ({ x: rand() * W * 2, y: 18 + rand() * 40, w: 6 + Math.floor(rand() * 10), h: 1 + Math.floor(rand() * 2) }));
+
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#0c0818');
+  sky.addColorStop(0.42, '#2a1a58');
+  sky.addColorStop(0.7, '#8a4f9e');
+  sky.addColorStop(0.86, '#d98aa6');
+
+  let camX = 0, mouseX = 0, mouseY = 0, t = 0;
+
+  function draw() {
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+
+    // stars twinkle in the upper sky
+    for (const s of stars) {
+      const x = ((s.x - camX * 0.05) % (W * 2) + W * 2) % (W * 2);
+      if (x > W) continue;
+      ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(t * 0.6 + s.p));
+      ctx.fillStyle = '#f2e9ff'; ctx.fillRect(Math.round(x), Math.round(s.y), 1, 1);
+    }
+    ctx.globalAlpha = 1;
+
+    // square moon, the in-game way
+    const mx = Math.round(276 - mouseX * 4), my = Math.round(34 - mouseY * 3);
+    ctx.fillStyle = 'rgba(240,230,255,0.12)'; ctx.fillRect(mx - 6, my - 6, 28, 28);
+    ctx.fillStyle = '#efe6ff'; ctx.fillRect(mx, my, 16, 16);
+    ctx.fillStyle = '#d8c9f5'; ctx.fillRect(mx + 3, my + 4, 4, 4); ctx.fillRect(mx + 10, my + 9, 3, 3);
+
+    // flat, blocky clouds
+    for (const c of clouds) {
+      const x = Math.round(((c.x - camX * 0.08 - t * 2) % (W * 2) + W * 2) % (W * 2) - 40), y = Math.round(c.y);
+      const w = c.w * B, h = (c.h + 1) * B;
+      // stepped slab: lit body, a narrower cap, a darker underside
+      ctx.fillStyle = 'rgba(214,190,250,0.42)'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = 'rgba(236,222,255,0.5)'; ctx.fillRect(x + B * 2, y - B, w - B * 4, B);
+      ctx.fillStyle = 'rgba(90,60,150,0.45)'; ctx.fillRect(x + B, y + h, w - B * 2, B);
+    }
+
+    layers.forEach((L, li) => {
+      const off = camX * L.speed + mouseX * (li + 1) * 3;
+      const first = Math.floor(off / B);
+      const sub = off - first * B;
+      for (let c = -1; c <= W / B + 1; c++) {
+        const col = ((first + c) % PERIOD + PERIOD) % PERIOD;
+        const x = Math.round(c * B - sub);
+        const top = Math.round((L.base - L.h(col) + mouseY * (li + 1) * 2) / B) * B;
+        ctx.fillStyle = L.body; ctx.fillRect(x, top, B, H - top);
+        // per-block value noise in the upper rows, so hills read as stacked blocks
+        for (let r = 1; r < 9; r++) {
+          const n = hash(col * 31 + r * 7 + li * 101);
+          if (n < 0.28) { ctx.fillStyle = `rgba(0,0,0,${0.12 + r * 0.02})`; ctx.fillRect(x, top + r * B, B, B); }
+          else if (n > 0.8) { ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(x, top + r * B, B, B); }
+        }
+        ctx.fillStyle = L.top; ctx.fillRect(x, top, B, B);
+        ctx.fillStyle = L.side; ctx.fillRect(x, top + B, B, B);
+        // lit edge where the next column steps down
+        const nextTop = Math.round((L.base - L.h((col + 1) % PERIOD) + mouseY * (li + 1) * 2) / B) * B;
+        if (nextTop > top) { ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x + B - 1, top + B, 1, nextTop - top); }
+        if (L.trees && treeAt[li][col]) {
+          ctx.fillStyle = L.body; ctx.fillRect(x, top - B * 3, B, B * 3);
+          ctx.fillStyle = L.top; ctx.fillRect(x - B, top - B * 6, B * 3, B * 3);
+          ctx.fillRect(x, top - B * 7, B, B);
+        }
+      }
+      if (L.haze) { ctx.fillStyle = `rgba(42,26,88,${L.haze * 0.35})`; ctx.fillRect(0, 0, W, H); }
+    });
+
+    // fireflies drift over the nearest hills
+    for (let i = 0; i < 14; i++) {
+      const fx = (i * 53 + t * 6 + Math.sin(t + i) * 8) % W;
+      const fy = 168 + Math.sin(t * 0.8 + i * 1.7) * 14 + (i % 3) * 8;
+      ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 + i));
+      ctx.fillStyle = '#ffff9a'; ctx.fillRect(Math.round(fx), Math.round(fy), 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  let visible = true, last = 0, raf = 0;
+  function frame(now: number) {
+    const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
+    t += dt; camX += dt * 22;
+    draw();
+    raf = requestAnimationFrame(frame);
+  }
+  const start = () => { if (!raf && visible && !still.matches) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? start() : stop(); }).observe(canvas);
+  still.addEventListener('change', () => (still.matches ? (stop(), draw()) : start()));
+  addEventListener('pointermove', (e) => {
+    mouseX = e.clientX / innerWidth - 0.5; mouseY = e.clientY / innerHeight - 0.5;
+    if (!raf) draw();
+  }, { passive: true });
+
+  draw(); start();
+</script>

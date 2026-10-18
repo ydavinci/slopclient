@@ -1,0 +1,122 @@
+@import '@fontsource/sora/400.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/sora/700.css';
+@import '@fontsource/sora/800.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+:root {
+  /* ground: purple-tinted stone, like the in-game screen backdrop */
+  --ink: #0b0912;
+  --stone: #17121f;
+  --stone-2: #211a2e;
+  --stone-3: #2d2440;
+  --inset: #07050c;
+
+  /* GUI bevel */
+  --hi: rgba(255, 255, 255, 0.2);
+  --lo: rgba(0, 0, 0, 0.6);
+  --edge: #000;
+
+  --text: #ece9f5;
+  --muted: #aaa3c2;
+  --dim: #7a7392;
+
+  --accent: #8b5cf6;
+  --accent-2: #c084fc;
+  --accent-deep: #5b3bb0;
+  --splash: #ffff55;
+  --on: #55ff55;
+  --soon: #ffd75e;
+
+  /* in-game tooltip colours */
+  --tip-bg: #100010;
+  --tip-a: #5000ff;
+  --tip-b: #28007f;
+
+  --tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%23161021'/%3E%3Cpath fill='%231f172d' d='M0 0h3v1H0zM5 1h3v1H5zM2 3h2v1H2zM6 4h2v2H6zM0 5h2v1H0zM3 6h3v1H3zM1 7h1v1H1z'/%3E%3Cpath fill='%230e0a15' d='M3 1h1v2H3zM0 2h1v1H0zM5 3h1v1H5zM4 5h1v1H4zM2 6h1v1H2zM6 7h2v1H6z'/%3E%3Cpath fill='%23271e38' d='M6 0h1v1H6zM1 4h1v1H1zM7 2h1v1H7zM5 6h1v1H5z'/%3E%3C/svg%3E");
+
+  --font: 'Sora', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body {
+  background: var(--ink) var(--tile) 0 0 / 32px 32px;
+  image-rendering: pixelated;
+  color: var(--text);
+  font: 400 16px/1.6 var(--font);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body * { image-rendering: auto; }
+img, canvas, svg { display: block; }
+a { color: var(--accent-2); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--text); }
+::selection { background: var(--accent); color: #fff; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: 0.88em; font-variant-numeric: tabular-nums; }
+
+html { scrollbar-color: var(--stone-3) var(--inset); }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--inset); }
+::-webkit-scrollbar-thumb { background: var(--stone-3); border: 2px solid var(--inset); box-shadow: inset 1px 1px 0 var(--hi), inset -1px -1px 0 var(--lo); }
+
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- GUI button: the one control language ---------- */
+.btn {
+  --face: var(--stone-3);
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 44px; padding: 0 18px;
+  font: 600 15px/1 var(--font); letter-spacing: 0.01em;
+  color: var(--text); text-decoration: none; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+  background: var(--face) var(--tile) 0 0 / 16px 16px; background-blend-mode: soft-light;
+  border: 2px solid var(--edge);
+  box-shadow: inset 2px 2px 0 var(--hi), inset -2px -3px 0 var(--lo);
+  cursor: pointer; user-select: none;
+  transition: background-color 120ms, color 120ms;
+}
+.btn:hover, .btn:focus-visible, .btn[aria-pressed='true'], .btn[aria-selected='true'] {
+  --face: var(--accent);
+  color: #fff; outline: 2px solid #fff; outline-offset: -2px;
+}
+.btn:active { box-shadow: inset -2px -2px 0 var(--hi), inset 2px 3px 0 var(--lo); }
+.btn[disabled] { --face: #1a1622; color: var(--dim); cursor: not-allowed; outline: none; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+
+/* inset well: lists, logs, reading panels */
+.well {
+  background: rgba(7, 5, 12, 0.88);
+  border: 2px solid var(--edge);
+  box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- screens ---------- */
+.screen { position: relative; padding: 0 16px 88px; }
+.screen-head { margin: 0 -16px 40px; padding: 22px 16px; background: rgba(0, 0, 0, 0.35); border-bottom: 2px solid var(--edge); box-shadow: 0 2px 0 rgba(255, 255, 255, 0.05); }
+.screen + .screen { border-top: 2px solid var(--edge); box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.05); }
+.screen-inner { max-width: 1040px; margin: 0 auto; }
+.screen-title {
+  text-align: center; font-weight: 700; font-size: clamp(22px, 2.6vw, 28px); letter-spacing: -0.02em; line-height: 1.15;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6); text-wrap: balance;
+}
+.screen-lede { text-align: center; color: var(--muted); max-width: 60ch; margin: 0 auto; text-wrap: pretty; }
+.done-row { display: flex; justify-content: center; margin-top: 48px; }
+.done-row .btn { min-width: min(320px, 100%); }
+
+/* reveal: content is visible by default; JS opts in */
+.js [data-reveal] { opacity: 0; transform: translateY(12px) scale(0.985); filter: blur(4px); transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out), filter 700ms var(--ease-out); }
+.js [data-reveal].in { opacity: 1; transform: none; filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .js [data-reveal] { opacity: 1; transform: none; filter: none; }
+}
