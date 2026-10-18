@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DaClient Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09080D; --surface:#121019; --surface-2:#1A1724; --surface-3:#241F31;
+  --border:rgba(255,255,255,.07); --border-2:rgba(255,255,255,.12);
+  --text:#E8EAF0; --muted:#8B91A1; --dim:#5E6475;
+  --accent:#8B5CF6; --accent-2:#C084FC; --grad:linear-gradient(135deg,var(--accent),var(--accent-2));
+  --success:#3DDC97; --warn:#FFB547; --danger:#FF5C6C;
+  --r-s:8px; --r-m:12px; --r-l:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#05060A;color:var(--text);font-family:Sora,system-ui,sans-serif;font-size:14px;min-height:100vh;padding:24px 16px 48px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.page-head{max-width:1200px;margin:0 auto 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.page-head h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.page-head h1 span{color:var(--muted);font-weight:500}
+.switch{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:4px}
+.switch button{padding:7px 12px;border-radius:var(--r-s);color:var(--muted);font-weight:500;font-size:13px}
+.switch button.on{background:var(--surface-3);color:var(--text)}
+.view{display:none;max-width:1200px;margin:0 auto}
+.view.on{display:block}
+.note{max-width:1200px;margin:14px auto 0;color:var(--muted);font-size:13px;line-height:1.55}
+
+/* ---------- Launcher window ---------- */
+.win{background:var(--bg);border:1px solid var(--border-2);border-radius:14px;overflow:hidden;height:720px;display:grid;grid-template-rows:38px 1fr;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.titlebar{display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 14px;border-bottom:1px solid var(--border);-webkit-app-region:drag}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;letter-spacing:.02em}
+.logo{width:20px;height:20px;border-radius:6px;background:var(--grad);display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff}
+.wbtns{display:flex}.wbtns span{width:40px;height:30px;display:grid;place-items:center;color:var(--muted);font-size:12px;border-radius:6px}
+.body{display:grid;grid-template-columns:64px 1fr;min-height:0}
+.rail{border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px}
+.rail .ic{width:42px;height:42px;border-radius:var(--r-m);display:grid;place-items:center;color:var(--muted);position:relative}
+.rail .ic.on{background:var(--surface-2);color:var(--text)}
+.rail .ic.on::before{content:"";position:absolute;left:-11px;top:11px;bottom:11px;width:3px;border-radius:2px;background:var(--grad)}
+.rail .sp{flex:1}
+.avatar{width:36px;height:36px;border-radius:10px;background:
+  linear-gradient(#6b4a2f 0 0) 0 0/100% 38% no-repeat,
+  linear-gradient(90deg,#c9966b 0 20%,#fff 20% 32%,#3a5bd0 32% 40%,#c9966b 40% 60%,#3a5bd0 60% 68%,#fff 68% 80%,#c9966b 80%) 0 45%/100% 14% no-repeat,
+  #c9966b;image-rendering:pixelated;border:2px solid var(--surface-3)}
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.main{overflow:hidden;position:relative;min-width:0}
+
+/* landscape art (stand-in for instance background) */
+.scene{position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(10,12,17,0) 30%,rgba(10,12,17,.75) 70%,var(--bg) 100%),
+  radial-gradient(1200px 400px at 70% 0%,rgba(192,132,252,.35),transparent 60%),
+  linear-gradient(180deg,#24305a 0%,#4a4f86 35%,#c78a7a 62%,#2a3a2c 62.2%,#1e2b22 100%)}
+.scene::after{content:"";position:absolute;left:0;right:0;top:52%;height:12%;background:
+  linear-gradient(90deg,transparent 0 6%,#1b2a20 6% 14%,transparent 14% 22%,#1b2a20 22% 26%,transparent 26% 48%,#1b2a20 48% 60%,transparent 60% 74%,#1b2a20 74% 80%,transparent 80%);opacity:.9}
+
+.home{position:relative;height:100%;display:flex;flex-direction:column;padding:28px 32px}
+.topbar{display:flex;justify-content:space-between;align-items:center}
+.crumb{color:rgba(255,255,255,.7);font-size:13px}
+.acct{display:flex;align-items:center;gap:10px;background:rgba(18,21,28,.6);backdrop-filter:blur(14px);border:1px solid var(--border);padding:6px 12px 6px 6px;border-radius:999px;font-weight:600;font-size:13px}
+.acct .avatar{width:26px;height:26px;border-radius:7px;border-width:1px}
+.acct small{color:var(--success);font-weight:500;font-size:11px;display:block}
+.hero{margin-top:auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;background:rgba(255,255,255,.08);border:1px solid var(--border);backdrop-filter:blur(10px)}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+.hero h2{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.hero p{color:rgba(232,234,240,.7);margin-top:8px;max-width:520px;line-height:1.5}
+.playrow{display:flex;gap:10px;margin-top:22px;align-items:stretch}
+.play{display:flex;border-radius:var(--r-m);overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.play .go{background:var(--grad);padding:0 44px;height:52px;font-weight:800;font-size:16px;letter-spacing:.08em;display:flex;align-items:center;gap:10px}
+.play .dd{background:linear-gradient(135deg,#a171f8,#c99bfc);border-left:1px solid rgba(255,255,255,.2);width:44px;display:grid;place-items:center}
+.ghost{height:52px;padding:0 18px;border-radius:var(--r-m);background:rgba(18,21,28,.6);backdrop-filter:blur(14px);border:1px solid var(--border);font-weight:600;display:flex;align-items:center;gap:8px}
+.recent{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.rcard{background:rgba(18,21,28,.7);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--r-m);padding:12px;display:flex;gap:12px;align-items:center}
+.rcard.on{border-color:rgba(139,92,246,.5);background:rgba(30,36,60,.7)}
+.ico{width:40px;height:40px;border-radius:10px;flex:none;display:grid;place-items:center;font-weight:800;font-size:15px}
+.rcard b{display:block;font-size:13px;font-weight:600}
+.rcard span{color:var(--muted);font-size:12px}
+
+/* ---------- Instance detail ---------- */
+.detail{height:100%;display:grid;grid-template-rows:auto auto 1fr;min-height:0}
+.dhead{padding:22px 28px 0;display:flex;gap:16px;align-items:center}
+.dhead .ico{width:56px;height:56px;border-radius:14px;font-size:22px}
+.dhead h3{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.dhead .meta{color:var(--muted);font-size:13px;margin-top:3px}
+.dhead .act{margin-left:auto;display:flex;gap:8px}
+.btn{height:36px;padding:0 14px;border-radius:var(--r-s);background:var(--surface-2);border:1px solid var(--border);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px}
+.btn.pri{background:var(--grad);border:0}
+.tabs{display:flex;gap:2px;padding:16px 28px 0;border-bottom:1px solid var(--border);overflow-x:auto}
+.tabs span{padding:10px 14px;color:var(--muted);font-weight:500;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs span.on{color:var(--text);border-color:var(--accent)}
+.tabs span em{font-style:normal;background:var(--surface-3);border-radius:999px;padding:1px 7px;font-size:11px;margin-left:5px;color:var(--muted)}
+.dcontent{overflow:auto;padding:16px 28px 0}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.search{flex:1;height:36px;border-radius:var(--r-s);background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--dim);font-size:13px}
+.banner{display:flex;align-items:center;gap:10px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:var(--r-s);padding:9px 12px;margin-bottom:12px;font-size:13px}
+.banner b{color:var(--accent)}
+.banner .btn{margin-left:auto;height:28px}
+.list{border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden}
+.row{display:grid;grid-template-columns:36px 1fr 120px 96px 60px 44px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+.row:last-child{border-bottom:0}
+.row.off{opacity:.5}
+.row .ico{width:36px;height:36px;border-radius:9px;font-size:13px}
+.row b{font-weight:600;font-size:13px;display:block}
+.row small{color:var(--muted);font-size:12px}
+.ver{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+.src{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;justify-self:start}
+.src.mr{background:rgba(27,217,106,.12);color:#1bd96a}
+.src.cf{background:rgba(241,100,54,.12);color:#f16436}
+.src.lo{background:var(--surface-3);color:var(--muted)}
+.upd{color:var(--accent);font-size:12px;font-weight:600}
+.tg{width:36px;height:20px;border-radius:999px;background:var(--surface-3);position:relative}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#8b91a1;transition:.2s}
+.tg.on{background:var(--grad)}
+.tg.on::after{left:19px;background:#fff}
+
+/* ---------- Browse ---------- */
+.browse{height:100%;display:grid;grid-template-columns:220px 1fr;min-height:0}
+.filters{border-right:1px solid var(--border);padding:20px 16px;overflow:auto}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-s);padding:3px;margin-bottom:18px}
+.seg span{text-align:center;padding:6px 0;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted)}
+.seg span.on{background:var(--surface-3);color:var(--text)}
+.fgroup{margin-bottom:18px}
+.fgroup h5{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:8px;font-weight:600}
+.sel{height:34px;border-radius:var(--r-s);background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:13px}
+.ck{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;color:var(--muted)}
+.ck i{width:15px;height:15px;border-radius:4px;border:1px solid var(--border-2);flex:none}
+.ck.on{color:var(--text)}.ck.on i{background:var(--grad);border:0}
+.results{padding:20px 24px;overflow:auto}
+.rtabs{display:flex;gap:6px;margin-bottom:14px}
+.rtabs span{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:500;color:var(--muted);border:1px solid var(--border)}
+.rtabs span.on{color:var(--text);background:var(--surface-2);border-color:var(--border-2)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:14px;display:flex;gap:12px}
+.pcard .ico{width:52px;height:52px;border-radius:12px;font-size:18px}
+.pcard h4{font-size:14px;font-weight:600}
+.pcard h4 span{color:var(--dim);font-weight:400;font-size:12px}
+.pcard p{color:var(--muted);font-size:12px;line-height:1.45;margin:4px 0 8px}
+.pmeta{display:flex;gap:10px;color:var(--dim);font-size:11px;align-items:center}
+.pcard .btn{margin-left:auto;align-self:flex-start;height:30px;font-size:12px}
+.pcard .btn.done{color:var(--success)}
+.dl{position:absolute;left:0;right:0;bottom:0;background:rgba(18,21,28,.92);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;font-size:12px}
+.bar{flex:1;height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden}
+.bar i{display:block;height:100%;width:64%;background:var(--grad)}
+
+/* ---------- In-game ---------- */
+.game{position:relative;height:720px;border-radius:14px;overflow:hidden;border:1px solid var(--border-2);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.world{position:absolute;inset:0;background:
+  linear-gradient(180deg,#7fb2ff 0%,#a9cbff 45%,#d7e6ff 58%,#5a8d3a 58.2%,#4b7a30 66%,#6b4a2f 66.2%,#5a3d27 100%)}
+.world::before{content:"";position:absolute;left:8%;top:30%;width:160px;height:220px;background:
+  linear-gradient(#2f6b2a 0 0) 0 0/100% 60% no-repeat,
+  linear-gradient(#6b4a2f 0 0) 50% 100%/22% 40% no-repeat;filter:drop-shadow(0 0 0 #000)}
+.world::after{content:"";position:absolute;right:12%;top:26%;width:200px;height:270px;background:
+  linear-gradient(#2a5f26 0 0) 0 0/100% 62% no-repeat,
+  linear-gradient(#5a3d27 0 0) 50% 100%/20% 38% no-repeat}
+.blur{position:absolute;inset:0;backdrop-filter:blur(10px) brightness(.55)}
+.title{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bigl{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.bigl .logo{width:52px;height:52px;border-radius:14px;font-size:24px}
+.bigl h1{font-size:42px;font-weight:800;letter-spacing:-.03em}
+.sub{color:rgba(255,255,255,.6);font-size:13px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:36px}
+.mbtns{display:flex;flex-direction:column;gap:8px;width:300px}
+.mbtn{height:46px;border-radius:var(--r-m);background:rgba(18,21,28,.55);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px;padding:0 16px;font-weight:600}
+.mbtn.pri{background:var(--grad);border:0;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.mbtn .k{margin-left:auto;font-size:11px;color:rgba(255,255,255,.55);font-weight:500}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mrow .mbtn{justify-content:center}
+.corner{position:absolute;bottom:18px;display:flex;gap:10px;align-items:center;font-size:12px;color:rgba(255,255,255,.65)}
+.corner.l{left:20px}.corner.r{right:20px}
+.srv{background:rgba(18,21,28,.55);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;display:flex;gap:10px;align-items:center;color:var(--text)}
+.srv .ico{width:28px;height:28px;border-radius:7px;font-size:11px}
+.srv small{display:block;color:var(--success);font-size:11px}
+
+/* ClickGUI */
+.cg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(860px,94%);height:520px;background:rgba(14,16,22,.82);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.1);border-radius:18px;display:grid;grid-template-columns:200px 1fr;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.6)}
+.cg-side{border-right:1px solid var(--border);padding:18px 12px;display:flex;flex-direction:column;gap:2px}
+.cg-side .brand{padding:0 8px 16px}
+.cat{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-s);color:var(--muted);font-weight:500;font-size:13px}
+.cat.on{background:var(--surface-2);color:var(--text)}
+.cat em{margin-left:auto;font-style:normal;font-size:11px;color:var(--dim)}
+.cat svg.i{width:17px;height:17px}
+.cg-side .sp{flex:1}
+.cg-main{padding:18px;display:flex;flex-direction:column;min-width:0}
+.cg-top{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+.cg-top h3{font-size:16px;font-weight:700;margin-right:auto}
+.cg-top .search{flex:none;width:220px}
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow:auto}
+.mod{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:14px;display:flex;flex-direction:column;gap:12px}
+.mod.on{border-color:rgba(139,92,246,.35);background:linear-gradient(180deg,rgba(139,92,246,.08),var(--surface))}
+.mod .t{display:flex;align-items:center;gap:10px}
+.mod .mi{width:32px;height:32px;border-radius:9px;background:var(--surface-3);display:grid;place-items:center;color:var(--muted)}
+.mod.on .mi{color:#fff;background:var(--grad)}
+.mod b{font-size:13px;font-weight:600}
+.mod p{font-size:11.5px;color:var(--muted);line-height:1.4}
+.mod .f{display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+.mod .gear{color:var(--dim);font-size:12px;display:flex;align-items:center;gap:5px}
+.mod .gear svg.i{width:15px;height:15px}
+
+/* HUD over game */
+.hud{position:absolute;font-family:Sora;font-weight:600;font-size:12px}
+.hud .box{background:rgba(10,12,17,.55);border-radius:8px;padding:6px 10px;backdrop-filter:blur(6px)}
+.hud.tl{left:14px;top:14px;display:flex;flex-direction:column;gap:5px}
+.hud.tl .box b{color:var(--accent)}
+.keys{position:absolute;left:14px;bottom:72px;display:grid;grid-template-columns:repeat(3,38px);gap:4px}
+.keys span{height:38px;border-radius:8px;background:rgba(10,12,17,.55);display:grid;place-items:center;font-size:12px;font-weight:700}
+.keys span.p{background:rgba(139,92,246,.75)}
+.keys .wide{grid-column:span 3;height:22px;font-size:10px}
+.armor{position:absolute;right:14px;bottom:72px;display:flex;flex-direction:column;gap:4px}
+.armor div{display:flex;align-items:center;gap:8px;background:rgba(10,12,17,.55);padding:4px 10px 4px 4px;border-radius:8px;font-size:12px;font-weight:600}
+.armor i{width:20px;height:20px;border-radius:4px;background:#5fd3e6;display:block}
+.hotbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:2px;padding:3px;background:rgba(0,0,0,.45);border-radius:6px}
+.hotbar span{width:40px;height:40px;border:2px solid rgba(255,255,255,.15);border-radius:4px}
+.hotbar span.s{border-color:#fff}
+.xhair{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);background:linear-gradient(#fff 0 0) center/2px 100% no-repeat,linear-gradient(#fff 0 0) center/100% 2px no-repeat;mix-blend-mode:difference}
+
+/* HUD editor */
+.editor .dim{position:absolute;inset:0;background:rgba(5,6,10,.45)}
+.editor .hud .box,.editor .keys,.editor .armor{outline:1.5px dashed rgba(139,92,246,.8);outline-offset:4px}
+.guide-v{position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed rgba(192,132,252,.7)}
+.guide-h{position:absolute;top:118px;left:0;right:0;border-top:1px dashed rgba(192,132,252,.7)}
+.drag{position:absolute;left:50%;top:100px;transform:translateX(-50%);outline:1.5px solid var(--accent-2)!important;outline-offset:4px}
+.drag::after{content:"";position:absolute;right:-9px;bottom:-9px;width:8px;height:8px;background:var(--accent-2);border-radius:2px}
+.edbar{position:absolute;left:50%;top:18px;transform:translateX(-50%);display:flex;gap:8px;background:rgba(14,16,22,.85);backdrop-filter:blur(16px);border:1px solid var(--border-2);border-radius:999px;padding:6px}
+.edbar .btn{border-radius:999px;height:32px}
+.pop{position:absolute;left:calc(50% + 120px);top:92px;width:220px;background:rgba(14,16,22,.92);backdrop-filter:blur(16px);border:1px solid var(--border-2);border-radius:var(--r-m);padding:12px;font-size:12px}
+.pop h6{font-size:12px;font-weight:700;margin-bottom:10px}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;color:var(--muted)}
+.slider{width:90px;height:4px;background:var(--surface-3);border-radius:2px;position:relative}
+.slider i{position:absolute;left:0;top:0;bottom:0;width:60%;background:var(--grad);border-radius:2px}
+.slider i::after{content:"";position:absolute;right:-6px;top:-4px;width:12px;height:12px;border-radius:50%;background:#fff}
+.sw{width:18px;height:18px;border-radius:5px;border:1px solid var(--border-2)}
+
+@media (max-width:900px){
+  .win,.game{height:auto;min-height:640px}
+  .body{grid-template-columns:52px 1fr}
+  .recent,.grid,.mods{grid-template-columns:1fr}
+  .browse{grid-template-columns:1fr}.filters{display:none}
+  .row{grid-template-columns:36px 1fr 60px 44px}.row .ver,.row .src{display:none}
+  .cg{grid-template-columns:1fr;height:auto;max-height:90%}.cg-side{display:none}
+  .hero h2{font-size:32px}
+  .dhead .act{display:none}
+  .pop{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>DaClient <span>· Design-Mockup</span></h1>
+  <div class="switch" id="sw">
+    <button class="on" data-v="home">Launcher · Home</button>
+    <button data-v="inst">Instanz · Mods</button>
+    <button data-v="browse">Browse</button>
+    <button data-v="title">In-Game · Title Screen</button>
+    <button data-v="gui">In-Game · Mod-Menü</button>
+    <button data-v="edit">In-Game · HUD-Editor</button>
+  </div>
+</div>
+
+<!-- SVG icon sprite -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></symbol>
+  <symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="zap" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="move" viewBox="0 0 24 24"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></symbol>
+  <symbol id="mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+  <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="keyb" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+</svg>
+
+<!-- ============ Launcher: Home ============ -->
+<section class="view on" id="v-home">
+  <div class="win">
+    <div class="titlebar"><div class="brand"><div class="logo">D</div>DACLIENT</div><div class="wbtns"><span>—</span><span>☐</span><span>✕</span></div></div>
+    <div class="body">
+      <nav class="rail">
+        <div class="ic on"><svg class="i"><use href="#home"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#grid"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#compass"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#down"/></svg></div>
+        <div class="sp"></div>
+        <div class="ic"><svg class="i"><use href="#cog"/></svg></div>
+        <div class="avatar"></div>
+      </nav>
+      <main class="main">
+        <div class="scene"></div>
+        <div class="home">
+          <div class="topbar">
+            <div class="crumb">Willkommen zurück, <b>Steve_DE</b></div>
+            <div class="acct"><div class="avatar"></div><div>Steve_DE<small>● Microsoft</small></div><svg class="i" style="width:16px;height:16px;color:var(--muted)"><use href="#chev"/></svg></div>
+          </div>
+          <div class="hero">
+            <div class="chips"><span class="chip"><span class="dot"></span>Bereit</span><span class="chip">1.21.4</span><span class="chip">Fabric 0.16.9</span><span class="chip">42 Mods</span><span class="chip">DaClient Core 1.0</span></div>
+            <h2>PvP Survival</h2>
+            <p>Zuletzt gespielt vor 2 Stunden · 38 h Spielzeit · Sodium, Iris und Complementary Shaders aktiv.</p>
+            <div class="playrow">
+              <div class="play"><button class="go"><svg class="i" style="width:18px;height:18px"><use href="#play"/></svg>SPIELEN</button><button class="dd"><svg class="i" style="width:18px;height:18px"><use href="#chev"/></svg></button></div>
+              <button class="ghost"><svg class="i" style="width:18px;height:18px"><use href="#folder"/></svg>Ordner</button>
+              <button class="ghost"><svg class="i" style="width:18px;height:18px"><use href="#cog"/></svg>Bearbeiten</button>
+            </div>
+          </div>
+          <div class="recent">
+            <div class="rcard on"><div class="ico" style="background:var(--grad)">P</div><div><b>PvP Survival</b><span>1.21.4 · Fabric</span></div></div>
+            <div class="rcard"><div class="ico" style="background:#2c3d2a;color:#7fd36a">V</div><div><b>Vanilla+</b><span>1.21.4 · Vanilla</span></div></div>
+            <div class="rcard"><div class="ico" style="background:#3a2a1c;color:#f0a35e">C</div><div><b>Create Above</b><span>1.21.1 · NeoForge</span></div></div>
+            <div class="rcard"><div class="ico" style="background:var(--surface-3);color:var(--muted)"><svg class="i"><use href="#plus"/></svg></div><div><b>Neue Instanz</b><span>Version & Loader</span></div></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Launcher: Instance detail ============ -->
+<section class="view" id="v-inst">
+  <div class="win">
+    <div class="titlebar"><div class="brand"><div class="logo">D</div>DACLIENT</div><div class="wbtns"><span>—</span><span>☐</span><span>✕</span></div></div>
+    <div class="body">
+      <nav class="rail">
+        <div class="ic"><svg class="i"><use href="#home"/></svg></div>
+        <div class="ic on"><svg class="i"><use href="#grid"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#compass"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#down"/></svg></div>
+        <div class="sp"></div>
+        <div class="ic"><svg class="i"><use href="#cog"/></svg></div>
+        <div class="avatar"></div>
+      </nav>
+      <main class="main">
+        <div class="detail">
+          <div class="dhead">
+            <div class="ico" style="background:var(--grad)">P</div>
+            <div><h3>PvP Survival</h3><div class="meta">Minecraft 1.21.4 · Fabric 0.16.9 · Java 21 (auto) · 4 GB RAM</div></div>
+            <div class="act"><button class="btn"><svg class="i" style="width:16px;height:16px"><use href="#folder"/></svg>Ordner</button><button class="btn pri"><svg class="i" style="width:15px;height:15px"><use href="#play"/></svg>Spielen</button></div>
+          </div>
+          <div class="tabs"><span>Übersicht</span><span class="on">Mods<em>42</em></span><span>Resourcepacks<em>3</em></span><span>Shader<em>2</em></span><span>Welten</span><span>Screenshots</span><span>Logs</span><span>Einstellungen</span></div>
+          <div class="dcontent">
+            <div class="toolbar">
+              <div class="search"><svg class="i" style="width:16px;height:16px"><use href="#search"/></svg>Mods durchsuchen…</div>
+              <button class="btn"><svg class="i" style="width:16px;height:16px"><use href="#plus"/></svg>Hinzufügen</button>
+            </div>
+            <div class="banner"><svg class="i" style="width:16px;height:16px;color:var(--accent)"><use href="#down"/></svg><span><b>3 Updates</b> verfügbar für Sodium, Iris und Mod Menu</span><button class="btn pri">Alle aktualisieren</button></div>
+            <div class="list">
+              <div class="row"><div class="ico" style="background:var(--grad);font-size:12px">DV</div><div><b>DaClient Core</b><small>Client-Interface · automatisch verwaltet</small></div><span class="ver">1.0.0</span><span class="src lo">Launcher</span><span></span><div class="tg on"></div></div>
+              <div class="row"><div class="ico" style="background:#1d3b2c;color:#4be08a">S</div><div><b>Sodium</b><small>Moderne Rendering-Engine</small></div><span class="ver">0.6.5</span><span class="src mr">Modrinth</span><span class="upd">↑ 0.6.6</span><div class="tg on"></div></div>
+              <div class="row"><div class="ico" style="background:#2d2246;color:#b693ff">I</div><div><b>Iris Shaders</b><small>Shader-Unterstützung</small></div><span class="ver">1.8.1</span><span class="src mr">Modrinth</span><span class="upd">↑ 1.8.3</span><div class="tg on"></div></div>
+              <div class="row"><div class="ico" style="background:#1e2f45;color:#6ab0ff">L</div><div><b>Lithium</b><small>Server- & Tick-Optimierung</small></div><span class="ver">0.14.3</span><span class="src mr">Modrinth</span><span></span><div class="tg on"></div></div>
+              <div class="row"><div class="ico" style="background:#3b2a1d;color:#f0a35e">J</div><div><b>JourneyMap</b><small>Minimap & Weltkarte</small></div><span class="ver">6.0.0</span><span class="src cf">CurseForge</span><span></span><div class="tg on"></div></div>
+              <div class="row off"><div class="ico" style="background:var(--surface-3);color:var(--muted)">R</div><div><b>ReplayMod</b><small>Deaktiviert</small></div><span class="ver">2.6.20</span><span class="src mr">Modrinth</span><span></span><div class="tg"></div></div>
+              <div class="row"><div class="ico" style="background:var(--surface-3);color:var(--muted)">?</div><div><b>custom-tweaks.jar</b><small>Lokale Datei</small></div><span class="ver">—</span><span class="src lo">Lokal</span><span></span><div class="tg on"></div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Launcher: Browse ============ -->
+<section class="view" id="v-browse">
+  <div class="win">
+    <div class="titlebar"><div class="brand"><div class="logo">D</div>DACLIENT</div><div class="wbtns"><span>—</span><span>☐</span><span>✕</span></div></div>
+    <div class="body">
+      <nav class="rail">
+        <div class="ic"><svg class="i"><use href="#home"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#grid"/></svg></div>
+        <div class="ic on"><svg class="i"><use href="#compass"/></svg></div>
+        <div class="ic"><svg class="i"><use href="#down"/></svg></div>
+        <div class="sp"></div>
+        <div class="ic"><svg class="i"><use href="#cog"/></svg></div>
+        <div class="avatar"></div>
+      </nav>
+      <main class="main">
+        <div class="browse">
+          <aside class="filters">
+            <div class="seg"><span class="on">Modrinth</span><span>CurseForge</span></div>
+            <div class="fgroup"><h5>Installieren in</h5><div class="sel">PvP Survival<svg class="i" style="width:14px;height:14px;color:var(--muted)"><use href="#chev"/></svg></div></div>
+            <div class="fgroup"><h5>Version</h5><div class="sel">1.21.4<svg class="i" style="width:14px;height:14px;color:var(--muted)"><use href="#chev"/></svg></div></div>
+            <div class="fgroup"><h5>Loader</h5><div class="ck on"><i></i>Fabric</div><div class="ck"><i></i>Quilt</div><div class="ck"><i></i>NeoForge</div></div>
+            <div class="fgroup"><h5>Kategorie</h5><div class="ck on"><i></i>Optimierung</div><div class="ck"><i></i>Utility</div><div class="ck"><i></i>Dekoration</div><div class="ck"><i></i>Abenteuer</div><div class="ck"><i></i>Technik</div></div>
+          </aside>
+          <div class="results">
+            <div class="toolbar"><div class="search"><svg class="i" style="width:16px;height:16px"><use href="#search"/></svg>Suche auf Modrinth…</div><div class="sel" style="width:150px">Relevanz<svg class="i" style="width:14px;height:14px;color:var(--muted)"><use href="#chev"/></svg></div></div>
+            <div class="rtabs"><span class="on">Mods</span><span>Resourcepacks</span><span>Shader</span><span>Datapacks</span><span>Modpacks</span></div>
+            <div class="grid">
+              <div class="pcard"><div class="ico" style="background:#1d3b2c;color:#4be08a">S</div><div><h4>Sodium <span>von jellysquid3</span></h4><p>Moderne Rendering-Engine, die die Framerate drastisch erhöht.</p><div class="pmeta"><span>⬇ 98 M</span><span>♥ 24 k</span><span>Optimierung</span></div></div><button class="btn done">✓ Installiert</button></div>
+              <div class="pcard"><div class="ico" style="background:#2a2540;color:#9fb0ff">E</div><div><h4>Entity Culling <span>von tr7zw</span></h4><p>Rendert keine Entities, die nicht sichtbar sind.</p><div class="pmeta"><span>⬇ 41 M</span><span>♥ 6 k</span><span>Optimierung</span></div></div><button class="btn pri">Installieren</button></div>
+              <div class="pcard"><div class="ico" style="background:#3a2236;color:#ff8fd1">F</div><div><h4>FerriteCore <span>von malte0811</span></h4><p>Reduziert den Arbeitsspeicherverbrauch deutlich.</p><div class="pmeta"><span>⬇ 52 M</span><span>♥ 5 k</span><span>Optimierung</span></div></div><button class="btn pri">Installieren</button></div>
+              <div class="pcard"><div class="ico" style="background:#1e2f45;color:#6ab0ff">I</div><div><h4>ImmediatelyFast <span>von RaphiMC</span></h4><p>Beschleunigt Immediate-Mode-Rendering (HUD, Text, Items).</p><div class="pmeta"><span>⬇ 30 M</span><span>♥ 3 k</span><span>Optimierung</span></div></div><button class="btn pri">Installieren</button></div>
+              <div class="pcard"><div class="ico" style="background:#332d18;color:#ffd166">M</div><div><h4>ModernFix <span>von embeddedt</span></h4><p>Schnellere Ladezeiten und weniger Speicher.</p><div class="pmeta"><span>⬇ 28 M</span><span>♥ 4 k</span><span>Optimierung</span></div></div><button class="btn pri">Installieren</button></div>
+              <div class="pcard"><div class="ico" style="background:#1d3436;color:#5fe0d4">D</div><div><h4>Dynamic FPS <span>von juliand665</span></h4><p>Reduziert FPS, wenn das Spiel im Hintergrund ist.</p><div class="pmeta"><span>⬇ 25 M</span><span>♥ 3 k</span><span>Optimierung</span></div></div><button class="btn pri">Installieren</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="dl"><svg class="i" style="width:16px;height:16px;color:var(--accent)"><use href="#down"/></svg><span>Installiere <b>FerriteCore 7.1.1</b> + 0 Abhängigkeiten</span><div class="bar"><i></i></div><span style="color:var(--muted)">64 % · 2 in Warteschlange</span></div>
+      </main>
+    </div>
+  </div>
+</section>
+
+<!-- ============ In-game: Title screen ============ -->
+<section class="view" id="v-title">
+  <div class="game">
+    <div class="world"></div><div class="blur"></div>
+    <div class="title">
+      <div class="bigl"><div class="logo">D</div><h1>DaClient</h1></div>
+      <div class="sub">Client · 1.21.4</div>
+      <div class="mbtns">
+        <button class="mbtn pri"><svg class="i"><use href="#user"/></svg>Einzelspieler</button>
+        <button class="mbtn"><svg class="i"><use href="#compass"/></svg>Mehrspieler</button>
+        <button class="mbtn"><svg class="i"><use href="#layers"/></svg>DaClient-Menü<span class="k">R-SHIFT</span></button>
+        <div class="mrow"><button class="mbtn"><svg class="i"><use href="#cog"/></svg>Optionen</button><button class="mbtn">Beenden</button></div>
+      </div>
+    </div>
+    <div class="corner l"><div class="srv" style="padding:6px 12px 6px 6px"><div class="avatar" style="width:28px;height:28px;border-radius:7px;border-width:1px"></div><div>Steve_DE<small>Microsoft-Account</small></div></div></div>
+    <div class="corner r">
+      <div class="srv"><div class="ico" style="background:#f0b12c;color:#2a1b00">H</div><div>hypixel.net<small>● 42.180 online · 18 ms</small></div></div>
+      <div class="srv"><div class="ico" style="background:#3d6bff;color:#fff">G</div><div>gommehd.net<small>● 6.410 online · 9 ms</small></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ In-game: ClickGUI ============ -->
+<section class="view" id="v-gui">
+  <div class="game">
+    <div class="world"></div><div class="blur" style="backdrop-filter:blur(4px) brightness(.5)"></div>
+    <div class="cg">
+      <div class="cg-side">
+        <div class="brand"><div class="logo">D</div>DACLIENT</div>
+        <div class="cat on"><svg class="i"><use href="#grid"/></svg>Alle Module<em>34</em></div>
+        <div class="cat"><svg class="i"><use href="#layers"/></svg>HUD<em>12</em></div>
+        <div class="cat"><svg class="i"><use href="#eye"/></svg>Render<em>9</em></div>
+        <div class="cat"><svg class="i"><use href="#star"/></svg>QoL<em>8</em></div>
+        <div class="cat"><svg class="i"><use href="#zap"/></svg>Performance<em>5</em></div>
+        <div class="sp"></div>
+        <div class="cat"><svg class="i"><use href="#move"/></svg>HUD bearbeiten</div>
+        <div class="cat"><svg class="i"><use href="#user"/></svg>Profile</div>
+        <div class="cat"><svg class="i"><use href="#cog"/></svg>Einstellungen</div>
+      </div>
+      <div class="cg-main">
+        <div class="cg-top"><h3>Alle Module</h3><div class="search"><svg class="i" style="width:16px;height:16px"><use href="#search"/></svg>Modul suchen…</div></div>
+        <div class="mods">
+          <div class="mod on"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#zap"/></svg></div><b>FPS</b></div><p>Zeigt die aktuelle Bildrate an.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg on"></div></div></div>
+          <div class="mod on"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#keyb"/></svg></div><b>Keystrokes</b></div><p>WASD, Maustasten und CPS als Overlay.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg on"></div></div></div>
+          <div class="mod on"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#shield"/></svg></div><b>Armor Status</b></div><p>Rüstung und Haltbarkeit am Bildschirmrand.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg on"></div></div></div>
+          <div class="mod"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#search"/></svg></div><b>Zoom</b></div><p>Zoomen mit C, Mausrad für Stufen.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg"></div></div></div>
+          <div class="mod on"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#target"/></svg></div><b>Crosshair</b></div><p>Eigenes Fadenkreuz mit Farbe und Form.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg on"></div></div></div>
+          <div class="mod"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#sun"/></svg></div><b>Fullbright</b></div><p>Maximale Helligkeit in dunklen Bereichen.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg"></div></div></div>
+          <div class="mod"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#eye"/></svg></div><b>Freelook</b></div><p>Umsehen ohne Drehen. Server können es sperren.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg"></div></div></div>
+          <div class="mod on"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#mouse"/></svg></div><b>CPS</b></div><p>Klicks pro Sekunde für links und rechts.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg on"></div></div></div>
+          <div class="mod"><div class="t"><div class="mi"><svg class="i" style="width:17px;height:17px"><use href="#clock"/></svg></div><b>Clock</b></div><p>Echte Uhrzeit im HUD.</p><div class="f"><span class="gear"><svg class="i"><use href="#cog"/></svg>Optionen</span><div class="tg"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ In-game: HUD editor ============ -->
+<section class="view" id="v-edit">
+  <div class="game editor">
+    <div class="world"></div><div class="dim"></div>
+    <div class="guide-v"></div><div class="guide-h"></div>
+    <div class="hud tl"><div class="box"><b>142</b> FPS</div><div class="box">XYZ  -214 / 71 / 389</div><div class="box">NW · 12 ms</div></div>
+    <div class="hud drag" style="top:100px"><div class="box" style="outline:none"><b style="color:var(--accent)">12</b> | 8 CPS</div></div>
+    <div class="keys"><span></span><span class="p">W</span><span></span><span>A</span><span class="p">S</span><span>D</span><span class="wide p">LMB · 12</span></div>
+    <div class="armor"><div><i></i>363</div><div><i></i>528</div><div><i></i>495</div><div><i></i>429</div></div>
+    <div class="hotbar"><span class="s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="edbar"><button class="btn">Raster</button><button class="btn">Zurücksetzen</button><button class="btn pri">Fertig</button></div>
+    <div class="pop"><h6>CPS-Anzeige</h6>
+      <div class="prow">Skalierung<div class="slider"><i></i></div></div>
+      <div class="prow">Hintergrund<div class="tg on"></div></div>
+      <div class="prow">Textfarbe<div class="sw" style="background:#fff"></div></div>
+      <div class="prow">Akzent<div class="sw" style="background:var(--grad);border:0"></div></div>
+      <div class="prow">Rechte Maustaste<div class="tg on"></div></div>
+    </div>
+  </div>
+</section>
+
+<p class="note">Statisches Mockup zur Abstimmung von Layout und Stil. Hintergründe sind Platzhalter – im fertigen Launcher wird das Panorama/Hintergrundbild der aktiven Instanz verwendet, im Spiel die echte Welt bzw. ein Panorama-Video.</p>
+
+<script>
+document.getElementById('sw').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#sw button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + b.dataset.v));
+});
+</script>
+</body>
+</html>
