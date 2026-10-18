@@ -7,6 +7,7 @@
 
 mod manager;
 pub mod modrinth;
+pub mod mrpack;
 
 use std::{fmt, str::FromStr};
 

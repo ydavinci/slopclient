@@ -192,6 +192,20 @@ pub async fn version(id: &str) -> Result<Version> {
     http::get_json(&format!("{API}/version/{id}")).await
 }
 
+pub async fn versions(ids: &[String]) -> Result<Vec<Version>> {
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    Ok(http::client()
+        .get(format!("{API}/versions"))
+        .query(&[("ids", serde_json::to_string(ids)?)])
+        .send()
+        .await?
+        .error_for_status()?
+        .json()
+        .await?)
+}
+
 /// Looks up versions by file SHA-1 (identifies files that were added manually).
 pub async fn versions_by_hash(hashes: &[String]) -> Result<HashMap<String, Version>> {
     if hashes.is_empty() {

@@ -11,7 +11,11 @@ use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::AccountStore,
     config::Settings,
-    content::{ContentManager, Source, modrinth::{self, SearchQuery}},
+    content::{
+        ContentManager, Source,
+        modrinth::{self, SearchQuery},
+        mrpack::{self, ExportOptions, PackSource},
+    },
     install::Installer,
     instance::{Instance, Loader, now},
     launch::{self, LaunchAuth},
@@ -76,6 +80,9 @@ enum Command {
     /// Mods, resource packs and shaders of an instance
     #[command(subcommand)]
     Content(ContentCommand),
+    /// Import or export Modrinth modpacks (.mrpack)
+    #[command(subcommand)]
+    Modpack(ModpackCommand),
     /// Log in with a Microsoft account (device code)
     Login,
     /// List accounts
@@ -119,6 +126,30 @@ enum ContentCommand {
     Update { instance: String },
     /// Recognize manually added files on Modrinth
     Identify { instance: String },
+}
+
+#[derive(Subcommand)]
+enum ModpackCommand {
+    /// Create an instance from a .mrpack file or a Modrinth modpack (slug or id)
+    Import {
+        source: String,
+        /// Instance name (default: the pack's name)
+        #[arg(long)]
+        name: Option<String>,
+    },
+    /// Export an instance as .mrpack
+    Export {
+        instance: String,
+        output: std::path::PathBuf,
+        /// Pack name (default: instance name)
+        #[arg(long)]
+        name: Option<String>,
+        #[arg(long, default_value = "1.0.0")]
+        version: String,
+        /// Files or folders of the game directory to bundle
+        #[arg(long, default_values_t = ["config".to_string()])]
+        include: Vec<String>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -229,6 +260,49 @@ async fn main() -> anyhow::Result<()> {
             }
         }
         Command::Content(cmd) => content_command(&paths, cmd).await?,
+        Command::Modpack(cmd) => {
+            let concurrency = Settings::load(&paths)?.download_concurrency();
+            match cmd {
+                ModpackCommand::Import { source, name } => {
+                    let path = std::path::Path::new(&source);
+                    let source = if path.is_file() {
+                        PackSource::File(path)
+                    } else {
+                        PackSource::Modrinth(&source)
+                    };
+                    let (progress, bar) = progress_bar();
+                    let instance = mrpack::import(&paths, source, name.as_deref(), concurrency, &progress).await;
+                    bar.finish_and_clear();
+                    let instance = instance?;
+                    let mods = ContentManager::new(&paths, instance.clone(), concurrency).list().await?.len();
+                    println!(
+                        "created instance '{}' ({}) - Minecraft {}, {}, {} files",
+                        instance.name, instance.id, instance.mc_version, instance.loader, mods
+                    );
+                }
+                ModpackCommand::Export {
+                    instance,
+                    output,
+                    name,
+                    version,
+                    include,
+                } => {
+                    let instance = Instance::load(&paths, &instance)?;
+                    let options = ExportOptions {
+                        name: name.unwrap_or_else(|| instance.name.clone()),
+                        version,
+                        summary: None,
+                        include,
+                    };
+                    let (referenced, bundled) =
+                        mrpack::export(&paths, &instance, &options, &output, concurrency).await?;
+                    println!(
+                        "exported {} ({referenced} downloads, {bundled} bundled files)",
+                        output.display()
+                    );
+                }
+            }
+        }
         Command::Instance(cmd) => match cmd {
             InstanceCommand::Create {
                 name,

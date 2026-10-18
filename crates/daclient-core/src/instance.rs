@@ -26,6 +26,20 @@ pub struct Instance {
     pub last_played: Option<u64>,
     #[serde(default)]
     pub play_time_secs: u64,
+    /// Set when the instance was created from a modpack.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modpack: Option<ModpackInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModpackInfo {
+    #[serde(default)]
+    pub project_id: Option<String>,
+    #[serde(default)]
+    pub version_id: Option<String>,
+    pub name: String,
+    pub version: String,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -135,6 +149,7 @@ impl Instance {
             created_at: now(),
             last_played: None,
             play_time_secs: 0,
+            modpack: None,
         };
         std::fs::create_dir_all(instance.game_dir(paths))?;
         instance.save(paths)?;

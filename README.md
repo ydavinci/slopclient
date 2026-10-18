@@ -12,6 +12,7 @@ Funktioniert:
 - Java-Runtimes automatisch von Mojang (Java 8 / 17 / 21 / 25 je nach Version)
 - Mod-Loader: Fabric, Quilt, NeoForge, Forge (1.13+) mit Versionsauswahl
 - Instanzen anlegen/listen/löschen, Spielzeit-Erfassung
+- Modpacks: `.mrpack` importieren (Datei oder Modrinth-Slug) und Instanzen als `.mrpack` exportieren
 - Modrinth: Suche (gefiltert nach Instanz), Installation von Mods/Resourcepacks/Shadern mit Abhängigkeiten, Liste pro Instanz, (De)aktivieren, Entfernen, Updates, Erkennung manuell kopierter Dateien
 - Start mit Live-Log
 - Microsoft-Login (Device Code → Xbox → XSTS → Minecraft), Tokens per DPAPI verschlüsselt
@@ -28,6 +29,8 @@ target/debug/daclient search sodium --instance modded
 target/debug/daclient content add modded sodium iris modmenu
 target/debug/daclient content list modded
 target/debug/daclient content updates modded
+target/debug/daclient modpack import fabulously-optimized
+target/debug/daclient modpack export modded modded.mrpack --include config --include options.txt
 target/debug/daclient set-client-id <azure-client-id>
 target/debug/daclient login
 target/debug/daclient launch survival
