@@ -83,7 +83,10 @@ public abstract class HudModule extends Module {
 
 	/** Shared look: rounded translucent box when "Hintergrund" is on. */
 	protected void box(GuiGraphicsExtractor g, int width, int height) {
-		if (background.on()) Draw.round(g, 0, 0, width, height, 3, Theme.alpha(Theme.PANEL_SOLID, 0.72));
+		if (!background.on()) return;
+		// Same glass as the launcher: translucent fill with a hairline border.
+		Draw.round(g, 0, 0, width, height, 4, Theme.alpha(Theme.PANEL_SOLID, 0.72));
+		Draw.roundOutline(g, 0, 0, width, height, 4, Theme.LINE);
 	}
 
 	/** Simple one-line element: label in muted colour, value in text colour. */

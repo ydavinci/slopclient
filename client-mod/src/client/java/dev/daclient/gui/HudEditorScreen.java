@@ -3,6 +3,7 @@ package dev.daclient.gui;
 import dev.daclient.DaClient;
 import dev.daclient.hud.HudModule;
 import dev.daclient.render.Draw;
+import dev.daclient.render.MenuShader;
 import dev.daclient.render.Theme;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -39,7 +40,9 @@ public final class HudEditorScreen extends Screen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-		g.fill(0, 0, width, height, 0x55000000);
+		// Menus get the launcher shader behind the frames; in game the world stays visible.
+		if (minecraft.level == null) MenuShader.draw(g, 1);
+		else g.fill(0, 0, width, height, 0x55000000);
 	}
 
 	@Override

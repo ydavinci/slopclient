@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.daclient.gui.ClickGuiScreen;
 import dev.daclient.hud.HudModule;
 import dev.daclient.module.ModuleManager;
+import dev.daclient.render.MenuShader;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -52,6 +53,7 @@ public final class DaClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		MenuShader.register();
 		modules = new ModuleManager();
 		config = new Config();
 		config.load(modules);

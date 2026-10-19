@@ -76,6 +76,62 @@ public final class Draw {
 		}
 	}
 
+	/**
+	 * Rotating chroma border, like the launcher's conic "chroma-ring": the gradient
+	 * runs once around the perimeter and turns over time.
+	 */
+	public static void chromaRing(GuiGraphicsExtractor g, int x, int y, int w, int h, int thickness) {
+		int perimeter = 2 * (w + h);
+		double turn = System.currentTimeMillis() / 4000.0;
+		for (int i = 0; i < perimeter; i += 2) {
+			int color = Theme.chroma(i / (double) perimeter - turn);
+			int px, py;
+			if (i < w) {
+				px = x + i;
+				py = y;
+				g.fill(px, py, Math.min(px + 2, x + w), py + thickness, color);
+			} else if (i < w + h) {
+				px = x + w - thickness;
+				py = y + (i - w);
+				g.fill(px, py, px + thickness, Math.min(py + 2, y + h), color);
+			} else if (i < 2 * w + h) {
+				px = x + w - (i - w - h) - 2;
+				py = y + h - thickness;
+				g.fill(Math.max(px, x), py, px + 2, py + thickness, color);
+			} else {
+				px = x;
+				py = y + h - (i - 2 * w - h) - 2;
+				g.fill(px, Math.max(py, y), px + thickness, py + 2, color);
+			}
+		}
+	}
+
+	/** Soft glow around a box (stacked translucent rounds), like a CSS box-shadow. */
+	public static void glow(GuiGraphicsExtractor g, int x, int y, int w, int h, int spread, int color, double strength) {
+		for (int i = spread; i >= 1; i--) {
+			double a = strength * (1 - i / (double) (spread + 1)) / spread * 2.2;
+			round(g, x - i, y - i + 2, w + 2 * i, h + 2 * i, 6 + i, Theme.alpha(color, a));
+		}
+	}
+
+	/** Pill with a hairline border and muted text, the launcher's Chip. Returns its width. */
+	public static int chip(GuiGraphicsExtractor g, int x, int y, String text, int dot) {
+		int pad = 7, dotW = dot != 0 ? 7 : 0;
+		int w = width(text) + pad * 2 + dotW;
+		round(g, x, y, w, 14, 7, 0x0FFFFFFF);
+		roundOutline(g, x, y, w, 14, 7, Theme.LINE_2);
+		if (dot != 0) round(g, x + pad, y + 5, 4, 4, 2, dot);
+		text(g, text, x + pad + dotW, y + 3, Theme.MUTED);
+		return w;
+	}
+
+	/** Glass button: translucent fill, hairline border, brighter on hover. */
+	public static void glassButton(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, boolean hover, double alpha) {
+		round(g, x, y, w, h, 6, Theme.alpha(hover ? Theme.RAISED : Theme.PANEL_SOLID, 0.78 * alpha));
+		roundOutline(g, x, y, w, h, 6, Theme.alpha(0xFFFFFF, (hover ? 0.16 : 0.08) * alpha));
+		text(g, label, x + (w - width(label)) / 2, y + (h - 8) / 2, Theme.alpha(hover ? 0xFFFFFF : Theme.TEXT, alpha));
+	}
+
 	/** Glass panel: translucent fill plus hairline border. */
 	public static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h, int r) {
 		round(g, x, y, w, h, r, Theme.PANEL);

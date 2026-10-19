@@ -4,6 +4,7 @@ import dev.daclient.DaClient;
 import dev.daclient.module.Category;
 import dev.daclient.module.Module;
 import dev.daclient.render.Draw;
+import dev.daclient.render.MenuShader;
 import dev.daclient.render.Theme;
 import dev.daclient.setting.BoolSetting;
 import dev.daclient.setting.ModeSetting;
@@ -93,17 +94,25 @@ public final class ClickGuiScreen extends Screen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-		if (parent == null) g.fill(0, 0, width, height, 0x66000000);
-		else g.fillGradient(0, 0, width, height, 0xF0130F1E, 0xF009080E);
+		if (minecraft.level == null) {
+			// From the title screen: the launcher's shader backdrop.
+			MenuShader.draw(g, 1);
+		} else {
+			// In game: the world stays visible, blurred and dimmed like the launcher's glass.
+			extractBlurredBackground(g);
+			g.fillGradient(0, 0, width, height, 0x7009080E, 0xA009080E);
+		}
 	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(g, mouseX, mouseY, partialTick);
+		double t = (System.currentTimeMillis() - openedAt) / 1000.0;
+		long active = DaClient.modules().all().stream().filter(Module::active).count();
+		Chrome.titleBar(g, minecraft, Theme.ease(t / 0.5), active + " Module aktiv");
 		// Footer first, so panels dragged over it stay on top.
 		drawFooter(g, mouseX, mouseY);
 		hint = "";
-		double t = (System.currentTimeMillis() - openedAt) / 1000.0;
 		int i = 0;
 		for (Map.Entry<Category, int[]> e : panels.entrySet()) {
 			// Panels drop in one after another.
@@ -116,10 +125,11 @@ public final class ClickGuiScreen extends Screen {
 
 	private void drawPanel(GuiGraphicsExtractor g, Category c, int x, int y, int mx, int my, int index) {
 		int h = panelHeight(c);
-		Draw.round(g, x, y, PANEL_W, h, 4, Theme.alpha(Theme.PANEL_SOLID, 0.92));
-		Draw.roundOutline(g, x, y, PANEL_W, h, 4, Theme.LINE_2);
-		// Header with a chroma bar, like the launcher's panels.
-		g.fill(x + 4, y + 1, x + PANEL_W - 4, y + 3, Theme.chroma(-index * 0.15));
+		// Glass panel like the launcher's: translucent, hairline border, chroma bar on top.
+		Draw.glow(g, x, y, PANEL_W, h, 5, 0xFF000000, 0.35);
+		Draw.round(g, x, y, PANEL_W, h, 7, Theme.alpha(Theme.PANEL_SOLID, 0.86));
+		Draw.roundOutline(g, x, y, PANEL_W, h, 7, Theme.LINE_2);
+		g.fill(x + 7, y, x + PANEL_W - 7, y + 2, Theme.chroma(-index * 0.15));
 		List<Module> mods = DaClient.modules().in(c);
 		long on = mods.stream().filter(Module::enabled).count();
 		Draw.shadowText(g, c.label, x + 7, y + 8, Theme.TEXT);
@@ -130,22 +140,26 @@ public final class ClickGuiScreen extends Screen {
 		int row = 0;
 		for (Module m : visible(c)) {
 			boolean hover = Draw.inside(mx, my, x, ry, PANEL_W, ROW);
-			if (m.enabled()) g.fill(x + 2, ry, x + PANEL_W - 2, ry + ROW, Theme.alpha(Theme.ACCENT, hover ? 0.28 : 0.18));
-			else if (hover) g.fill(x + 2, ry, x + PANEL_W - 2, ry + ROW, 0x0AFFFFFF);
-			if (m.enabled()) Draw.chromaText(g, m.name, x + 8, ry + 4, -index * 0.15 - row * 0.05, false);
-			else Draw.text(g, m.name, x + 8, ry + 4, hover ? Theme.TEXT : Theme.MUTED);
+			// Rows like the launcher's module list: enabled ones tinted with a chroma name.
+			if (m.enabled()) Draw.round(g, x + 3, ry, PANEL_W - 6, ROW, 4, Theme.alpha(Theme.ACCENT, hover ? 0.26 : 0.16));
+			else if (hover) Draw.round(g, x + 3, ry, PANEL_W - 6, ROW, 4, 0x0CFFFFFF);
+			if (m.enabled()) Draw.chromaText(g, m.name, x + 9, ry + 4, -index * 0.15 - row * 0.05, false);
+			else Draw.text(g, m.name, x + 9, ry + 4, hover ? Theme.TEXT : Theme.alpha(Theme.MUTED, 0.85));
 			if (m.serverLocked()) {
 				// Switched off by the server for this session; the choice is kept.
 				String tag = "Server";
-				Draw.scaledText(g, tag, x + PANEL_W - 8 - Draw.width(tag) * 0.75f, ry + 5, 0.75f, Theme.ERR, false);
-			} else if (!m.settings().isEmpty()) {
-				String marker = expanded.contains(m.name) ? "-" : "+";
-				Draw.text(g, marker, x + PANEL_W - 12, ry + 4, Theme.DIM);
+				Draw.scaledText(g, tag, x + PANEL_W - 9 - Draw.width(tag) * 0.75f, ry + 5, 0.75f, Theme.ERR, false);
+			} else {
+				Chrome.toggle(g, x + PANEL_W - 25, ry + 3, m.enabled(), 1);
+				if (!m.settings().isEmpty()) {
+					String marker = expanded.contains(m.name) ? "-" : "+";
+					Draw.text(g, marker, x + PANEL_W - 35, ry + 4, hover ? Theme.MUTED : Theme.DIM);
+				}
 			}
 			if (hover) hint = m.serverLocked() ? m.name + " ist auf diesem Server deaktiviert." : m.description;
 			ry += ROW;
 			if (expanded.contains(m.name)) {
-				g.fill(x + 2, ry, x + PANEL_W - 2, ry + m.settings().size() * SETTING + 3, 0x33000000);
+				Draw.round(g, x + 3, ry, PANEL_W - 6, m.settings().size() * SETTING + 3, 4, 0x2E000000);
 				for (Setting<?> s : m.settings()) {
 					drawSetting(g, s, x + 8, ry + 1, PANEL_W - 16, mx, my);
 					ry += SETTING;
@@ -160,11 +174,7 @@ public final class ClickGuiScreen extends Screen {
 		boolean hover = Draw.inside(mx, my, x, y, w, SETTING);
 		Draw.scaledText(g, s.name(), x, y + 3, 0.85f, hover ? Theme.TEXT : Theme.MUTED, false);
 		switch (s) {
-			case BoolSetting b -> {
-				int sx = x + w - 16, sy = y + 3;
-				Draw.round(g, sx, sy, 16, 8, 4, b.on() ? Theme.chroma(0) : 0x33FFFFFF);
-				Draw.round(g, b.on() ? sx + 9 : sx + 1, sy + 1, 6, 6, 3, 0xFFFFFFFF);
-			}
+			case BoolSetting b -> Chrome.toggle(g, x + w - 16, y + 2, b.on(), 1);
 			case NumberSetting n -> {
 				String v = n.display();
 				int vw = Math.round(Draw.width(v) * 0.85f);
@@ -224,9 +234,7 @@ public final class ClickGuiScreen extends Screen {
 		for (FooterButton b : footerButtons()) {
 			boolean hover = b.hit(mx, my);
 			if (hover) buttonHint = b.hint();
-			Draw.round(g, b.x(), b.y(), b.w(), b.h(), 4, hover ? Theme.chroma(0) : Theme.alpha(Theme.PANEL_SOLID, 0.92));
-			if (!hover) Draw.roundOutline(g, b.x(), b.y(), b.w(), b.h(), 4, Theme.LINE_2);
-			Draw.text(g, b.label(), b.x() + (b.w() - Draw.width(b.label())) / 2, b.y() + 5, hover ? 0xFFFFFFFF : Theme.TEXT);
+			Draw.glassButton(g, b.x(), b.y(), b.w(), b.h(), b.label(), hover, 1);
 		}
 		if (hint.isEmpty()) hint = buttonHint;
 
