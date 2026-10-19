@@ -15,6 +15,7 @@ public final class ModuleManager {
 	public final Features.ToggleSprint toggleSprint = add(new Features.ToggleSprint());
 	public final Features.Freelook freelook = add(new Features.Freelook());
 	public final Features.UiFont uiFont = add(new Features.UiFont());
+	public final Features.Capes capes = add(new Features.Capes());
 	public final Features.TitleScreenModule titleScreen = add(new Features.TitleScreenModule());
 
 	public ModuleManager() {

@@ -264,6 +264,26 @@ public final class Features {
 		}
 	}
 
+	/**
+	 * Shows the cape from the launcher's Cape Studio on your player (and as elytra).
+	 * Purely visual; servers can switch it off with the id "capes".
+	 */
+	public static final class Capes extends Module {
+		public final BoolSetting animate = add(new BoolSetting("Animation", true));
+		public final BoolSetting elytra = add(new BoolSetting("Auch als Elytra", true));
+		public final BoolSetting overMojang = add(new BoolSetting("Vor Mojang-Cape", true));
+
+		public Capes() {
+			super("Capes", "Eigene Cape aus dem Cape-Studio des Launchers", Category.COSMETICS, true);
+		}
+
+		@Override
+		public String suffix() {
+			int frames = dev.daclient.cosmetics.CapeTextures.frameCount();
+			return frames > 1 ? frames + " Bilder" : "";
+		}
+	}
+
 	/** Replaces the vanilla title screen with the DaClient one. */
 	public static final class TitleScreenModule extends Module {
 		public TitleScreenModule() {

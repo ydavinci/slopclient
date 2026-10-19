@@ -10,7 +10,10 @@
 
 use std::path::PathBuf;
 
-use image::{ImageFormat, ImageReader};
+use image::{
+    ExtendedColorType, ImageEncoder, ImageFormat, ImageReader,
+    codecs::png::{CompressionType, FilterType, PngEncoder},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{Error, Paths, Result, config::Settings, instance::now};
@@ -95,11 +98,13 @@ pub fn validate(png: &[u8], meta: &CapeMeta) -> Result<Vec<u8>> {
             img.height()
         )));
     }
-    let mut out = std::io::Cursor::new(Vec::new());
-    img.to_rgba8()
-        .write_to(&mut out, ImageFormat::Png)
+    // Best compression keeps the re-encoded sheet close to the editor's own export,
+    // so the size the editor showed still holds.
+    let rgba = img.to_rgba8();
+    let mut out = Vec::new();
+    PngEncoder::new_with_quality(&mut out, CompressionType::Best, FilterType::Adaptive)
+        .write_image(&rgba, rgba.width(), rgba.height(), ExtendedColorType::Rgba8)
         .map_err(|e| Error::Other(format!("could not encode the cape: {e}")))?;
-    let out = out.into_inner();
     if out.len() > MAX_BYTES {
         return Err(Error::Other(format!("the cape is larger than {} MB", MAX_BYTES / 1024 / 1024)));
     }
@@ -250,6 +255,27 @@ pub fn active(paths: &Paths) -> Result<Option<CapeInfo>> {
         return Ok(None);
     };
     Ok(read_info(paths, &id).ok())
+}
+
+/// Puts the active cape into the instance for the client mod
+/// (`minecraft/config/daclient/cosmetics/cape.png` + `cape.json`), or removes it.
+pub fn sync_to_instance(paths: &Paths, instance: &crate::instance::Instance) -> Result<()> {
+    let target = instance.game_dir(paths).join("config").join("daclient").join("cosmetics");
+    let active = active(paths)?;
+    let Some(cape) = active else {
+        for file in ["cape.png", "cape.json"] {
+            match std::fs::remove_file(target.join(file)) {
+                Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.into()),
+                _ => {}
+            }
+        }
+        return Ok(());
+    };
+    std::fs::create_dir_all(&target)?;
+    let d = dir(paths, &cape.id)?;
+    std::fs::copy(d.join("cape.png"), target.join("cape.png"))?;
+    std::fs::copy(d.join("cape.json"), target.join("cape.json"))?;
+    Ok(())
 }
 
 pub fn set_active(paths: &Paths, id: Option<&str>) -> Result<()> {

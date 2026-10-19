@@ -3,6 +3,7 @@
 	"package": "dev.daclient.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"AvatarRendererMixin",
 		"CameraMixin",
 		"EntityMixin",
 		"GuiMixin",

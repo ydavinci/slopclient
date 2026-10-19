@@ -3,7 +3,8 @@ package dev.daclient.module;
 public enum Category {
 	HUD("HUD"),
 	RENDER("Render"),
-	COMFORT("Komfort");
+	COMFORT("Komfort"),
+	COSMETICS("Kosmetik");
 
 	public final String label;
 

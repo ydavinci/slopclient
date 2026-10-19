@@ -40,7 +40,7 @@ Design-System: [launcher/DESIGN.md](launcher/DESIGN.md) (Launcher und Client-Mod
 ```
 M8  Instanz-Icons ────────────────► umgesetzt
 M9  Cape-Studio (lokal) ──┐   (M9 umgesetzt)
-M10 Capes im Client-Mod ──┴──────► eigene Cape sofort im Spiel sichtbar (nur für dich)
+M10 Capes im Client-Mod ──┴──────► umgesetzt: eigene Cape im Spiel sichtbar (nur für dich)
 M11 Cosmetics-Konto & Backend ───► andere DaClient-Spieler sehen deine Cape
 M12 Backlog & Release-Vorbereitung
 ```
@@ -105,7 +105,7 @@ Begründung: M8 ist klein und sofort spürbar. M9 und M10 liefern den sichtbaren
 
 ---
 
-### M10 · Capes im Client-Mod
+### M10 · Capes im Client-Mod · umgesetzt (für den eigenen Spieler; Capes anderer folgen mit M11)
 
 **Ziel:** Die aktive Cape im Spiel tragen, animiert, auch als Elytra.
 

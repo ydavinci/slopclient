@@ -11,7 +11,7 @@ use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::AccountStore,
     config::Settings,
-    crash, foreign,
+    cosmetics, crash, foreign,
     content::{
         BlockedFile, ContentManager,
         curseforge::CurseForge,
@@ -122,6 +122,9 @@ enum Command {
     SetCurseforgeKey { key: String },
     /// Explain a crash from a log or crash report file
     Diagnose { file: std::path::PathBuf },
+    /// Capes of the Cape Studio
+    #[command(subcommand)]
+    Cape(CapeCommand),
 }
 
 #[derive(Subcommand)]
@@ -180,6 +183,38 @@ enum ModpackCommand {
         #[arg(long, default_values_t = ["config".to_string()])]
         include: Vec<String>,
     },
+}
+
+#[derive(Subcommand)]
+enum CapeCommand {
+    /// List capes (the active one is marked)
+    List,
+    /// Add a finished spritesheet (frames stacked vertically, 64x32 per frame times scale)
+    Import {
+        png: std::path::PathBuf,
+        #[arg(long, default_value = "Cape")]
+        name: String,
+        #[arg(long, default_value_t = 1)]
+        frames: u32,
+        #[arg(long, default_value_t = 1)]
+        scale: u32,
+        #[arg(long, default_value_t = 100)]
+        frame_time: u32,
+        /// Don't show it as elytra
+        #[arg(long)]
+        no_elytra: bool,
+        /// Make it the active cape
+        #[arg(long)]
+        activate: bool,
+    },
+    /// Wear a cape (or none with --none)
+    Use {
+        #[arg(required_unless_present = "none")]
+        id: Option<String>,
+        #[arg(long)]
+        none: bool,
+    },
+    Delete { id: String },
 }
 
 #[derive(Subcommand)]
@@ -484,6 +519,53 @@ async fn main() -> anyhow::Result<()> {
             settings.save(&paths)?;
             println!("saved");
         }
+        Command::Cape(cmd) => match cmd {
+            CapeCommand::List => {
+                let active = cosmetics::active(&paths)?.map(|c| c.id);
+                let capes = cosmetics::list(&paths)?;
+                if capes.is_empty() {
+                    println!("no capes yet");
+                }
+                for c in capes {
+                    println!(
+                        "  {} {:<20} {:<24} {:>2} frames  {}x{}",
+                        if active.as_deref() == Some(c.id.as_str()) { "*" } else { " " },
+                        c.id,
+                        truncate(&c.name, 24),
+                        c.meta.frames,
+                        64 * c.meta.scale,
+                        32 * c.meta.scale
+                    );
+                }
+            }
+            CapeCommand::Import { png, name, frames, scale, frame_time, no_elytra, activate } => {
+                let bytes = std::fs::read(&png)?;
+                let meta = cosmetics::CapeMeta {
+                    version: 1,
+                    frames,
+                    frame_time_ms: if frames > 1 { frame_time } else { 0 },
+                    scale,
+                    elytra: !no_elytra,
+                };
+                let info = cosmetics::save(
+                    &paths,
+                    cosmetics::NewCape { id: None, name: &name, png: &bytes, meta, source: None, editor: Default::default() },
+                )?;
+                if activate {
+                    cosmetics::set_active(&paths, Some(&info.id))?;
+                }
+                println!("added cape {} ({}){}", info.name, info.id, if activate { ", active" } else { "" });
+            }
+            CapeCommand::Use { id, none } => {
+                let id = if none { None } else { id };
+                cosmetics::set_active(&paths, id.as_deref())?;
+                println!("{}", if id.is_some() { "cape active" } else { "no cape active" });
+            }
+            CapeCommand::Delete { id } => {
+                cosmetics::delete(&paths, &id)?;
+                println!("deleted {id}");
+            }
+        },
         Command::Diagnose { file } => {
             let text = std::fs::read_to_string(&file)?;
             let input = crash::CrashInput {

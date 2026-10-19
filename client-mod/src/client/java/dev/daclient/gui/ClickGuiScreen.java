@@ -50,11 +50,17 @@ public final class ClickGuiScreen extends Screen {
 	@Override
 	protected void init() {
 		Category[] cats = Category.values();
-		int total = cats.length * PANEL_W + (cats.length - 1) * GAP;
+		int cols = Math.max(1, Math.min(cats.length, (width - 16 + GAP) / (PANEL_W + GAP)));
+		int total = cols * PANEL_W + (cols - 1) * GAP;
 		int x0 = Math.max(8, (width - total) / 2);
+		// Panels that don't fit in one row go under the currently shortest column.
+		int[] bottoms = new int[cols];
+		java.util.Arrays.fill(bottoms, 44);
 		for (int i = 0; i < cats.length; i++) {
 			int[] saved = DaClient.config().panels.get(cats[i].name());
-			int[] pos = saved != null ? saved.clone() : new int[] {x0 + i * (PANEL_W + GAP), 44};
+			int col = i < cols ? i : shortest(bottoms);
+			int[] pos = saved != null ? saved.clone() : new int[] {x0 + col * (PANEL_W + GAP), bottoms[col]};
+			bottoms[col] += panelHeight(cats[i]) + GAP;
 			pos[0] = Math.max(0, Math.min(width - PANEL_W, pos[0]));
 			pos[1] = Math.max(0, Math.min(height - HEADER, pos[1]));
 			panels.put(cats[i], pos);
@@ -64,6 +70,12 @@ public final class ClickGuiScreen extends Screen {
 	/** Opens the settings of a module (used by the self-test). */
 	public void expand(String module) {
 		expanded.add(module);
+	}
+
+	private static int shortest(int[] bottoms) {
+		int best = 0;
+		for (int i = 1; i < bottoms.length; i++) if (bottoms[i] < bottoms[best]) best = i;
+		return best;
 	}
 
 	@Override

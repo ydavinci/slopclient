@@ -201,6 +201,7 @@ pub async fn prepare(
     let game_dir = instance.game_dir(paths);
     std::fs::create_dir_all(&game_dir)?;
     crate::client_mod::sync(paths, instance, concurrency, &progress).await?;
+    crate::cosmetics::sync_to_instance(paths, instance)?;
     if version.map_to_resources {
         let index = install::read_asset_index(paths, &version.asset_index_id)?;
         let objects = paths.assets().join("objects");
