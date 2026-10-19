@@ -41,7 +41,7 @@ Design-System: [launcher/DESIGN.md](launcher/DESIGN.md) (Launcher und Client-Mod
 M8  Instanz-Icons ────────────────► umgesetzt
 M9  Cape-Studio (lokal) ──┐   (M9 umgesetzt)
 M10 Capes im Client-Mod ──┴──────► umgesetzt: eigene Cape im Spiel sichtbar (nur für dich)
-M11 Cosmetics-Konto & Backend ───► andere DaClient-Spieler sehen deine Cape
+M11 Cosmetics-Konto & Backend ───► umgesetzt; Deployment auf dem VPS steht aus
 M12 Backlog & Release-Vorbereitung
 ```
 
@@ -97,7 +97,7 @@ Begründung: M8 ist klein und sofort spürbar. M9 und M10 liefern den sichtbaren
 **Export-Format** (gemeinsam für Mod und Backend)
 - `cape.png`: Spritesheet, alle Bilder untereinander im Minecraft-Cape-Layout (64 × 32 je Bild, bei HD entsprechend größer).
 - `cape.json`: `{ "version": 1, "frames": 12, "frameTimeMs": 80, "scale": 4, "elytra": true }`.
-- Grenzen: höchstens 64 Bilder, mindestens 40 ms pro Bild, Datei höchstens 2 MB, höchstens 512 × 256 pro Bild. Der Editor zeigt die Grenzen an, bevor man sie reißt.
+- Grenzen (Schutz für Server und Grafikkarte, keine Stil-Grenzen): höchstens 128 Bilder, mindestens 40 ms pro Bild, Datei höchstens 8 MB, bis 1024 × 512 pro Bild, Spritesheet höchstens 32 768 px hoch (bei 1024 × 512 also 64 Bilder; mehr Bilder werden gleichmäßig ausgedünnt).
 
 **Ablage:** `%APPDATA%/DaClient/cosmetics/capes/<id>/` mit `cape.png`, `cape.json` und `source.*` (Original, nur lokal, damit man später weiter bearbeiten kann). Die aktive Cape steht in `settings.json`.
 
@@ -124,7 +124,7 @@ Begründung: M8 ist klein und sofort spürbar. M9 und M10 liefern den sichtbaren
 
 ---
 
-### M11 · Cosmetics-Konto & Backend
+### M11 · Cosmetics-Konto & Backend · umgesetzt (Betrieb auf dem VPS steht aus)
 
 **Ziel:** Andere DaClient-Spieler sehen deine Cape, und du siehst ihre.
 
@@ -255,9 +255,9 @@ Format-Vertrag Launcher ↔ Mod ↔ Backend: `cape.png` + `cape.json` (M9). Er w
 
 ## 7. Offene Fragen
 
-1. **Hosting für M11**: eigener kleiner Server (VPS) mit dem Rust-Dienst, oder ein Serverless-Anbieter? Empfehlung: VPS + S3-kompatibler Speicher, weil Code und Formatprüfung mit dem Launcher geteilt werden.
-2. **Freigabe hochgeladener Capes**: sofort für alle sichtbar nach automatischer Prüfung, oder erst nach manueller Freigabe? Empfehlung zum Start: manuelle Freigabe, solange es wenige Nutzer sind.
-3. **HD-Grenze**: reicht 512 × 256 pro Bild, oder bewusst kleiner (256 × 128), um Speicher und Leistung zu schonen?
+1. ~~Hosting für M11~~ → entschieden: VPS (Anleitung in deploy/cosmetics).
+2. ~~Freigabe~~ → entschieden: automatisch; Melden und Ausblenden über die Admin-Schnittstelle.
+3. ~~HD-Grenze~~ → entschieden: keine Stil-Grenze, bis 1024 × 512; nur technische Schutzgrenzen (8 MB, 128 Bilder, 32 768 px Höhe).
 4. **Elytra**: soll die Cape standardmäßig auch als Elytra erscheinen?
 
 ---

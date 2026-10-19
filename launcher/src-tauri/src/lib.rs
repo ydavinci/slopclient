@@ -12,6 +12,7 @@ use daclient_core::{
     auth::{Account, AccountStore, DeviceCode, msa},
     config::Settings,
     cosmetics::{self, CapeInfo, CapeMeta, NewCape},
+    cosmetics_online,
     crash::{self, CrashReport},
     icon,
     foreign::{self, ForeignInstance},
@@ -606,9 +607,49 @@ async fn cape_delete(state: State<'_, AppState>, id: String) -> CmdResult<()> {
     cosmetics::delete(&state.paths, &id).map_err(err)
 }
 
+/// Wears a cape locally and, when signed in, on the cosmetics server. Returns an
+/// error text when only the online part failed (the local change stays).
 #[tauri::command]
-async fn cape_set_active(state: State<'_, AppState>, id: Option<String>) -> CmdResult<()> {
-    cosmetics::set_active(&state.paths, id.as_deref()).map_err(err)
+async fn cape_set_active(state: State<'_, AppState>, id: Option<String>) -> CmdResult<Option<String>> {
+    cosmetics::set_active(&state.paths, id.as_deref()).map_err(err)?;
+    Ok(cosmetics_online::publish_active(&state.paths).await.err().map(|e| e.to_string()))
+}
+
+#[tauri::command]
+async fn cosmetics_status(state: State<'_, AppState>) -> CmdResult<cosmetics_online::OnlineStatus> {
+    Ok(cosmetics_online::status(&state.paths))
+}
+
+/// Signs in to the cosmetics server with the active account (offline only in dev builds).
+#[tauri::command]
+async fn cosmetics_sign_in(state: State<'_, AppState>, offline_name: Option<String>) -> CmdResult<cosmetics_online::OnlineStatus> {
+    let paths = &state.paths;
+    let auth = match offline_name {
+        Some(name) if cfg!(debug_assertions) => LaunchAuth::offline(&name),
+        Some(_) => return Err("Offline-Anmeldung gibt es nur in Entwickler-Builds.".into()),
+        None => {
+            let store = AccountStore::new(paths);
+            let account = store.active().map_err(err)?.ok_or("Kein Account angemeldet.")?;
+            let client_id = Settings::load(paths)
+                .map_err(err)?
+                .msa_client_id()
+                .ok_or("Keine Microsoft-Client-ID hinterlegt (Einstellungen).")?;
+            store.launch_auth(&client_id, &account.uuid).await.map_err(err)?
+        }
+    };
+    cosmetics_online::sign_in(paths, &auth).await.map_err(err)?;
+    cosmetics_online::publish_active(paths).await.map_err(err)?;
+    Ok(cosmetics_online::status(paths))
+}
+
+#[tauri::command]
+async fn cosmetics_sign_out(state: State<'_, AppState>) -> CmdResult<()> {
+    cosmetics_online::sign_out(&state.paths).map_err(err)
+}
+
+#[tauri::command]
+async fn cosmetics_delete_account(state: State<'_, AppState>) -> CmdResult<()> {
+    cosmetics_online::delete_account(&state.paths).await.map_err(err)
 }
 
 #[derive(Serialize)]
@@ -776,6 +817,10 @@ pub fn run() {
             cape_delete,
             cape_set_active,
             cape_source,
+            cosmetics_status,
+            cosmetics_sign_in,
+            cosmetics_sign_out,
+            cosmetics_delete_account,
         ])
         .run(tauri::generate_context!())
         .expect("error while running DaClient");

@@ -11,7 +11,7 @@ use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::AccountStore,
     config::Settings,
-    cosmetics, crash, foreign,
+    cosmetics, cosmetics_online, crash, foreign,
     content::{
         BlockedFile, ContentManager,
         curseforge::CurseForge,
@@ -215,6 +215,25 @@ enum CapeCommand {
         none: bool,
     },
     Delete { id: String },
+    /// The cosmetics server (other players see your cape)
+    #[command(subcommand)]
+    Online(OnlineCommand),
+}
+
+#[derive(Subcommand)]
+enum OnlineCommand {
+    Status,
+    /// Sign in with the active Microsoft account
+    SignIn {
+        /// DEV ONLY: offline identity; needs a server with DACLIENT_COSMETICS_DEV_AUTH=1
+        #[arg(long, value_name = "NAME")]
+        dev_offline: Option<String>,
+    },
+    /// Upload the active cape (or clear it online)
+    Publish,
+    SignOut,
+    /// Delete your account and capes on the server
+    DeleteAccount,
 }
 
 #[derive(Subcommand)]
@@ -560,7 +579,50 @@ async fn main() -> anyhow::Result<()> {
                 let id = if none { None } else { id };
                 cosmetics::set_active(&paths, id.as_deref())?;
                 println!("{}", if id.is_some() { "cape active" } else { "no cape active" });
+                if cosmetics_online::publish_active(&paths).await? {
+                    println!("published to the cosmetics server");
+                }
             }
+            CapeCommand::Online(cmd) => match cmd {
+                OnlineCommand::Status => {
+                    let s = cosmetics_online::status(&paths);
+                    println!("server: {}", s.server.as_deref().unwrap_or("not configured"));
+                    match (s.name, s.uuid) {
+                        (Some(name), Some(uuid)) => println!("signed in as {name} ({uuid})"),
+                        _ => println!("not signed in"),
+                    }
+                }
+                OnlineCommand::SignIn { dev_offline } => {
+                    let auth = match dev_offline {
+                        Some(name) => LaunchAuth::offline(&name),
+                        None => {
+                            let store = AccountStore::new(&paths);
+                            let account = store.active()?.context("no account, run `daclient login` first")?;
+                            store.launch_auth(&client_id(&paths)?, &account.uuid).await?
+                        }
+                    };
+                    let s = cosmetics_online::sign_in(&paths, &auth).await?;
+                    println!("signed in as {} ({})", s.name, s.uuid);
+                    if cosmetics_online::publish_active(&paths).await? {
+                        println!("active cape published");
+                    }
+                }
+                OnlineCommand::Publish => {
+                    if cosmetics_online::publish_active(&paths).await? {
+                        println!("published");
+                    } else {
+                        bail!("not signed in, run `daclient cape online sign-in`");
+                    }
+                }
+                OnlineCommand::SignOut => {
+                    cosmetics_online::sign_out(&paths)?;
+                    println!("signed out");
+                }
+                OnlineCommand::DeleteAccount => {
+                    cosmetics_online::delete_account(&paths).await?;
+                    println!("account and capes deleted on the server");
+                }
+            },
             CapeCommand::Delete { id } => {
                 cosmetics::delete(&paths, &id)?;
                 println!("deleted {id}");

@@ -20,10 +20,12 @@ use crate::{Error, Paths, Result, config::Settings, instance::now};
 
 pub const BASE_WIDTH: u32 = 64;
 pub const BASE_HEIGHT: u32 = 32;
-pub const SCALES: [u32; 4] = [1, 2, 4, 8];
-pub const MAX_FRAMES: u32 = 64;
+pub const SCALES: [u32; 5] = [1, 2, 4, 8, 16];
+pub const MAX_FRAMES: u32 = 128;
 pub const MIN_FRAME_MS: u32 = 40;
-pub const MAX_BYTES: usize = 2 * 1024 * 1024;
+pub const MAX_BYTES: usize = 8 * 1024 * 1024;
+/// Tallest spritesheet browsers and PNG decoders handle reliably.
+pub const MAX_SHEET_HEIGHT: u32 = 32_768;
 const SOURCE_EXTS: [&str; 5] = ["gif", "png", "webp", "jpg", "jpeg"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -58,6 +60,9 @@ struct InfoFile {
     updated_at: u64,
     #[serde(default)]
     editor: serde_json::Value,
+    /// Uploaded copy per cosmetics server (server URL -> cape id there).
+    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+    remote: std::collections::HashMap<String, String>,
 }
 
 /// Checks the meta data against the limits.
@@ -71,6 +76,13 @@ pub fn check_meta(meta: &CapeMeta) -> Result<()> {
     }
     if meta.frames == 0 || meta.frames > MAX_FRAMES {
         return bad(format!("a cape has 1 to {MAX_FRAMES} frames"));
+    }
+    if BASE_HEIGHT * meta.scale * meta.frames > MAX_SHEET_HEIGHT {
+        return bad(format!(
+            "at scale {} a cape has at most {} frames",
+            meta.scale,
+            MAX_SHEET_HEIGHT / (BASE_HEIGHT * meta.scale)
+        ));
     }
     if meta.frames > 1 && meta.frame_time_ms < MIN_FRAME_MS {
         return bad(format!("frames must show at least {MIN_FRAME_MS} ms"));
@@ -191,6 +203,8 @@ pub fn save(paths: &Paths, cape: NewCape<'_>) -> Result<CapeInfo> {
         created_at,
         updated_at: now(),
         editor: cape.editor,
+        // New pixels: any uploaded copy is outdated.
+        remote: Default::default(),
     };
     std::fs::write(d.join("info.json"), serde_json::to_string_pretty(&info)?)?;
 
@@ -228,6 +242,23 @@ pub fn delete(paths: &Paths, id: &str) -> Result<()> {
         settings.active_cape = None;
         settings.save(paths)?;
     }
+    Ok(())
+}
+
+fn read_info_file(paths: &Paths, id: &str) -> Result<InfoFile> {
+    let text = std::fs::read_to_string(dir(paths, id)?.join("info.json"))?;
+    Ok(serde_json::from_str(&text)?)
+}
+
+/// Id of this cape on a cosmetics server, if it was uploaded there.
+pub fn remote_id(paths: &Paths, id: &str, server: &str) -> Result<Option<String>> {
+    Ok(read_info_file(paths, id).ok().and_then(|i| i.remote.get(server).cloned()))
+}
+
+pub fn set_remote_id(paths: &Paths, id: &str, server: &str, remote: &str) -> Result<()> {
+    let mut info = read_info_file(paths, id)?;
+    info.remote.insert(server.to_owned(), remote.to_owned());
+    std::fs::write(dir(paths, id)?.join("info.json"), serde_json::to_string_pretty(&info)?)?;
     Ok(())
 }
 
@@ -313,7 +344,9 @@ mod tests {
     fn rejects_wrong_dimensions_and_limits() {
         assert!(validate(&sheet(2, 3), &meta(2, 4, 80)).is_err());
         assert!(validate(&sheet(3, 1), &meta(3, 1, 0)).is_err());
-        assert!(check_meta(&meta(1, 65, 80)).is_err());
+        assert!(check_meta(&meta(1, 129, 80)).is_err());
+        assert!(check_meta(&meta(16, 64, 80)).is_ok());
+        assert!(check_meta(&meta(16, 65, 80)).is_err());
         assert!(check_meta(&meta(1, 10, 20)).is_err());
         assert!(validate(b"no png", &meta(1, 1, 0)).is_err());
     }

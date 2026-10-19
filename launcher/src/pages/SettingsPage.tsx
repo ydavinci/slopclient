@@ -20,7 +20,7 @@ export function SettingsPage() {
     if (!settings) return;
     setSaving(true);
     try {
-      await api.saveSettings({ ...settings, msaClientId: settings.msaClientId?.trim() || null, curseforgeApiKey: settings.curseforgeApiKey?.trim() || null });
+      await api.saveSettings({ ...settings, msaClientId: settings.msaClientId?.trim() || null, curseforgeApiKey: settings.curseforgeApiKey?.trim() || null, cosmeticsUrl: settings.cosmeticsUrl?.trim() || null });
       await refresh();
       toast("Einstellungen gespeichert", "success");
     } catch (e) {
@@ -68,6 +68,13 @@ export function SettingsPage() {
               }
             >
               <input type="password" autoComplete="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="$2a$10$…" value={settings.curseforgeApiKey ?? ""} onChange={(e) => setSettings({ ...settings, curseforgeApiKey: e.target.value })} />
+            </Field>
+          </motion.section>
+
+          <motion.section variants={rise} className="glass grid gap-4 rounded-[18px] p-5">
+            <h2 className="text-[15px] font-bold">Kosmetik</h2>
+            <Field label="Cosmetics-Server" hint="Adresse des DaClient-Cosmetics-Dienstes. Darüber sehen andere DaClient-Spieler deine Cape und du ihre.">
+              <input className={`${inputClass} font-mono`} placeholder="https://cosmetics.example.com" value={settings.cosmeticsUrl ?? ""} onChange={(e) => setSettings({ ...settings, cosmeticsUrl: e.target.value })} />
             </Field>
           </motion.section>
 

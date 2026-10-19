@@ -85,6 +85,7 @@ const hits: SearchHit[] = [
 const mockIcons = new Map<string, string>();
 let mockCapes: { info: CapeInfo; png: string; source: string; ext: string; editor: unknown }[] = [];
 let mockActiveCape: string | null = null;
+let mockOnline: { server: string | null; uuid: string | null; name: string | null } = { server: "https://cosmetics.daclient.example", uuid: null, name: null };
 
 const delay = <T,>(value: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(value), ms));
 
@@ -103,7 +104,7 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
     case "get_overview":
       return delay(structuredClone(overview), 120);
     case "get_settings":
-      return delay({ msaClientId: "00000000-0000-0000-0000-000000000000", curseforgeApiKey: "preview", downloadConcurrency: 16 });
+      return delay({ msaClientId: "00000000-0000-0000-0000-000000000000", curseforgeApiKey: "preview", cosmeticsUrl: "https://cosmetics.daclient.example", downloadConcurrency: 16 });
     case "list_versions":
       return delay({
         latestRelease: "26.3",
@@ -155,6 +156,15 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       return delay(null);
     case "cape_set_active":
       mockActiveCape = (args.id as string | null) ?? null;
+      return delay(null);
+    case "cosmetics_status":
+      return delay(mockOnline);
+    case "cosmetics_sign_in":
+      mockOnline = { ...mockOnline, uuid: "069a79f444e94726a5befca90e38aaf5", name: "Notch" };
+      return delay(mockOnline, 700);
+    case "cosmetics_sign_out":
+    case "cosmetics_delete_account":
+      mockOnline = { ...mockOnline, uuid: null, name: null };
       return delay(null);
     case "instance_icon":
       return delay(mockIcons.get(args.id as string) ?? null);

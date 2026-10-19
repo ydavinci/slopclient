@@ -39,7 +39,8 @@ export function CapeEditor({ target, onDone }: { target: EditTarget; onDone: (sa
   const set = (patch: Partial<EditorState>) => setSt((s) => ({ ...s, ...patch }));
   const account = overview?.accounts.find((a) => a.uuid === overview.activeAccount) ?? overview?.accounts[0];
   const ms = frameTime(source, st);
-  const frameCount = activeFrames(source, st).frames.length;
+  const { frames: kept, thinned } = activeFrames(source, st);
+  const frameCount = kept.length;
 
   // Re-render all frames shortly after the last change (cheap enough for 64 HD frames).
   useEffect(() => {
@@ -50,7 +51,7 @@ export function CapeEditor({ target, onDone }: { target: EditTarget; onDone: (sa
     return () => clearTimeout(t);
   }, [source, st, autoEdge]);
 
-  // File size of the real export, for the 2 MB limit.
+  // File size of the real export, for the 8 MB limit.
   useEffect(() => {
     setSize(null);
     const t = setTimeout(() => {
@@ -89,7 +90,7 @@ export function CapeEditor({ target, onDone }: { target: EditTarget; onDone: (sa
     setSaving(true);
     try {
       const { png, meta } = await exportCape(source, st);
-      if (png.size > LIMITS.maxBytes) throw new Error(`Die Cape ist ${kb(png.size)} groß, erlaubt sind 2 MB. Wähle eine kleinere Auflösung oder weniger Bilder.`);
+      if (png.size > LIMITS.maxBytes) throw new Error(`Die Cape ist ${kb(png.size)} groß, erlaubt sind 8 MB. Wähle eine kleinere Auflösung oder weniger Bilder.`);
       const info = await api.capeSave({
         id: target.id ?? null,
         name,
@@ -193,7 +194,11 @@ export function CapeEditor({ target, onDone }: { target: EditTarget; onDone: (sa
               <Range label="Erstes Bild" value={st.trimStart} min={0} max={source.frames.length - 1} step={1} display={String(st.trimStart + 1)} onChange={(v) => set({ trimStart: Math.min(v, st.trimEnd) })} />
               <Range label="Letztes Bild" value={st.trimEnd} min={0} max={source.frames.length - 1} step={1} display={String(st.trimEnd + 1)} onChange={(v) => set({ trimEnd: Math.max(v, st.trimStart) })} />
               <Range label="Geschwindigkeit" value={st.speed} min={0.25} max={4} step={0.05} display={`${st.speed.toFixed(2)}×`} onChange={(speed) => set({ speed })} />
-              {source.sampled && <p className="text-[11.5px] text-dim">Das GIF hat mehr als {LIMITS.maxFrames} Bilder, es wurde gleichmäßig ausgedünnt.</p>}
+              {(source.sampled || thinned) && (
+                <p className="text-[11.5px] text-dim">
+                  {thinned ? `Bei ${64 * st.scale}×${32 * st.scale} passen höchstens ${frameCount} Bilder, die Animation wird gleichmäßig ausgedünnt.` : `Das GIF hat mehr als ${LIMITS.maxFrames} Bilder, es wurde gleichmäßig ausgedünnt.`}
+                </p>
+              )}
             </section>
           )}
 
@@ -201,7 +206,7 @@ export function CapeEditor({ target, onDone }: { target: EditTarget; onDone: (sa
             <h3 className="text-[13px] font-semibold">Auflösung</h3>
             <Segmented value={String(st.scale)} onChange={(v) => set({ scale: Number(v) as EditorState["scale"] })} options={SCALES.map((s) => ({ value: String(s), label: `${64 * s}×${32 * s}` }))} />
             <p className={`text-[13px] ${tooBig ? "text-err" : "text-muted"}`}>
-              {size == null ? "Größe wird berechnet …" : `Dateigröße ${kb(size)} von höchstens 2 MB.`}
+              {size == null ? "Größe wird berechnet …" : `Dateigröße ${kb(size)} von höchstens 8 MB.`}
               {tooBig && " Wähle eine kleinere Auflösung oder kürze die Animation."}
             </p>
           </section>

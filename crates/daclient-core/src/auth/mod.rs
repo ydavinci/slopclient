@@ -2,7 +2,7 @@
 
 pub mod accounts;
 pub mod msa;
-mod secrets;
+pub(crate) mod secrets;
 pub mod xbox;
 
 pub use accounts::{Account, AccountStore};

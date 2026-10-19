@@ -7,6 +7,7 @@ pub mod client_mod;
 pub mod config;
 pub mod content;
 pub mod cosmetics;
+pub mod cosmetics_online;
 pub mod crash;
 pub mod download;
 pub mod error;

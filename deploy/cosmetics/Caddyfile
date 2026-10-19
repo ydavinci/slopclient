@@ -1,0 +1,9 @@
+# Caddy terminates HTTPS (certificates are automatic) and forwards to the backend.
+cosmetics.example.com {
+	encode zstd gzip
+	# Uploads are up to 8 MB of PNG, base64 adds a third.
+	request_body {
+		max_size 12MB
+	}
+	reverse_proxy 127.0.0.1:8787
+}

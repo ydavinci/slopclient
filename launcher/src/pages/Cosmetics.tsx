@@ -1,16 +1,18 @@
-import { Check, ImagePlus, Pencil, Shirt, Trash2 } from "lucide-react";
+import { Check, Globe, ImagePlus, LogOut, Pencil, Shirt, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FACES, dataUrlToBlob, decode, defaultState, type EditorState } from "../lib/cape";
 import { api } from "../lib/ipc";
 import { useStore } from "../lib/store";
-import type { CapeInfo } from "../lib/types";
+import type { CapeInfo, OnlineStatus } from "../lib/types";
 import { CapeEditor, type EditTarget } from "../ui/CapeEditor";
 import { Button, EmptyState, Spinner, rise, stagger } from "../ui/kit";
 
 /** Cape Studio: library of own capes, and the editor for new or existing ones. */
 export function Cosmetics() {
-  const { toast } = useStore();
+  const { toast, overview, navigate } = useStore();
+  const [online, setOnline] = useState<OnlineStatus | null>(null);
+  const [signingIn, setSigningIn] = useState(false);
   const [capes, setCapes] = useState<CapeInfo[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditTarget | null>(null);
@@ -28,6 +30,35 @@ export function Cosmetics() {
       .catch((e) => toast(String(e), "error"));
   }, [toast]);
   useEffect(load, [load]);
+  useEffect(() => {
+    api.cosmeticsStatus().then(setOnline).catch(() => setOnline(null));
+  }, []);
+
+  async function signIn() {
+    setSigningIn(true);
+    try {
+      // Without a Microsoft account, dev builds sign in with the offline test identity.
+      const offline = overview?.accounts.length ? null : overview?.devBuild ? "DevPlayer" : null;
+      const status = await api.cosmeticsSignIn(offline);
+      setOnline(status);
+      toast(`Online als ${status.name}. Andere DaClient-Spieler sehen jetzt deine Cape.`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setSigningIn(false);
+    }
+  }
+
+  async function signOut(deleteAccount: boolean) {
+    try {
+      if (deleteAccount) await api.cosmeticsDeleteAccount();
+      else await api.cosmeticsSignOut();
+      setOnline(await api.cosmeticsStatus());
+      toast(deleteAccount ? "Konto und Capes auf dem Server gelöscht" : "Abgemeldet. Deine Cape bleibt lokal.");
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
 
   async function openFile(file: File) {
     if (!/^image\/(gif|png|webp|jpeg|apng)$/.test(file.type)) {
@@ -64,9 +95,10 @@ export function Cosmetics() {
 
   async function activate(id: string | null) {
     try {
-      await api.capeSetActive(id);
+      const onlineError = await api.capeSetActive(id);
       setActiveId(id);
       toast(id ? "Cape ist jetzt aktiv. Sie erscheint beim nächsten Spielstart." : "Keine Cape aktiv");
+      if (onlineError) toast(`Online nicht aktualisiert: ${onlineError}`, "error");
     } catch (e) {
       toast(String(e), "error");
     }
@@ -139,6 +171,8 @@ export function Cosmetics() {
         </motion.div>
       </motion.div>
 
+      <OnlineCard online={online} busy={signingIn} onSignIn={signIn} onSignOut={signOut} onSettings={() => navigate({ page: "settings" })} />
+
       <div className={`mx-8 mb-6 min-h-0 flex-1 overflow-auto rounded-[18px] transition-colors duration-200 ${dragOver ? "bg-accent/[0.08] shadow-[inset_0_0_0_1.5px_rgb(192_132_252/0.5)]" : ""}`}>
         {capes === null ? (
           <div className="grid place-items-center py-20">
@@ -193,6 +227,59 @@ export function Cosmetics() {
         )}
       </div>
     </div>
+  );
+}
+
+/** Whether other players can see the cape: the cosmetics server sign-in. */
+function OnlineCard({ online, busy, onSignIn, onSignOut, onSettings }: { online: OnlineStatus | null; busy: boolean; onSignIn: () => void; onSignOut: (deleteAccount: boolean) => void; onSettings: () => void }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  if (!online) return null;
+  const signedIn = online.name != null;
+  return (
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="glass mx-8 mb-4 flex items-center gap-4 rounded-[18px] px-4 py-3">
+      <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${signedIn ? "chroma text-white" : "bg-white/[0.06] text-muted"}`}>
+        <Globe className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-semibold">{!online.server ? "Nur für dich sichtbar" : signedIn ? `Online sichtbar als ${online.name}` : "Für andere unsichtbar"}</p>
+        <p className="truncate text-[11.5px] text-muted">
+          {!online.server
+            ? "Ohne Cosmetics-Server siehst nur du deine Cape. Die Adresse trägst du in den Einstellungen ein."
+            : signedIn
+              ? `Andere DaClient-Spieler sehen deine aktive Cape. Server: ${online.server}`
+              : "Melde dich mit deinem Minecraft-Konto an, dann sehen andere DaClient-Spieler deine Cape."}
+        </p>
+      </div>
+      {!online.server ? (
+        <Button size="sm" onClick={onSettings}>
+          Einstellungen
+        </Button>
+      ) : signedIn ? (
+        confirmDelete ? (
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="danger" onClick={() => onSignOut(true)}>
+              Konto löschen
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
+              Abbrechen
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-1.5">
+            <Button size="sm" icon={<LogOut className="size-3.5" />} onClick={() => onSignOut(false)}>
+              Abmelden
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)}>
+              Daten löschen …
+            </Button>
+          </div>
+        )
+      ) : (
+        <Button size="sm" variant="primary" loading={busy} onClick={onSignIn}>
+          Online sichtbar machen
+        </Button>
+      )}
+    </motion.div>
   );
 }
 

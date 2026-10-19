@@ -15,6 +15,7 @@ import type {
   Instance,
   LoaderKind,
   LoaderVersion,
+  OnlineStatus,
   Overview,
   Platform,
   SearchArgs,
@@ -84,7 +85,12 @@ export const api = {
   capeSave: (cape: { id: string | null; name: string; png: string; meta: CapeInfo["meta"]; sourceExt: string; source: string; editor: unknown }) =>
     call<CapeInfo>("cape_save", { cape }),
   capeDelete: (id: string) => call<void>("cape_delete", { id }),
-  capeSetActive: (id: string | null) => call<void>("cape_set_active", { id }),
+  /** Resolves to an error text when only publishing online failed. */
+  capeSetActive: (id: string | null) => call<string | null>("cape_set_active", { id }),
+  cosmeticsStatus: () => call<OnlineStatus>("cosmetics_status"),
+  cosmeticsSignIn: (offlineName: string | null) => call<OnlineStatus>("cosmetics_sign_in", { offlineName }),
+  cosmeticsSignOut: () => call<void>("cosmetics_sign_out"),
+  cosmeticsDeleteAccount: () => call<void>("cosmetics_delete_account"),
   capeSource: (id: string) => call<{ ext: string; dataUrl: string; editor: unknown } | null>("cape_source", { id }),
   foreignScan: (extraDir: string | null) => call<ForeignInstance[]>("foreign_scan", { extraDir }),
   foreignImport: (path: string, name: string | null, taskId: string) => call<Instance>("foreign_import", { path, name, taskId }),

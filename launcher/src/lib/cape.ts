@@ -5,12 +5,18 @@ export interface CapeMeta {
   version: 1;
   frames: number;
   frameTimeMs: number;
-  scale: 1 | 2 | 4 | 8;
+  scale: 1 | 2 | 4 | 8 | 16;
   elytra: boolean;
 }
 
-export const LIMITS = { maxFrames: 64, minFrameMs: 40, maxBytes: 2 * 1024 * 1024 };
-export const SCALES = [1, 2, 4, 8] as const;
+export const LIMITS = { maxFrames: 128, minFrameMs: 40, maxBytes: 8 * 1024 * 1024 };
+export const SCALES = [1, 2, 4, 8, 16] as const;
+/** Tallest spritesheet browsers and PNG decoders handle reliably (same rule as the core). */
+export const MAX_SHEET_HEIGHT = 32768;
+
+export function maxFramesFor(scale: number) {
+  return Math.min(LIMITS.maxFrames, Math.floor(MAX_SHEET_HEIGHT / (32 * scale)));
+}
 
 /** Decoded source: frames with their display time. */
 export interface Source {
@@ -38,7 +44,7 @@ export interface EditorState {
   trimStart: number;
   trimEnd: number;
   speed: number;
-  scale: 1 | 2 | 4 | 8;
+  scale: 1 | 2 | 4 | 8 | 16;
 }
 
 export function defaultState(source: Source): EditorState {
@@ -173,11 +179,20 @@ export function renderFrame(frame: ImageBitmap, st: EditorState, edge: string, t
   return canvas;
 }
 
-/** Frames between trimStart and trimEnd. */
+/**
+ * Frames between trimStart and trimEnd, thinned out evenly when the resolution
+ * allows fewer (each kept frame then lasts longer, so the animation keeps its length).
+ */
 export function activeFrames(source: Source, st: EditorState) {
   const start = Math.min(st.trimStart, source.frames.length - 1);
   const end = Math.max(start, Math.min(st.trimEnd, source.frames.length - 1));
-  return { frames: source.frames.slice(start, end + 1), durations: source.durations.slice(start, end + 1) };
+  const frames = source.frames.slice(start, end + 1);
+  const durations = source.durations.slice(start, end + 1);
+  const max = maxFramesFor(st.scale);
+  if (frames.length <= max) return { frames, durations, thinned: false };
+  const step = frames.length / max;
+  const kept = Array.from({ length: max }, (_, i) => Math.floor(i * step));
+  return { frames: kept.map((i) => frames[i]), durations: kept.map((i) => durations[i] * step), thinned: true };
 }
 
 /** Uniform frame time the mod plays at (average of the GIF's timing, sped up or slowed). */

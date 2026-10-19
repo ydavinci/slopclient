@@ -14,6 +14,8 @@ pub struct Settings {
     pub download_concurrency: Option<usize>,
     /// Cape from the Cape Studio that the client mod shows.
     pub active_cape: Option<String>,
+    /// DaClient cosmetics server, e.g. `https://cosmetics.example.com`.
+    pub cosmetics_url: Option<String>,
 }
 
 impl Settings {
@@ -47,6 +49,16 @@ impl Settings {
             .or_else(|| self.curseforge_api_key.clone())
             .or_else(|| option_env!("DACLIENT_CURSEFORGE_API_KEY").map(str::to_owned))
             .filter(|key| !key.trim().is_empty())
+    }
+
+    /// Server from `DACLIENT_COSMETICS_URL`, then settings, then the build-time default.
+    pub fn cosmetics_url(&self) -> Option<String> {
+        std::env::var("DACLIENT_COSMETICS_URL")
+            .ok()
+            .or_else(|| self.cosmetics_url.clone())
+            .or_else(|| option_env!("DACLIENT_COSMETICS_URL").map(str::to_owned))
+            .map(|u| u.trim().trim_end_matches('/').to_owned())
+            .filter(|u| !u.is_empty())
     }
 
     pub fn download_concurrency(&self) -> usize {

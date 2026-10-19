@@ -219,6 +219,8 @@ pub async fn prepare(
         extra_jvm_args: [format!("-Ddaclient.instance={}", instance.name)]
             .into_iter()
             .chain(crate::icon::path(paths, instance).map(|p| format!("-Ddaclient.icon={}", p.display())))
+            // The client mod looks up other players' capes there.
+            .chain(settings.cosmetics_url().map(|u| format!("-Ddaclient.cosmetics={u}")))
             .chain(instance.java.jvm_args.iter().cloned())
             .collect(),
         resolution: None,

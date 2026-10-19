@@ -16,7 +16,7 @@ Funktioniert:
 - Modrinth: Suche (gefiltert nach Instanz), Installation von Mods/Resourcepacks/Shadern mit Abhängigkeiten, Liste pro Instanz, (De)aktivieren, Entfernen, Updates, Erkennung manuell kopierter Dateien
 - CurseForge (mit API-Schlüssel): Suche, Installation mit Abhängigkeiten, Updates, Erkennung per Fingerprint. Dateien, deren Autoren Downloads außerhalb der Website sperren, landen in `blocked.json` und werden aus dem Download-Ordner übernommen
 - Start mit Live-Log und Crash-Analyse (erkennt u. a. zu wenig RAM, falsches Java, inkompatible/doppelte Mods, fehlerhafte Mixins, Grafiktreiber und nennt die verursachende Mod, die sich direkt deaktivieren lässt)
-- Cape-Studio (Seite „Kosmetik“): eigene Capes aus Bildern und GIFs mit Editor (Ausschnitt, Rückseite, Ränder, Elytra, Bildauswahl, Tempo, Auflösung bis 512×256) und 3D-Vorschau (skinview3d); Bibliothek mit aktiver Cape. Die aktive Cape trägt dein Spieler im Spiel (animiert, auch als Elytra; Modul „Capes“, serverseitig abschaltbar über `capes`)
+- Cape-Studio (Seite „Kosmetik“): eigene Capes aus Bildern und GIFs mit Editor (Ausschnitt, Rückseite, Ränder, Elytra, Bildauswahl, Tempo, Auflösung bis 512×256) und 3D-Vorschau (skinview3d); Bibliothek mit aktiver Cape. Die aktive Cape trägt dein Spieler im Spiel (animiert, auch als Elytra; Modul „Capes“, serverseitig abschaltbar über `capes`). Mit Cosmetics-Server (`crates/daclient-cosmetics`, Anleitung in [deploy/cosmetics](deploy/cosmetics/README.md)) sehen andere DaClient-Spieler deine Cape und du ihre
 - Import von Instanzen aus Prism Launcher, PolyMC und MultiMC (Kopie inkl. Welten und Configs, Mods werden mit Modrinth/CurseForge verknüpft)
 - DaClient-Mod (Fabric/Quilt, Minecraft 26.3): eigener Titelbildschirm, ClickGUI (Rechts-Shift) mit Suche, HUD-Editor mit Snapping, HUD-Module (Watermark, ArrayList, FPS, CPS, Keystrokes, Koordinaten, Rüstung, Trankeffekte, Ping, Uhrzeit), Zoom (C), Freelook (Alt), Helligkeit, Fadenkreuz, Toggle Sprint, Sora-Schrift, Config-Profile. Der Launcher legt die Mod beim Start in passende Instanzen und installiert Fabric API mit; abschaltbar pro Instanz
 - Microsoft-Login (Device Code → Xbox → XSTS → Minecraft), Tokens per DPAPI verschlüsselt
@@ -43,6 +43,7 @@ target/debug/daclient modpack import all-the-mods-10 --platform curseforge
 target/debug/daclient import list                  # Instanzen von Prism/PolyMC (--dir für MultiMC)
 target/debug/daclient import run "%APPDATA%\PrismLauncher\instances\<name>"
 target/debug/daclient cape list                    # Capes; cape import <sheet.png> --frames 8 --scale 4 --activate
+target/debug/daclient cape online sign-in           # Cosmetics-Server: sign-in, publish, sign-out, delete-account
 target/debug/daclient diagnose crash-report.txt    # Absturzursache aus Log oder Crash-Report
 target/debug/daclient modpack export modded modded.mrpack --include config --include options.txt
 target/debug/daclient set-client-id <azure-client-id>

@@ -1,12 +1,14 @@
 package dev.daclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.daclient.cosmetics.RemoteCapes;
 import dev.daclient.gui.ClickGuiScreen;
 import dev.daclient.hud.HudModule;
 import dev.daclient.module.ModuleManager;
 import dev.daclient.render.MenuShader;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -67,12 +69,14 @@ public final class DaClient implements ClientModInitializer {
 		modules.freelook.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.daclient.freelook", InputConstants.KEY_LALT, category)));
 		ServerRules.register();
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> RemoteCapes.clear());
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (clickGuiKey.consumeClick()) {
 				if (mc.gui.screen() == null) mc.gui.setScreen(new ClickGuiScreen(null));
 			}
 			modules.tick(mc);
+			RemoteCapes.tick(mc);
 			if (SelfTest.enabled()) SelfTest.tick(mc);
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {

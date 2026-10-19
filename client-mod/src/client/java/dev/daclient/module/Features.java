@@ -272,6 +272,7 @@ public final class Features {
 		public final BoolSetting animate = add(new BoolSetting("Animation", true));
 		public final BoolSetting elytra = add(new BoolSetting("Auch als Elytra", true));
 		public final BoolSetting overMojang = add(new BoolSetting("Vor Mojang-Cape", true));
+		public final BoolSetting others = add(new BoolSetting("Capes anderer", true));
 
 		public Capes() {
 			super("Capes", "Eigene Cape aus dem Cape-Studio des Launchers", Category.COSMETICS, true);

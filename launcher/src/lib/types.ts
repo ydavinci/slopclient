@@ -64,6 +64,7 @@ export interface Overview {
 export interface Settings {
   msaClientId?: string | null;
   curseforgeApiKey?: string | null;
+  cosmeticsUrl?: string | null;
   downloadConcurrency?: number | null;
 }
 
@@ -190,10 +191,17 @@ export interface DeviceCode {
 export interface CapeInfo {
   id: string;
   name: string;
-  meta: { version: 1; frames: number; frameTimeMs: number; scale: 1 | 2 | 4 | 8; elytra: boolean };
+  meta: { version: 1; frames: number; frameTimeMs: number; scale: 1 | 2 | 4 | 8 | 16; elytra: boolean };
   createdAt: number;
   updatedAt: number;
   hasSource: boolean;
+}
+
+/** Sign-in state at the cosmetics server (other players see your cape). */
+export interface OnlineStatus {
+  server: string | null;
+  uuid: string | null;
+  name: string | null;
 }
 
 /** An instance of Prism Launcher, PolyMC or MultiMC that can be copied over. */
