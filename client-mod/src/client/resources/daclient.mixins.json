@@ -5,11 +5,22 @@
 	"client": [
 		"AvatarRendererMixin",
 		"CameraMixin",
+		"ChatComponentMixin",
+		"ConditionalItemModelPropertiesAccessor",
 		"EntityMixin",
 		"GuiMixin",
+		"HudMixin",
+		"LevelRendererMixin",
+		"LivingEntityRendererMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",
-		"OptionsMixin"
+		"OptionsMixin",
+		"OverlayTextureAccessor",
+		"PunchyConfigMixin",
+		"ScreenEffectRendererMixin",
+		"ScreenshotMixin",
+		"SpecialModelRenderersAccessor",
+		"SpecialModelWrapperMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }

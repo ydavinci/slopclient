@@ -18,10 +18,13 @@ pub mod install;
 pub mod instance;
 pub mod java;
 pub mod launch;
+pub mod mclogs;
 pub mod meta;
 pub mod paths;
 pub mod progress;
 pub mod rules;
+pub mod screenshots;
+pub mod worlds;
 
 pub use error::{Error, Result};
 pub use paths::Paths;

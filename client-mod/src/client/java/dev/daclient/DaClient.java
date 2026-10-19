@@ -2,6 +2,7 @@ package dev.daclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.daclient.cosmetics.RemoteCapes;
+import dev.daclient.cosmetics.karambit.KarambitModels;
 import dev.daclient.gui.ClickGuiScreen;
 import dev.daclient.hud.HudModule;
 import dev.daclient.module.ModuleManager;
@@ -49,6 +50,16 @@ public final class DaClient implements ClientModInitializer {
 		return modules != null;
 	}
 
+	/** Height of vanilla's sidebar in GUI pixels: title plus up to 15 lines of 9 px. */
+	private static int sidebarHeight(Minecraft mc) {
+		if (mc.level == null) return 0;
+		var scoreboard = mc.level.getScoreboard();
+		var objective = scoreboard.getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
+		if (objective == null) return 0;
+		int lines = (int) Math.min(15, scoreboard.listPlayerScores(objective).stream().filter(e -> !e.isHidden()).count());
+		return (lines + 1) * 9;
+	}
+
 	public static void save() {
 		if (ready()) config.save(modules);
 	}
@@ -68,10 +79,16 @@ public final class DaClient implements ClientModInitializer {
 		modules.zoom.bind(zoomKey);
 		modules.freelook.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.daclient.freelook", InputConstants.KEY_LALT, category)));
+		modules.karambit.bind(KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.daclient.inspect", InputConstants.KEY_V, category)));
+		KarambitModels.register();
+		KeyMapping screenshotKey = KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.daclient.screenshot", InputConstants.UNKNOWN.getValue(), category));
 		ServerRules.register();
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> RemoteCapes.clear());
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+			while (screenshotKey.consumeClick()) modules.screenshots.openLatest();
 			while (clickGuiKey.consumeClick()) {
 				if (mc.gui.screen() == null) mc.gui.setScreen(new ClickGuiScreen(null));
 			}
@@ -89,6 +106,26 @@ public final class DaClient implements ClientModInitializer {
 			for (HudModule hud : modules.hud()) {
 				if (hud.active()) hud.render(g, mc, false);
 			}
+			modules.screenshots.render(g);
+		});
+		HudElementRegistry.replaceElement(VanillaHudElements.SCOREBOARD, vanilla -> (g, delta) -> {
+			var board = modules.scoreboard;
+			if (board.active() && board.hide.on()) return;
+			float s = board.active() ? board.size.get().floatValue() : 1;
+			// The sidebar sits centred on the right edge, where the ArrayList also lives:
+			// move it below the list when they would overlap, and scale around its centre.
+			float centre = g.guiHeight() / 2f;
+			float half = sidebarHeight(Minecraft.getInstance()) * s / 2f;
+			HudModule list = modules.hud().stream().filter(h -> h instanceof dev.daclient.hud.HudModules.ArrayListHud).findFirst().orElse(null);
+			if (list != null && list.active() && list.fx > 0.5 && list.y + list.h + 4 > centre - half) {
+				centre = Math.min(g.guiHeight() - half - 2, list.y + list.h + 4 + half);
+			}
+			g.pose().pushMatrix();
+			g.pose().translate(g.guiWidth(), centre);
+			g.pose().scale(s, s);
+			g.pose().translate(-g.guiWidth(), -g.guiHeight() / 2f);
+			vanilla.extractRenderState(g, delta);
+			g.pose().popMatrix();
 		});
 		HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, vanilla -> (g, delta) -> {
 			Minecraft mc = Minecraft.getInstance();

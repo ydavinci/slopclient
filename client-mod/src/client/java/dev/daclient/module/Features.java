@@ -285,6 +285,51 @@ public final class Features {
 		}
 	}
 
+	/**
+	 * Shows the netherite sword as a 3D CS:GO Karambit, with draw and inspect
+	 * animations in first person. Purely visual: the item stays a netherite sword.
+	 */
+	public static final class Karambit extends Module {
+		public final BoolSetting draw = add(new BoolSetting("Zieh-Animation", true));
+		public final BoolSetting inspect = add(new BoolSetting("Inspect-Animation", true));
+		private KeyMapping inspectKey;
+		private boolean held;
+		private int slot = -1;
+
+		public Karambit() {
+			super("Karambit", "Netherite-Schwert als 3D-Karambit, Inspect mit V", Category.COSMETICS, true);
+		}
+
+		public void bind(KeyMapping key) {
+			inspectKey = key;
+		}
+
+		@Override
+		protected void onDisable() {
+			dev.daclient.cosmetics.karambit.KarambitAnimation.stop();
+			held = false;
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			if (mc.player == null) {
+				held = false;
+				return;
+			}
+			boolean now = mc.player.getMainHandItem().is(net.minecraft.world.item.Items.NETHERITE_SWORD);
+			int selected = mc.player.getInventory().getSelectedSlot();
+			if (now && (!held || selected != slot) && draw.on()) dev.daclient.cosmetics.karambit.KarambitAnimation.startDraw();
+			if (!now) dev.daclient.cosmetics.karambit.KarambitAnimation.stop();
+			held = now;
+			slot = selected;
+			while (inspectKey != null && inspectKey.consumeClick()) {
+				if (now && inspect.on() && mc.gui.screen() == null) dev.daclient.cosmetics.karambit.KarambitAnimation.startInspect();
+			}
+			// Attacking interrupts the inspect, like in CS.
+			if (mc.player.isSwinging()) dev.daclient.cosmetics.karambit.KarambitAnimation.cancelInspect();
+		}
+	}
+
 	/** Replaces the vanilla title screen with the DaClient one. */
 	public static final class TitleScreenModule extends Module {
 		public TitleScreenModule() {

@@ -14,10 +14,12 @@ use daclient_core::{
     cosmetics::{self, CapeInfo, CapeMeta, NewCape},
     cosmetics_online,
     crash::{self, CrashReport},
-    icon,
+    icon, mclogs,
+    screenshots::{self, Screenshot},
+    worlds::{self, Datapack, World},
     foreign::{self, ForeignInstance},
     content::{
-        BlockedFile, ContentEntry, ContentManager, InstallReport, UpdateInfo,
+        BlockedFile, ContentEntry, ContentManager, ContentType, InstallReport, UpdateInfo,
         curseforge::CurseForge,
         modrinth::{self, SearchQuery, SearchResult},
         mrpack::{self, ExportOptions, PackSource},
@@ -36,6 +38,10 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::Mutex,
 };
+
+/// Debug builds, or release builds made with `--features dev-offline` for local
+/// testing. Only these may start the game without a Microsoft account.
+const DEV_BUILD: bool = cfg!(debug_assertions) || cfg!(feature = "dev-offline");
 
 type CmdResult<T> = Result<T, String>;
 
@@ -126,20 +132,26 @@ struct Overview {
     data_dir: String,
     running: Vec<String>,
     dev_build: bool,
+    /// Launcher version, e.g. "0.2.0".
+    version: &'static str,
+    dev_offline: bool,
 }
 
 #[tauri::command]
 async fn get_overview(state: State<'_, AppState>) -> CmdResult<Overview> {
     let paths = &state.paths;
     let store = AccountStore::new(paths);
+    let settings = Settings::load(paths).map_err(err)?;
     Ok(Overview {
         instances: Instance::list(paths).map_err(err)?,
         accounts: store.list().map_err(err)?,
         active_account: store.active().map_err(err)?.map(|a| a.uuid),
-        has_client_id: Settings::load(paths).map_err(err)?.msa_client_id().is_some(),
+        has_client_id: settings.msa_client_id().is_some(),
         data_dir: paths.root.display().to_string(),
         running: state.games.lock().await.keys().cloned().collect(),
-        dev_build: cfg!(debug_assertions),
+        dev_build: DEV_BUILD,
+        version: env!("CARGO_PKG_VERSION"),
+        dev_offline: DEV_BUILD && settings.dev_offline,
     })
 }
 
@@ -212,6 +224,11 @@ async fn save_instance(state: State<'_, AppState>, instance: Instance) -> CmdRes
 }
 
 #[tauri::command]
+async fn duplicate_instance(state: State<'_, AppState>, id: String, name: String) -> CmdResult<Instance> {
+    Instance::duplicate(&state.paths, &id, &name).await.map_err(err)
+}
+
+#[tauri::command]
 async fn delete_instance(state: State<'_, AppState>, id: String) -> CmdResult<()> {
     if state.games.lock().await.contains_key(&id) {
         return Err("Die Instanz läuft gerade.".into());
@@ -271,8 +288,12 @@ async fn launch_instance(
     let paths = state.paths.clone();
     let instance = Instance::load(&paths, &id).map_err(err)?;
 
+    let settings = Settings::load(&paths).map_err(err)?;
+    let offline_name = offline_name.or_else(|| {
+        (DEV_BUILD && settings.dev_offline).then(|| "DevPlayer".to_owned())
+    });
     let auth = match offline_name {
-        Some(name) if cfg!(debug_assertions) => LaunchAuth::offline(&name),
+        Some(name) if DEV_BUILD => LaunchAuth::offline(&name),
         Some(_) => return Err("Offline-Start ist nur in Entwickler-Builds verfügbar.".into()),
         None => {
             let store = AccountStore::new(&paths);
@@ -291,6 +312,7 @@ async fn launch_instance(
     let mut cmd = launch::prepare(&paths, &instance, &auth, progress_for(&app, &task_id))
         .await
         .map_err(err)?;
+    let java = PathBuf::from(cmd.as_std().get_program());
     let mut child = cmd.spawn().map_err(|e| format!("Java konnte nicht gestartet werden: {e}"))?;
     let pid = child.id().unwrap_or(0);
     state.games.lock().await.insert(id.clone(), pid);
@@ -351,6 +373,13 @@ async fn launch_instance(
                 exit_code,
             },
         );
+        if !instance.hooks.post_exit.trim().is_empty() {
+            let line = match launch::run_hook(&paths, &instance, &instance.hooks.post_exit, &java).await {
+                Ok(()) => "[DaClient] Post-Exit-Befehl ausgeführt".to_owned(),
+                Err(e) => format!("[DaClient] {e}"),
+            };
+            let _ = app2.emit("game-log", GameLog { instance_id: id.clone(), line, stderr: false });
+        }
         if !stopped {
             // Give the log pipes a moment to flush their last lines.
             tokio::time::sleep(std::time::Duration::from_millis(300)).await;
@@ -374,6 +403,145 @@ async fn stop_instance(state: State<'_, AppState>, id: String) -> CmdResult<()> 
         .output()
         .map_err(err)?;
     Ok(())
+}
+
+/// Shares log text on mclo.gs and returns the link.
+#[tauri::command]
+async fn upload_log(text: String) -> CmdResult<String> {
+    mclogs::upload(&text).await.map_err(err)
+}
+
+/// The text of a crash report or log file the crash analysis pointed to.
+#[tauri::command]
+async fn read_log_file(path: String) -> CmdResult<String> {
+    let bytes = std::fs::read(&path).map_err(err)?;
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
+}
+
+// ---------- raw uploads ----------
+
+/// Files dropped into the UI arrive as a raw body plus headers, which is much
+/// cheaper than a JSON number array for multi-megabyte mods.
+fn raw_upload<'a>(request: &'a tauri::ipc::Request<'_>, keys: &[&str]) -> CmdResult<(Vec<String>, &'a [u8])> {
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+        return Err("Erwartet wurde eine Datei".into());
+    };
+    let values = keys
+        .iter()
+        .map(|k| {
+            let v = request
+                .headers()
+                .get(*k)
+                .and_then(|v| v.to_str().ok())
+                .ok_or_else(|| format!("Header {k} fehlt"))?;
+            percent_decode(v)
+        })
+        .collect::<CmdResult<Vec<_>>>()?;
+    Ok((values, bytes))
+}
+
+/// Header values are sent through encodeURIComponent.
+fn percent_decode(s: &str) -> CmdResult<String> {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 3 <= bytes.len() {
+            let hex = std::str::from_utf8(&bytes[i + 1..i + 3]).map_err(err)?;
+            out.push(u8::from_str_radix(hex, 16).map_err(err)?);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8(out).map_err(err)
+}
+
+/// Adds a dropped mod, resource pack or shader pack; returns the detected kind.
+#[tauri::command]
+async fn content_add_local(state: State<'_, AppState>, request: tauri::ipc::Request<'_>) -> CmdResult<ContentType> {
+    let (v, bytes) = raw_upload(&request, &["x-instance", "x-file-name"])?;
+    manager(&state, &v[0]).await?.add_local(&v[1], bytes).await.map_err(err)
+}
+
+// ---------- worlds & screenshots ----------
+
+#[tauri::command]
+async fn worlds_list(state: State<'_, AppState>, id: String) -> CmdResult<Vec<World>> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    let paths = state.paths.clone();
+    tokio::task::spawn_blocking(move || worlds::list(&paths, &instance)).await.map_err(err)?.map_err(err)
+}
+
+#[tauri::command]
+async fn world_delete(state: State<'_, AppState>, id: String, world: String) -> CmdResult<()> {
+    if state.games.lock().await.contains_key(&id) {
+        return Err("Beende das Spiel, bevor du Welten löschst.".into());
+    }
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    worlds::delete(&state.paths, &instance, &world).map_err(err)
+}
+
+/// Zips the world into the instance's backups folder; returns the zip path.
+#[tauri::command]
+async fn world_backup(state: State<'_, AppState>, id: String, world: String) -> CmdResult<String> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    let paths = state.paths.clone();
+    let file = tokio::task::spawn_blocking(move || worlds::backup(&paths, &instance, &world))
+        .await
+        .map_err(err)?
+        .map_err(err)?;
+    Ok(file.display().to_string())
+}
+
+#[tauri::command]
+async fn datapacks_list(state: State<'_, AppState>, id: String, world: String) -> CmdResult<Vec<Datapack>> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    worlds::datapacks(&state.paths, &instance, &world).map_err(err)
+}
+
+#[tauri::command]
+async fn datapack_add(state: State<'_, AppState>, request: tauri::ipc::Request<'_>) -> CmdResult<()> {
+    let (v, bytes) = raw_upload(&request, &["x-instance", "x-world", "x-file-name"])?;
+    let instance = Instance::load(&state.paths, &v[0]).map_err(err)?;
+    worlds::add_datapack(&state.paths, &instance, &v[1], &v[2], bytes).map_err(err)
+}
+
+#[tauri::command]
+async fn datapack_set_enabled(state: State<'_, AppState>, id: String, world: String, file_name: String, enabled: bool) -> CmdResult<()> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    worlds::set_datapack_enabled(&state.paths, &instance, &world, &file_name, enabled).map_err(err)
+}
+
+#[tauri::command]
+async fn datapack_remove(state: State<'_, AppState>, id: String, world: String, file_name: String) -> CmdResult<()> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    worlds::remove_datapack(&state.paths, &instance, &world, &file_name).map_err(err)
+}
+
+#[tauri::command]
+async fn screenshots_list(state: State<'_, AppState>, id: String) -> CmdResult<Vec<Screenshot>> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    screenshots::list(&state.paths, &instance).map_err(err)
+}
+
+/// Thumbnail as a JPEG data URL.
+#[tauri::command]
+async fn screenshot_thumb(state: State<'_, AppState>, id: String, name: String) -> CmdResult<String> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    let paths = state.paths.clone();
+    let bytes = tokio::task::spawn_blocking(move || screenshots::thumbnail(&paths, &instance, &name))
+        .await
+        .map_err(err)?
+        .map_err(err)?;
+    Ok(format!("data:image/jpeg;base64,{}", b64(&bytes)))
+}
+
+#[tauri::command]
+async fn screenshot_delete(state: State<'_, AppState>, id: String, name: String) -> CmdResult<()> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    screenshots::delete(&state.paths, &instance, &name).map_err(err)
 }
 
 // ---------- accounts ----------
@@ -437,6 +605,16 @@ async fn content_install(
         _ => manager.install(&project, &progress).await,
     }
     .map_err(err)
+}
+
+/// Sodium, Lithium, FerriteCore and Iris in one go.
+#[tauri::command]
+async fn content_install_preset(app: AppHandle, state: State<'_, AppState>, id: String, task_id: String) -> CmdResult<InstallReport> {
+    let manager = manager(&state, &id).await?;
+    manager
+        .install_many(&daclient_core::content::PERFORMANCE_PRESET, &progress_for(&app, &task_id))
+        .await
+        .map_err(err)
 }
 
 #[tauri::command]
@@ -625,7 +803,7 @@ async fn cosmetics_status(state: State<'_, AppState>) -> CmdResult<cosmetics_onl
 async fn cosmetics_sign_in(state: State<'_, AppState>, offline_name: Option<String>) -> CmdResult<cosmetics_online::OnlineStatus> {
     let paths = &state.paths;
     let auth = match offline_name {
-        Some(name) if cfg!(debug_assertions) => LaunchAuth::offline(&name),
+        Some(name) if DEV_BUILD => LaunchAuth::offline(&name),
         Some(_) => return Err("Offline-Anmeldung gibt es nur in Entwickler-Builds.".into()),
         None => {
             let store = AccountStore::new(paths);
@@ -788,7 +966,21 @@ pub fn run() {
             create_instance,
             save_instance,
             delete_instance,
+            duplicate_instance,
             instance_dir,
+            upload_log,
+            read_log_file,
+            content_add_local,
+            worlds_list,
+            world_delete,
+            world_backup,
+            datapacks_list,
+            datapack_add,
+            datapack_set_enabled,
+            datapack_remove,
+            screenshots_list,
+            screenshot_thumb,
+            screenshot_delete,
             instance_icon,
             set_instance_icon,
             clear_instance_icon,
@@ -800,6 +992,7 @@ pub fn run() {
             remove_account,
             content_list,
             content_install,
+            content_install_preset,
             content_blocked,
             content_resolve_blocked,
             content_remove,

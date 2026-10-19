@@ -10,7 +10,7 @@ export type Route =
   | { page: "cosmetics" }
   | { page: "settings" };
 
-export type InstanceTab = "mods" | "log" | "settings";
+export type InstanceTab = "mods" | "worlds" | "screenshots" | "log" | "settings";
 
 export type ModalState =
   | null
@@ -19,6 +19,7 @@ export type ModalState =
   | { kind: "login" }
   | { kind: "export"; instanceId: string }
   | { kind: "icon"; instanceId: string }
+  | { kind: "duplicate"; instanceId: string }
   | { kind: "crash"; instanceId: string; report: CrashReport };
 
 export interface Task {
@@ -235,14 +236,15 @@ export function useLaunch() {
   return useCallback(
     async (id: string, name: string, offlineName: string | null = null) => {
       if (!overview) return;
-      if (!offlineName && overview.accounts.length === 0) {
+      const effectiveOfflineName = offlineName ?? (overview.devOffline ? "DevPlayer" : null);
+      if (!effectiveOfflineName && overview.accounts.length === 0) {
         toast("Melde dich zuerst mit deinem Microsoft-Account an.", "error");
         return;
       }
       clearLogs(id);
       markLaunching(id, true);
       try {
-        await runTask(`${name} starten`, (taskId) => api.launch(id, taskId, offlineName));
+        await runTask(`${name} starten`, (taskId) => api.launch(id, taskId, effectiveOfflineName));
       } catch (e) {
         markLaunching(id, false);
         toast(String(e), "error");

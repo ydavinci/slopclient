@@ -170,28 +170,30 @@ Begründung: M8 ist klein und sofort spürbar. M9 und M10 liefern den sichtbaren
 
 ---
 
-### M12 · Backlog & Release-Vorbereitung
+### M12 · Backlog & Release-Vorbereitung · umgesetzt (Website-Download steht aus)
 
 Offene Punkte aus dem alten Feature-Umfang, nach Nutzen sortiert:
 
-**Launcher**
+**Launcher** · umgesetzt
 - Instanzen kopieren und gruppieren
-- lokale Mods per Drag & Drop
-- Datapacks
-- Tabs für Welten und Screenshots
+- lokale Mods, Resourcepacks und Shader per Drag & Drop oder Dateiauswahl
+- Datapacks pro Welt
+- Tabs für Welten (Backup als ZIP, Löschen) und Screenshots
 - Pre-/Post-Launch-Befehle
-- Crash-Log-Upload zu mclo.gs
+- Log- und Crash-Upload zu mclo.gs (ohne Token und Benutzernamen)
 
-**Client-Mod: Module**
-- Block-Umriss, Hit-Color, Low Fire, Nametags
-- Server-IP- und Geschwindigkeits-Anzeige
-- Chat-Verbesserungen, Scoreboard-Anpassung, Screenshot-Manager
+**Client-Mod: Module** · umgesetzt
+- Block-Umriss (Farbe, Chroma, Deckkraft, Linienstärke), Hit-Color, Low Fire, eigener Nametag
+- HUD: Server-IP und Geschwindigkeit
+- Chat (Uhrzeit, gebündelte Wiederholungen, längerer Verlauf), Scoreboard (Größe, Zahlen aus), Screenshot-Vorschau nach F2 (die Galerie ist der Screenshots-Tab im Launcher)
+- Zusätzlich: Karambit statt Netherite-Schwert (3D-Modell, Rückwärtsgriff, Zieh- und Inspect-Animation, Punchy- und Resourcepack-fest)
 
-**Client-Mod: Performance-Preset**
-- Sodium, Lithium, FerriteCore und Iris auf Wunsch über Modrinth mitinstallieren
+**Performance-Paket** · umgesetzt
+- Sodium, Lithium, FerriteCore und Iris beim Anlegen einer Instanz oder nachträglich im Inhalte-Tab (CLI: `daclient content preset`)
 
 **Release**
-- Versionsnummern, Changelog, Website-Download
+- Version 0.2.0 für Launcher und Mod, `CHANGELOG.md` · umgesetzt
+- Download-Link auf der Website · offen (Website-Dateien pflegst du selbst)
 
 ---
 

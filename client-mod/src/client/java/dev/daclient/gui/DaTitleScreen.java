@@ -21,14 +21,20 @@ import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
+import net.minecraft.client.multiplayer.ServerStatusPinger;
+import net.minecraft.client.gui.screens.FaviconTexture;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.server.network.EventLoopGroupHolder;
+import java.net.UnknownHostException;
+import net.minecraft.resources.Identifier;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 
 /**
  * The launcher's start page as the title screen: flowing shader backdrop,
- * watermark bar, active-mod ArrayList, a big instance name with status chips,
- * the chroma-ring play button and a strip of saved servers.
+ * active-mod ArrayList, a big instance name with status chips, the chroma-ring
+ * play button and a strip of saved servers with their icons.
  */
 public final class DaTitleScreen extends Screen {
 	private static final int PAD = 14, CARD_W = 124, CARD_H = 30, BTN_H = 24;
@@ -44,6 +50,11 @@ public final class DaTitleScreen extends Screen {
 	private final String instanceName = System.getProperty("daclient.instance", "DaClient");
 	private final List<String[]> mods = new ArrayList<>();
 	private final List<ServerData> servers = new ArrayList<>();
+	/** Pings the saved servers so their icons are current (like the server list does). */
+	private final ServerStatusPinger pinger = new ServerStatusPinger();
+	private final java.util.Map<ServerData, FaviconTexture> icons = new java.util.HashMap<>();
+	private final java.util.Map<ServerData, byte[]> uploaded = new java.util.HashMap<>();
+	private ServerList serverList;
 	private List<Button> buttons = List.of();
 
 	public DaTitleScreen() {
@@ -60,10 +71,49 @@ public final class DaTitleScreen extends Screen {
 	@Override
 	protected void init() {
 		servers.clear();
-		ServerList list = new ServerList(minecraft);
-		list.load();
-		for (int i = 0; i < list.size(); i++) servers.add(list.get(i));
+		pinger.removeAll();
+		serverList = new ServerList(minecraft);
+		serverList.load();
+		for (int i = 0; i < serverList.size(); i++) servers.add(serverList.get(i));
+		for (ServerData s : servers) {
+			try {
+				// A changed icon is written back to servers.dat, as vanilla does.
+				pinger.pingServer(s, () -> minecraft.execute(serverList::save), () -> {}, EventLoopGroupHolder.remote(minecraft.options.useNativeTransport()));
+			} catch (UnknownHostException | RuntimeException e) {
+				// Unreachable servers just keep their stored icon.
+			}
+		}
 		layout();
+	}
+
+	@Override
+	public void tick() {
+		pinger.tick();
+	}
+
+	@Override
+	public void removed() {
+		pinger.removeAll();
+		icons.values().forEach(FaviconTexture::close);
+		icons.clear();
+		uploaded.clear();
+	}
+
+	/** The server's favicon texture, or null while it has none. */
+	private Identifier icon(ServerData s) {
+		byte[] bytes = s.getIconBytes();
+		if (bytes == null) return null;
+		FaviconTexture tex = icons.computeIfAbsent(s, k -> FaviconTexture.forServer(minecraft.getTextureManager(), k.ip));
+		if (uploaded.get(s) != bytes) {
+			uploaded.put(s, bytes);
+			try {
+				tex.upload(NativeImage.read(bytes));
+			} catch (Exception e) {
+				tex.clear();
+				return null;
+			}
+		}
+		return tex.textureLocation();
 	}
 
 	@Override
@@ -121,16 +171,11 @@ public final class DaTitleScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(g, mouseX, mouseY, partialTick);
 		double t = seconds();
-		drawTitleBar(g, t);
 		drawArrayList(g, t);
 		drawHero(g, t);
 		drawButtons(g, mouseX, mouseY, t);
 		drawServers(g, mouseX, mouseY, t);
 		drawNotice(g, t);
-	}
-
-	private void drawTitleBar(GuiGraphicsExtractor g, double t) {
-		Chrome.titleBar(g, minecraft, Theme.ease(t / 0.6));
 	}
 
 	/** Loaded mods, longest first, sliding in from the right like the launcher's ArrayList. */
@@ -260,9 +305,15 @@ public final class DaTitleScreen extends Screen {
 			int iy = y - (hover ? 2 : 0);
 			Draw.round(g, c[0], iy, c[2], c[3], 7, Theme.alpha(Theme.PANEL_SOLID, 0.78 * k));
 			Draw.roundOutline(g, c[0], iy, c[2], c[3], 7, Theme.alpha(0xFFFFFF, (hover ? 0.16 : 0.07) * k));
-			Draw.round(g, c[0] + 7, iy + 7, 16, 16, 4, Theme.alpha(Theme.chroma(-i * 0.12), k));
-			String initial = s.name.isEmpty() ? "?" : s.name.substring(0, 1).toUpperCase();
-			Draw.text(g, initial, c[0] + 15 - Draw.width(initial) / 2, iy + 11, Theme.alpha(0xFFFFFF, k));
+			Identifier favicon = icon(s);
+			if (favicon != null) {
+				g.blit(RenderPipelines.GUI_TEXTURED, favicon, c[0] + 7, iy + 7, 0, 0, 16, 16, 64, 64, 64, 64, Theme.alpha(0xFFFFFF, k));
+			} else {
+				// No icon (yet): the initial on a chroma tile.
+				Draw.round(g, c[0] + 7, iy + 7, 16, 16, 4, Theme.alpha(Theme.chroma(-i * 0.12), k));
+				String initial = s.name.isEmpty() ? "?" : s.name.substring(0, 1).toUpperCase();
+				Draw.text(g, initial, c[0] + 15 - Draw.width(initial) / 2, iy + 11, Theme.alpha(0xFFFFFF, k));
+			}
 			Draw.text(g, ellipsize(s.name, c[2] - 36), c[0] + 29, iy + 6, Theme.alpha(Theme.TEXT, k));
 			Draw.scaledText(g, ellipsize(s.ip, (int) ((c[2] - 36) / 0.8f)), c[0] + 29, iy + 17, 0.8f, Theme.alpha(Theme.MUTED, k), false);
 		}

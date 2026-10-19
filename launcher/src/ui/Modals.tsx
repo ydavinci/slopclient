@@ -1,10 +1,10 @@
-import { Copy, ExternalLink, FileText, FileUp, PowerOff, Terminal, Upload } from "lucide-react";
+import { Copy, CopyPlus, ExternalLink, FileText, FileUp, Link2, PowerOff, Share2, Terminal, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, isTauri, openUrl, pickExportPath, pickFolder, pickModpackFile } from "../lib/ipc";
 import { loaderLabel } from "../lib/format";
 import { useStore } from "../lib/store";
-import type { CrashReport, DeviceCode, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
+import type { CrashReport, DeviceCode, InstallReport, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
 import { IconEditor } from "./IconEditor";
 import { Button, Field, Modal, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "./kit";
 
@@ -27,6 +27,9 @@ export function Modals() {
       <Modal open={modal?.kind === "icon"} title="Instanz-Icon" onClose={closeModal} width={560}>
         {modal?.kind === "icon" && <IconEditor instanceId={modal.instanceId} onClose={closeModal} />}
       </Modal>
+      <Modal open={modal?.kind === "duplicate"} title="Instanz kopieren" onClose={closeModal} width={440}>
+        {modal?.kind === "duplicate" && <Duplicate instanceId={modal.instanceId} onClose={closeModal} />}
+      </Modal>
       <Modal open={modal?.kind === "crash"} title={modal?.kind === "crash" ? modal.report.title : ""} onClose={closeModal} width={560}>
         {modal?.kind === "crash" && <Crash instanceId={modal.instanceId} report={modal.report} onClose={closeModal} />}
       </Modal>
@@ -34,9 +37,92 @@ export function Modals() {
   );
 }
 
+/**
+ * Shares a log on mclo.gs. The first click uploads (tokens and the Windows user
+ * name are removed first) and copies the link; afterwards the button opens it.
+ */
+export function ShareLogButton({ getText, size, variant }: { getText: () => Promise<string> | string; size?: "sm"; variant?: "ghost" }) {
+  const { toast } = useStore();
+  const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState<string | null>(null);
+
+  async function share() {
+    if (link) return openUrl(link);
+    setBusy(true);
+    try {
+      const url = await api.uploadLog(await getText());
+      setLink(url);
+      await navigator.clipboard.writeText(url).catch(() => {});
+      toast(`Link kopiert: ${url}`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button size={size} variant={variant} loading={busy} icon={link ? <Link2 className="size-3.5" /> : <Share2 className="size-3.5" />} onClick={share} title="Lädt das Log öffentlich auf mclo.gs hoch, ohne Zugangsdaten und Benutzername">
+      {link ? link.replace(/^https?:\/\//, "") : "Auf mclo.gs teilen"}
+    </Button>
+  );
+}
+
+function Duplicate({ instanceId, onClose }: { instanceId: string; onClose: () => void }) {
+  const { overview, refresh, toast, navigate, select } = useStore();
+  const source = overview?.instances.find((i) => i.id === instanceId);
+  const [name, setName] = useState(source ? `${source.name} (Kopie)` : "");
+  const [busy, setBusy] = useState(false);
+  if (!source) return null;
+
+  async function copy() {
+    setBusy(true);
+    try {
+      const created = await api.duplicateInstance(instanceId, name.trim() || `${source!.name} (Kopie)`);
+      await refresh();
+      select(created.id);
+      navigate({ page: "instance", id: created.id });
+      toast(`${created.name} angelegt`, "success");
+      onClose();
+    } catch (e) {
+      toast(String(e), "error");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-4">
+      <motion.p variants={rise} className="text-[13.5px] leading-relaxed text-muted">
+        Kopiert {source.name} mit Mods, Welten, Screenshots und Einstellungen. Die Spielzeit der Kopie beginnt bei null.
+      </motion.p>
+      <motion.div variants={rise}>
+        <Field label="Name der Kopie">
+          <input autoFocus className={inputClass} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !busy && copy()} />
+        </Field>
+      </motion.div>
+      <motion.div variants={rise} className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={onClose}>
+          Abbrechen
+        </Button>
+        <Button variant="primary" icon={<CopyPlus className="size-4" />} loading={busy} onClick={copy}>
+          Kopieren
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/** Toast text after installing the performance preset. */
+export function presetSummary(r: InstallReport): string {
+  const added = r.installed.filter((e) => !e.dependency).length;
+  const missing = r.warnings.length;
+  if (added === 0 && missing === 0) return "Performance-Paket ist schon installiert";
+  return `Performance-Paket: ${added} ${added === 1 ? "Mod" : "Mods"} installiert${missing ? `, ${missing} für diese Version nicht verfügbar` : ""}`;
+}
+
 /** What went wrong after a crash, with the fixes DaClient can apply directly. */
 function Crash({ instanceId, report, onClose }: { instanceId: string; report: CrashReport; onClose: () => void }) {
-  const { navigate, toast } = useStore();
+  const { navigate, toast, logs } = useStore();
   const [disabled, setDisabled] = useState(false);
   const culprit = report.culprit;
   const culpritName = culprit?.name ?? culprit?.modId;
@@ -79,6 +165,7 @@ function Crash({ instanceId, report, onClose }: { instanceId: string; report: Cr
             Crash-Report öffnen
           </Button>
         )}
+        <ShareLogButton getText={() => (report.reportFile ? api.readLogFile(report.reportFile) : (logs[instanceId] ?? []).map((l) => l.text).join("\n"))} />
         <Button
           icon={<Terminal className="size-4" />}
           onClick={() => {
@@ -108,7 +195,7 @@ const LOADERS: { value: LoaderChoice; label: string }[] = [
 ];
 
 function NewInstance({ onClose }: { onClose: () => void }) {
-  const { refresh, toast, navigate, select } = useStore();
+  const { refresh, toast, navigate, select, runTask } = useStore();
   const [versions, setVersions] = useState<ManifestEntry[] | null>(null);
   const [snapshots, setSnapshots] = useState(false);
   const [mc, setMc] = useState("");
@@ -116,6 +203,7 @@ function NewInstance({ onClose }: { onClose: () => void }) {
   const [loaderVersions, setLoaderVersions] = useState<LoaderVersion[] | null>(null);
   const [loaderVersion, setLoaderVersion] = useState("");
   const [name, setName] = useState("");
+  const [preset, setPreset] = useState(true);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -159,6 +247,12 @@ function NewInstance({ onClose }: { onClose: () => void }) {
       onClose();
       navigate({ page: "home" });
       toast(`${instance.name} angelegt. Fehlende Dateien lädt der erste Start.`, "success");
+      if (preset && loader !== "vanilla") {
+        // Runs as a background task; the instance is usable meanwhile.
+        runTask(`Performance-Paket für ${instance.name}`, (taskId) => api.contentInstallPreset(instance.id, taskId))
+          .then((r) => toast(presetSummary(r), r.warnings.length ? "info" : "success"))
+          .catch((e) => toast(String(e), "error"));
+      }
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -217,6 +311,15 @@ function NewInstance({ onClose }: { onClose: () => void }) {
             )}
           </Field>
         </motion.div>
+      )}
+      {loader !== "vanilla" && (
+        <motion.label variants={rise} className="glass flex cursor-pointer items-center gap-3 rounded-[14px] px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-semibold">Performance-Paket</div>
+            <div className="text-[12px] text-muted">Sodium, Lithium, FerriteCore und Iris (Shader) gleich mitinstallieren.</div>
+          </div>
+          <Toggle checked={preset} onChange={setPreset} label="Performance-Paket installieren" />
+        </motion.label>
       )}
       <motion.div variants={rise} className="mt-2 flex justify-end gap-2">
         <Button variant="ghost" onClick={onClose}>

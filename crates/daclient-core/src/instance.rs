@@ -35,6 +35,20 @@ pub struct Instance {
     /// Custom icon (instances/<id>/icon.png); none shows the colour tile.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub icon: Option<crate::icon::InstanceIcon>,
+    /// Shell commands run around a game session.
+    #[serde(default)]
+    pub hooks: Hooks,
+}
+
+/// Commands run through `cmd /C` in the game folder, with the instance in
+/// `INST_NAME`, `INST_ID`, `INST_DIR`, `INST_MC_DIR` and `INST_JAVA` (Prism's names).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct Hooks {
+    /// Runs before the game starts; a non-zero exit code cancels the start.
+    pub pre_launch: String,
+    /// Runs after the game exited.
+    pub post_exit: String,
 }
 
 fn default_true() -> bool {
@@ -162,6 +176,7 @@ impl Instance {
             modpack: None,
             client_mod: true,
             icon: None,
+            hooks: Hooks::default(),
         };
         std::fs::create_dir_all(instance.game_dir(paths))?;
         instance.save(paths)?;
@@ -202,6 +217,27 @@ impl Instance {
         Ok(out)
     }
 
+    /// Copies the instance with everything in it (worlds, mods, settings) under a new
+    /// name. Play statistics start from zero.
+    pub async fn duplicate(paths: &Paths, id: &str, name: &str) -> Result<Self> {
+        let source = Self::load(paths, id)?;
+        let mut copy = Self::create(paths, name, &source.mc_version, source.loader.clone())?;
+        let (from, to) = (source.dir(paths), copy.dir(paths));
+        let copied = tokio::task::spawn_blocking(move || copy_tree(&from, &to, true)).await?;
+        if let Err(e) = copied {
+            let _ = Self::delete(paths, &copy.id);
+            return Err(e.into());
+        }
+        copy.java = source.java;
+        copy.group = source.group;
+        copy.modpack = source.modpack;
+        copy.client_mod = source.client_mod;
+        copy.icon = source.icon;
+        copy.hooks = source.hooks;
+        copy.save(paths)?;
+        Ok(copy)
+    }
+
     pub fn delete(paths: &Paths, id: &str) -> Result<()> {
         let dir = paths.instances().join(id);
         if !dir.join("instance.json").exists() {
@@ -210,6 +246,25 @@ impl Instance {
         std::fs::remove_dir_all(dir)?;
         Ok(())
     }
+}
+
+/// Recursive copy; at the top level the instance's own bookkeeping is left out.
+fn copy_tree(from: &std::path::Path, to: &std::path::Path, top: bool) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)?.flatten() {
+        let name = entry.file_name();
+        if top && (name == "instance.json" || name == "launch.args") {
+            continue;
+        }
+        let target = to.join(&name);
+        let kind = entry.file_type()?;
+        if kind.is_dir() {
+            copy_tree(&entry.path(), &target, false)?;
+        } else if kind.is_file() {
+            std::fs::copy(entry.path(), &target)?;
+        }
+    }
+    Ok(())
 }
 
 fn slugify(name: &str) -> String {

@@ -9,6 +9,8 @@ import type {
   BlockedFile,
   CapeInfo,
   ContentEntry,
+  ContentType,
+  Datapack,
   DeviceCode,
   ForeignInstance,
   InstallReport,
@@ -18,11 +20,13 @@ import type {
   OnlineStatus,
   Overview,
   Platform,
+  Screenshot,
   SearchArgs,
   SearchResult,
   Settings,
   UpdateInfo,
   VersionList,
+  World,
 } from "./types";
 
 /** False when the UI runs in a plain browser (design preview with mock data). */
@@ -30,6 +34,14 @@ export const isTauri = "__TAURI_INTERNALS__" in window;
 
 function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   return isTauri ? invoke<T>(cmd, args) : (mockCall(cmd, args) as Promise<T>);
+}
+
+/** Sends a file as a raw body (cheap even for big mods); metadata goes in headers. */
+async function upload<T>(cmd: string, file: File, headers: Record<string, string>): Promise<T> {
+  if (!isTauri) return mockCall(cmd, { ...headers, fileName: file.name }) as Promise<T>;
+  const h: Record<string, string> = { "x-file-name": encodeURIComponent(file.name) };
+  for (const [k, v] of Object.entries(headers)) h[k] = encodeURIComponent(v);
+  return invoke<T>(cmd, new Uint8Array(await file.arrayBuffer()), { headers: h });
 }
 
 export function newTaskId(): string {
@@ -50,6 +62,23 @@ export const api = {
     call<Instance>("create_instance", { name, mcVersion, loader, loaderVersion }),
   saveInstance: (instance: Instance) => call<void>("save_instance", { instance }),
   deleteInstance: (id: string) => call<void>("delete_instance", { id }),
+  duplicateInstance: (id: string, name: string) => call<Instance>("duplicate_instance", { id, name }),
+  /** Shares text on mclo.gs; resolves to the public link. */
+  uploadLog: (text: string) => call<string>("upload_log", { text }),
+  readLogFile: (path: string) => call<string>("read_log_file", { path }),
+  /** Adds a dropped .jar/.zip; resolves to the kind it was sorted into. */
+  contentAddLocal: (id: string, file: File) => upload<ContentType>("content_add_local", file, { "x-instance": id }),
+  worlds: (id: string) => call<World[]>("worlds_list", { id }),
+  worldDelete: (id: string, world: string) => call<void>("world_delete", { id, world }),
+  worldBackup: (id: string, world: string) => call<string>("world_backup", { id, world }),
+  datapacks: (id: string, world: string) => call<Datapack[]>("datapacks_list", { id, world }),
+  datapackAdd: (id: string, world: string, file: File) => upload<void>("datapack_add", file, { "x-instance": id, "x-world": world }),
+  datapackSetEnabled: (id: string, world: string, fileName: string, enabled: boolean) =>
+    call<void>("datapack_set_enabled", { id, world, fileName, enabled }),
+  datapackRemove: (id: string, world: string, fileName: string) => call<void>("datapack_remove", { id, world, fileName }),
+  screenshots: (id: string) => call<Screenshot[]>("screenshots_list", { id }),
+  screenshotThumb: (id: string, name: string) => call<string>("screenshot_thumb", { id, name }),
+  screenshotDelete: (id: string, name: string) => call<void>("screenshot_delete", { id, name }),
   instanceDir: (id: string) => call<string>("instance_dir", { id }),
   instanceIcon: (id: string) => call<string | null>("instance_icon", { id }),
   setInstanceIcon: (id: string, bytes: number[]) => call<Instance>("set_instance_icon", { id, bytes }),
@@ -67,6 +96,8 @@ export const api = {
   contentList: (id: string) => call<ContentEntry[]>("content_list", { id }),
   contentInstall: (id: string, project: string, source: Platform, taskId: string) =>
     call<InstallReport>("content_install", { id, project, source, taskId }),
+  /** Sodium, Lithium, FerriteCore and Iris. */
+  contentInstallPreset: (id: string, taskId: string) => call<InstallReport>("content_install_preset", { id, taskId }),
   contentBlocked: (id: string) => call<BlockedFile[]>("content_blocked", { id }),
   /** Moves matching files from the Downloads folder in; returns what is still missing. */
   contentResolveBlocked: (id: string) => call<BlockedFile[]>("content_resolve_blocked", { id }),

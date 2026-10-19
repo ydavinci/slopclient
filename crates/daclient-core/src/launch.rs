@@ -209,6 +209,11 @@ pub async fn prepare(
         tokio::task::spawn_blocking(move || install::copy_assets(&index, &objects, &target)).await??;
     }
 
+    if !instance.hooks.pre_launch.trim().is_empty() {
+        stage(&progress, "Running pre-launch command");
+        run_hook(paths, instance, &instance.hooks.pre_launch, &java).await?;
+    }
+
     stage(&progress, "Starting game");
     let opts = LaunchOptions {
         java: java.clone(),
@@ -246,6 +251,48 @@ pub async fn prepare(
     #[cfg(windows)]
     cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
     Ok(cmd)
+}
+
+/// Runs a pre-launch or post-exit command. Fails with the end of its output when
+/// the command exits with an error.
+pub async fn run_hook(paths: &Paths, instance: &Instance, command: &str, java: &std::path::Path) -> Result<()> {
+    let game_dir = instance.game_dir(paths);
+    #[cfg(windows)]
+    let mut cmd = {
+        let mut c = tokio::process::Command::new("cmd");
+        c.arg("/C").raw_arg(command);
+        c
+    };
+    #[cfg(not(windows))]
+    let mut cmd = {
+        let mut c = tokio::process::Command::new("sh");
+        c.arg("-c").arg(command);
+        c
+    };
+    cmd.current_dir(&game_dir)
+        .env("INST_NAME", &instance.name)
+        .env("INST_ID", &instance.id)
+        .env("INST_DIR", instance.dir(paths))
+        .env("INST_MC_DIR", &game_dir)
+        .env("INST_JAVA", java)
+        .stdin(Stdio::null());
+    #[cfg(windows)]
+    cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    let out = tokio::time::timeout(std::time::Duration::from_secs(300), cmd.output())
+        .await
+        .map_err(|_| crate::Error::Other("Befehl lief länger als 5 Minuten und wurde abgebrochen".into()))??;
+    if out.status.success() {
+        return Ok(());
+    }
+    let text = String::from_utf8_lossy(&out.stderr).into_owned() + &String::from_utf8_lossy(&out.stdout);
+    let tail: Vec<&str> = text.lines().filter(|l| !l.trim().is_empty()).rev().take(4).collect();
+    let tail: Vec<&str> = tail.into_iter().rev().collect();
+    Err(crate::Error::Other(format!(
+        "Befehl „{}“ ist fehlgeschlagen (Code {}){}",
+        command.trim(),
+        out.status.code().unwrap_or(-1),
+        if tail.is_empty() { String::new() } else { format!(": {}", tail.join(" · ")) }
+    )))
 }
 
 /// Records a finished session in the instance's play statistics.

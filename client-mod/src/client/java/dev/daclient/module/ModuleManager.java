@@ -16,6 +16,14 @@ public final class ModuleManager {
 	public final Features.Freelook freelook = add(new Features.Freelook());
 	public final Features.UiFont uiFont = add(new Features.UiFont());
 	public final Features.Capes capes = add(new Features.Capes());
+	public final Features.Karambit karambit = add(new Features.Karambit());
+	public final Visuals.BlockOutline blockOutline = add(new Visuals.BlockOutline());
+	public final Visuals.HitColor hitColor = add(new Visuals.HitColor());
+	public final Visuals.LowFire lowFire = add(new Visuals.LowFire());
+	public final Visuals.Nametags nametags = add(new Visuals.Nametags());
+	public final Visuals.ChatPlus chat = add(new Visuals.ChatPlus());
+	public final Visuals.Scoreboard scoreboard = add(new Visuals.Scoreboard());
+	public final dev.daclient.gui.ScreenshotPreview screenshots = add(new dev.daclient.gui.ScreenshotPreview());
 	public final Features.TitleScreenModule titleScreen = add(new Features.TitleScreenModule());
 
 	public ModuleManager() {
@@ -25,6 +33,8 @@ public final class ModuleManager {
 		add(new HudModules.CpsHud());
 		add(new HudModules.Ping());
 		add(new HudModules.Clock());
+		add(new HudModules.ServerIp());
+		add(new HudModules.Speed());
 		add(new HudModules.Coordinates());
 		add(new HudModules.Keystrokes());
 		add(new HudModules.Armor());

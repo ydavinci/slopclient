@@ -35,6 +35,35 @@ export interface Instance {
   clientMod: boolean;
   /** Custom icon; without one the colour tile shows. */
   icon?: { updated: number } | null;
+  /** Shell commands before the start and after the game exited. */
+  hooks?: { preLaunch: string; postExit: string };
+}
+
+/** A world in the instance's saves folder. */
+export interface World {
+  id: string;
+  name: string;
+  gameMode?: string | null;
+  hardcore: boolean;
+  version?: string | null;
+  lastPlayed?: number | null;
+  sizeBytes: number;
+  datapacks: number;
+  icon?: string | null;
+}
+
+export interface Datapack {
+  fileName: string;
+  enabled: boolean;
+  folder: boolean;
+  description?: string | null;
+}
+
+export interface Screenshot {
+  fileName: string;
+  path: string;
+  takenAt: number;
+  sizeBytes: number;
 }
 
 /** Minecraft versions the bundled client mod supports (mirrors daclient-core client_mod::SUPPORTED_MC). */
@@ -59,10 +88,14 @@ export interface Overview {
   dataDir: string;
   running: string[];
   devBuild: boolean;
+  /** Launcher version, e.g. "0.2.0". */
+  version: string;
+  devOffline: boolean;
 }
 
 export interface Settings {
   msaClientId?: string | null;
+  devOffline?: boolean;
   curseforgeApiKey?: string | null;
   cosmeticsUrl?: string | null;
   downloadConcurrency?: number | null;

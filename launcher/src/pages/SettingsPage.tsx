@@ -52,6 +52,22 @@ export function SettingsPage() {
             >
               <input className={`${inputClass} font-mono`} placeholder="00000000-0000-0000-0000-000000000000" value={settings.msaClientId ?? ""} onChange={(e) => setSettings({ ...settings, msaClientId: e.target.value })} />
             </Field>
+            {overview?.devBuild && (
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 accent-accent-2"
+                  checked={settings.devOffline ?? false}
+                  onChange={(e) => setSettings({ ...settings, devOffline: e.target.checked })}
+                />
+                <span>
+                  <span className="block text-sm font-semibold">Offline-Testmodus (Dev)</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted">
+                    Startet Minecraft ohne Microsoft-Login mit der lokalen Testidentität „DevPlayer“. Nur in Entwickler-Builds verfügbar und nur für Einzelspieler/LAN geeignet.
+                  </span>
+                </span>
+              </label>
+            )}
           </motion.section>
 
           <motion.section variants={rise} className="glass grid gap-4 rounded-[18px] p-5">
@@ -101,7 +117,7 @@ export function SettingsPage() {
           </motion.section>
 
           <motion.p variants={rise} className="text-xs leading-relaxed text-muted">
-            DaClient 0.1.0. Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.
+            DaClient {overview?.version}. Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.
           </motion.p>
         </motion.div>
       )}

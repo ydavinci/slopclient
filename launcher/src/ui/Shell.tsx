@@ -20,7 +20,7 @@ export function TitleBar() {
   const { overview } = useStore();
   const time = useClock();
   const account = overview?.accounts.find((a) => a.uuid === overview.activeAccount) ?? overview?.accounts[0];
-  const parts = [`v0.1.0`, account?.username ?? "nicht angemeldet", `${overview?.instances.length ?? 0} Instanzen`, time];
+  const parts = [`v${overview?.version ?? ""}`, account?.username ?? "nicht angemeldet", `${overview?.instances.length ?? 0} Instanzen`, time];
   return (
     <header data-tauri-drag-region className="relative z-20 flex h-12 shrink-0 items-center justify-between pr-2 pl-4">
       <motion.div

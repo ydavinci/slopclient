@@ -17,14 +17,22 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Development aid, only active with `-Ddaclient.selftest=true`: walks through the
  * title screen, ClickGUI and HUD editor, then creates a flat test world and looks
  * at the player from behind (cape), saving a screenshot of each step to
- * `screenshots/` before quitting.
+ * `screenshots/` before quitting. With the netherite sword in hand it then shows the
+ * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, DONE }
 
 	private static Step step;
 	private static int wait;
 	private static DaTitleScreen title;
+	/** Candidate grips (x, y, z degrees, upward shift) photographed when -Ddaclient.gripsweep=true. */
+	private static final float[][] GRIPS = {
+		{180, 0, 30, 0.2f}, {180, 0, 45, 0.25f}, {180, 0, 60, 0.3f}, {180, 30, 30, 0.2f},
+		{180, -30, 30, 0.2f}, {180, 0, 30, 0.35f}, {180, -30, 45, 0.25f}, {180, 30, 45, 0.25f},
+		{180, 0, 15, 0.15f}, {150, 0, 30, 0.2f}, {210, 0, 30, 0.2f}, {180, -45, 30, 0.25f},
+	};
+	private static int grip;
 
 	private SelfTest() {
 	}
@@ -84,6 +92,69 @@ final class SelfTest {
 			}
 			case CAPE -> {
 				shot(mc, "4-cape");
+				mc.player.connection.sendCommand("give @s netherite_sword");
+				mc.options.setCameraType(CameraType.FIRST_PERSON);
+				mc.player.setXRot(0);
+				next(Step.KARAMBIT, 40); // the draw animation finishes
+			}
+			case KARAMBIT -> {
+				shot(mc, "5-karambit");
+				if (Boolean.getBoolean("daclient.gripsweep")) {
+					grip = 0;
+					setGrip();
+					next(Step.GRIP_SWEEP, 10);
+					return;
+				}
+				dev.daclient.cosmetics.karambit.KarambitAnimation.startInspect();
+				next(Step.INSPECT, 22); // halfway through the double spin
+			}
+			case GRIP_SWEEP -> {
+				float[] g = GRIPS[grip];
+				shot(mc, "grip-" + String.format("%02d", grip) + "_" + (int) g[0] + "_" + (int) g[1] + "_" + (int) g[2] + "_" + (int) (g[3] * 100));
+				if (++grip < GRIPS.length) {
+					setGrip();
+					next(Step.GRIP_SWEEP, 10);
+					return;
+				}
+				dev.daclient.cosmetics.karambit.KarambitAnimation.overrideGrip(null, null);
+				dev.daclient.cosmetics.karambit.KarambitAnimation.startInspect();
+				next(Step.INSPECT, 22);
+			}
+			case INSPECT -> {
+				shot(mc, "6-karambit-inspect");
+				mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+				next(Step.KARAMBIT_FRONT, 50);
+			}
+			case KARAMBIT_FRONT -> {
+				shot(mc, "7-karambit-front");
+				mc.options.setCameraType(CameraType.FIRST_PERSON);
+				mc.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
+				next(Step.KARAMBIT_GUI, 20);
+			}
+			case KARAMBIT_GUI -> {
+				shot(mc, "8-karambit-gui");
+				mc.gui.setScreen(null);
+				// M12 modules: outline, own nametag, chat stacking, scoreboard.
+				var m = DaClient.modules();
+				for (var module : java.util.List.of(m.blockOutline, m.hitColor, m.lowFire, m.nametags, m.chat, m.scoreboard)) module.setEnabled(true);
+				m.blockOutline.color.set("Chroma");
+				var c = mc.player.connection;
+				c.sendCommand("scoreboard objectives add daclient dummy \"DaClient\"");
+				c.sendCommand("scoreboard objectives setdisplay sidebar daclient");
+				c.sendCommand("scoreboard players set DevPlayer daclient 42");
+				for (int i = 0; i < 3; i++) c.sendCommand("say Hallo aus dem Selbsttest");
+				mc.options.setCameraType(CameraType.FIRST_PERSON);
+				mc.player.setXRot(70); // look at the ground: block outline
+				next(Step.MODULES, 40);
+			}
+			case MODULES -> {
+				shot(mc, "9-modules");
+				mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+				mc.player.setXRot(10);
+				next(Step.MODULES_FRONT, 30);
+			}
+			case MODULES_FRONT -> {
+				shot(mc, "10-nametag");
 				next(Step.DONE, 10);
 			}
 			case DONE -> {
@@ -91,6 +162,12 @@ final class SelfTest {
 				mc.stop();
 			}
 		}
+	}
+
+	private static void setGrip() {
+		float[] g = GRIPS[grip];
+		dev.daclient.cosmetics.karambit.KarambitAnimation.overrideGrip(new org.joml.Quaternionf().rotationXYZ(
+			(float) Math.toRadians(g[0]), (float) Math.toRadians(g[1]), (float) Math.toRadians(g[2])), new org.joml.Vector3f(0, g[3], 0));
 	}
 
 	private static void next(Step s, int ticks) {

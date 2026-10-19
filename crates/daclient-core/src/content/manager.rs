@@ -139,6 +139,30 @@ pub struct ContentManager<'a> {
     curseforge: Option<CurseForge>,
 }
 
+fn detect_kind(name: &str, bytes: &[u8]) -> Result<ContentType> {
+    let lower = name.to_ascii_lowercase();
+    if lower.ends_with(".jar") {
+        return Ok(ContentType::Mod);
+    }
+    if !lower.ends_with(".zip") {
+        return Err(Error::Other(format!("{name}: nur .jar- und .zip-Dateien werden unterstützt")));
+    }
+    let archive = zip::ZipArchive::new(std::io::Cursor::new(bytes))?;
+    let names: Vec<&str> = archive.file_names().collect();
+    let has = |prefix: &str| names.iter().any(|n| n.starts_with(prefix));
+    if has("shaders/") {
+        Ok(ContentType::Shader)
+    } else if has("pack.mcmeta") && has("assets/") {
+        Ok(ContentType::ResourcePack)
+    } else if has("pack.mcmeta") && has("data/") {
+        Err(Error::Other(format!("{name} ist ein Datapack. Füge es im Tab „Welten“ einer Welt hinzu.")))
+    } else if has("pack.mcmeta") {
+        Ok(ContentType::ResourcePack)
+    } else {
+        Err(Error::Other(format!("{name} ist weder Resourcepack noch Shader")))
+    }
+}
+
 impl<'a> ContentManager<'a> {
     pub fn new(paths: &'a Paths, instance: Instance, concurrency: usize) -> Self {
         Self {
@@ -795,6 +819,48 @@ impl<'a> ContentManager<'a> {
             }
         }
         self.write_lock(&lock)
+    }
+
+    /// Installs several Modrinth projects. A project without a version for this
+    /// instance does not stop the others; it ends up in `warnings`.
+    pub async fn install_many(&self, projects: &[&str], progress: &ProgressFn) -> Result<InstallReport> {
+        let mut report = InstallReport::default();
+        for project in projects {
+            match self.install(project, progress).await {
+                Ok(r) => {
+                    report.installed.extend(r.installed);
+                    report.skipped.extend(r.skipped);
+                    report.warnings.extend(r.warnings);
+                    report.blocked.extend(r.blocked);
+                }
+                Err(e) => report.warnings.push(format!("{project}: {e}")),
+            }
+        }
+        Ok(report)
+    }
+
+    /// Adds a file the user dropped or picked. The kind comes from the file itself:
+    /// `.jar` is a mod, a zip with `shaders/` a shader pack, one with `pack.mcmeta`
+    /// a resource pack. The file is then looked up online so it can be updated.
+    pub async fn add_local(&self, file_name: &str, bytes: &[u8]) -> Result<ContentType> {
+        let name = Path::new(file_name)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .filter(|n| !n.starts_with('.'))
+            .ok_or_else(|| Error::Other(format!("ungültiger Dateiname: {file_name}")))?;
+        let kind = detect_kind(name, bytes)?;
+        if kind == ContentType::Mod && self.instance.loader.kind().is_none() {
+            return Err(Error::Other("Vanilla-Instanzen laden keine Mods".into()));
+        }
+        let target = self.file_path(kind, name, true);
+        if target.exists() || self.file_path(kind, name, false).exists() {
+            return Err(Error::Other(format!("{name} ist schon installiert")));
+        }
+        std::fs::create_dir_all(self.folder(kind))?;
+        std::fs::write(&target, bytes)?;
+        // Recognizing it is a bonus; offline the file simply stays local.
+        let _ = self.identify().await;
+        Ok(kind)
     }
 
     /// Looks up untracked files by hash, first on Modrinth, then (with a key) on

@@ -21,6 +21,10 @@ use crate::{Error, Result};
 
 pub const DISABLED_SUFFIX: &str = ".disabled";
 
+/// Performance preset (Modrinth slugs): rendering, game logic, memory, shaders.
+/// Iris needs Sodium; together they replace OptiFine.
+pub const PERFORMANCE_PRESET: [&str; 4] = ["sodium", "lithium", "ferrite-core", "iris"];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ContentType {

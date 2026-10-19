@@ -21,11 +21,38 @@ const java = { path: null, minMemoryMb: 512, maxMemoryMb: 4096, jvmArgs: [] };
 const clientMod = true;
 
 const instances: Instance[] = [
-  { id: "survival", name: "Survival", mcVersion: "26.3", loader: { type: "fabric", version: "0.19.5" }, java, clientMod, createdAt: now - 20 * day, lastPlayed: now - 7200, playTimeSecs: 38 * 3600 },
-  { id: "vanilla-plus", name: "Vanilla+", mcVersion: "26.3", loader: { type: "vanilla" }, java, clientMod, createdAt: now - 9 * day, lastPlayed: now - 2 * day, playTimeSecs: 6 * 3600 },
-  { id: "create-above", name: "Create: Above", mcVersion: "1.21.10", loader: { type: "neoforge", version: "21.10.64" }, java, clientMod, createdAt: now - 30 * day, lastPlayed: now - 5 * day, playTimeSecs: 71 * 3600 },
+  { id: "survival", name: "Survival", group: "Survival", mcVersion: "26.3", loader: { type: "fabric", version: "0.19.5" }, java, clientMod, createdAt: now - 20 * day, lastPlayed: now - 7200, playTimeSecs: 38 * 3600 },
+  { id: "vanilla-plus", name: "Vanilla+", group: "Survival", mcVersion: "26.3", loader: { type: "vanilla" }, java, clientMod, createdAt: now - 9 * day, lastPlayed: now - 2 * day, playTimeSecs: 6 * 3600 },
+  { id: "create-above", name: "Create: Above", group: "Modpacks", mcVersion: "1.21.10", loader: { type: "neoforge", version: "21.10.64" }, java, clientMod, createdAt: now - 30 * day, lastPlayed: now - 5 * day, playTimeSecs: 71 * 3600 },
   { id: "fabulously-optimized", name: "Fabulously Optimized", mcVersion: "26.2", loader: { type: "fabric", version: "0.19.5" }, java, clientMod, createdAt: now - 3 * day, lastPlayed: null, playTimeSecs: 0, modpack: { name: "Fabulously Optimized", version: "12.0.1" } },
 ];
+
+let mockWorlds = [
+  { id: "Neue Welt", name: "Neue Welt", gameMode: "survival", hardcore: false, version: "26.3", lastPlayed: now - 7300, sizeBytes: 184_320_000, datapacks: 2, icon: null },
+  { id: "Kreativ-Bau", name: "Stadtprojekt", gameMode: "creative", hardcore: false, version: "26.3", lastPlayed: now - 3 * day, sizeBytes: 52_000_000, datapacks: 0, icon: null },
+  { id: "hc", name: "Hardcore Run", gameMode: "survival", hardcore: true, version: "26.2", lastPlayed: now - 12 * day, sizeBytes: 9_400_000, datapacks: 1, icon: null },
+];
+const mockPacks: Record<string, { fileName: string; enabled: boolean; folder: boolean; description: string | null }[]> = {
+  "Neue Welt": [
+    { fileName: "Terralith_26.3_v2.6.zip", enabled: true, folder: false, description: "Explore Over 95 New Biomes" },
+    { fileName: "afk-display.zip", enabled: false, folder: false, description: "Zeigt AFK-Spieler in der Tabliste" },
+  ],
+  hc: [{ fileName: "graves", enabled: true, folder: true, description: "Gräber statt verlorener Items" }],
+};
+let mockShots = Array.from({ length: 9 }, (_, i) => ({
+  fileName: `2026-10-${String(18 - (i >> 1)).padStart(2, "0")}_${String(21 - i).padStart(2, "0")}.14.0${i}.png`,
+  path: "",
+  takenAt: now - i * 40000 - 600,
+  sizeBytes: 2_400_000 + i * 180_000,
+}));
+/** Stand-in thumbnails: a sky-to-ground gradient per screenshot. */
+function shotThumb(name: string): string {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const hue = 190 + (h % 80);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><defs><linearGradient id="g" x2="0" y2="1"><stop offset="0" stop-color="hsl(${hue} 60% 62%)"/><stop offset=".62" stop-color="hsl(${hue + 20} 45% 78%)"/><stop offset=".63" stop-color="hsl(110 35% 34%)"/><stop offset="1" stop-color="hsl(30 30% 22%)"/></linearGradient></defs><rect width="16" height="9" fill="url(#g)"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
 
 const overview: Overview = {
   instances,
@@ -35,6 +62,8 @@ const overview: Overview = {
   dataDir: "C:\\Users\\you\\AppData\\Roaming\\DaClient",
   running: [],
   devBuild: true,
+  version: "0.2.0",
+  devOffline: false,
 };
 
 const mr = (slug: string, name: string, version: string, kind: ContentEntry["kind"], extra: Partial<ContentEntry> = {}): ContentEntry => ({
@@ -104,7 +133,7 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
     case "get_overview":
       return delay(structuredClone(overview), 120);
     case "get_settings":
-      return delay({ msaClientId: "00000000-0000-0000-0000-000000000000", curseforgeApiKey: "preview", cosmeticsUrl: "https://cosmetics.daclient.example", downloadConcurrency: 16 });
+      return delay({ msaClientId: "00000000-0000-0000-0000-000000000000", devOffline: false, curseforgeApiKey: "preview", cosmeticsUrl: "https://cosmetics.daclient.example", downloadConcurrency: 16 });
     case "list_versions":
       return delay({
         latestRelease: "26.3",
@@ -241,6 +270,51 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       return delay({ user_code: "F7KQ-29XD", device_code: "x", verification_uri: "https://www.microsoft.com/link", expires_in: 900, interval: 5, message: "" });
     case "login_finish":
       return new Promise(() => {});
+    case "duplicate_instance": {
+      const source = instances.find((i) => i.id === args.id)!;
+      const copy = { ...structuredClone(source), id: `${source.id}-copy`, name: args.name as string, lastPlayed: null, playTimeSecs: 0, createdAt: now };
+      instances.push(copy);
+      return delay(copy, 900);
+    }
+    case "content_install_preset":
+      return delay({ installed: [mr("lithium", "Lithium", "mc26.3-0.18.0", "mod"), mr("ferrite-core", "FerriteCore", "8.0.2", "mod")], skipped: ["sodium", "iris"], warnings: [], blocked: [] }, 1500);
+    case "upload_log":
+      return delay("https://mclo.gs/x7Qp2Ka", 800);
+    case "read_log_file":
+      return delay("---- Minecraft Crash Report ----");
+    case "content_add_local": {
+      const name = String(args.fileName);
+      const kind = name.endsWith(".jar") ? "mod" : "resourcepack";
+      content = [...content, { fileName: name, kind, name: name.replace(/\.(jar|zip)$/, ""), version: null, sha1: name, source: { type: "local" }, enabled: true, dependency: false }];
+      return delay(kind, 500);
+    }
+    case "worlds_list":
+      return delay(mockWorlds);
+    case "world_backup":
+      return delay("C:\\Users\\you\\AppData\\Roaming\\DaClient\\instances\\survival\\backups\\Neue Welt-1760880000.zip", 1200);
+    case "world_delete":
+      mockWorlds = mockWorlds.filter((w) => w.id !== args.world);
+      return delay(null);
+    case "datapacks_list":
+      return delay(mockPacks[args.world as string] ?? []);
+    case "datapack_add": {
+      const list = (mockPacks[args["x-world"] as string] ??= []);
+      list.push({ fileName: String(args.fileName), enabled: true, folder: false, description: null });
+      return delay(null, 400);
+    }
+    case "datapack_set_enabled":
+      mockPacks[args.world as string] = (mockPacks[args.world as string] ?? []).map((p) => (p.fileName === args.fileName ? { ...p, enabled: args.enabled as boolean } : p));
+      return delay(null);
+    case "datapack_remove":
+      mockPacks[args.world as string] = (mockPacks[args.world as string] ?? []).filter((p) => p.fileName !== args.fileName);
+      return delay(null);
+    case "screenshots_list":
+      return delay(mockShots);
+    case "screenshot_thumb":
+      return delay(shotThumb(String(args.name)), 300 + Math.random() * 500);
+    case "screenshot_delete":
+      mockShots = mockShots.filter((s) => s.fileName !== args.name);
+      return delay(null);
     default:
       return delay(null);
   }

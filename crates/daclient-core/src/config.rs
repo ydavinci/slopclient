@@ -8,6 +8,8 @@ use crate::{Paths, Result};
 pub struct Settings {
     /// Azure application (client) id used for Microsoft login.
     pub msa_client_id: Option<String>,
+    /// Debug-only offline identity for local feature testing.
+    pub dev_offline: bool,
     /// CurseForge API key (console.curseforge.com).
     pub curseforge_api_key: Option<String>,
     /// Parallel downloads.

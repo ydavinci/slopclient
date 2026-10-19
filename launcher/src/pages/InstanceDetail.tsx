@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowLeft, ChevronDown, ExternalLink, FileWarning, FolderOpen, Image, Plus, Puzzle, RefreshCw, Search, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, Plus, Puzzle, RefreshCw, Search, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, openUrl } from "../lib/ipc";
@@ -7,6 +7,8 @@ import { loaderLabel, playTime, relativeTime } from "../lib/format";
 import { useLaunch, useStore, type InstanceTab } from "../lib/store";
 import { supportsClientMod, CLIENT_MOD_MC, type BlockedFile, type ContentEntry, type ContentType, type Instance, type Source, type UpdateInfo } from "../lib/types";
 import { Button, Chip, EASE, EmptyState, Field, IconButton, InstanceIcon, PlayButton, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "../ui/kit";
+import { ShareLogButton, presetSummary } from "../ui/Modals";
+import { DropZone, FilePicker, ScreenshotsTab, WorldsTab } from "./InstanceTabs";
 
 export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: InstanceTab }) {
   const { overview, navigate, openModal, launching, toast } = useStore();
@@ -61,6 +63,9 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
           <Button icon={<FolderOpen className="size-4" />} onClick={() => api.instanceDir(id).then(api.openPath).catch((e) => toast(String(e), "error"))}>
             Ordner
           </Button>
+          <Button icon={<CopyPlus className="size-4" />} onClick={() => openModal({ kind: "duplicate", instanceId: id })}>
+            Kopieren
+          </Button>
           <Button icon={<Upload className="size-4" />} onClick={() => openModal({ kind: "export", instanceId: id })}>
             Exportieren
           </Button>
@@ -76,11 +81,13 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
 
       <div className="mt-5 px-8">
         <Segmented
-          className="w-[420px]"
+          className="w-[640px]"
           value={tab}
           onChange={setTab}
           options={[
             { value: "mods", label: <><Puzzle className="size-3.5" />Inhalte</> },
+            { value: "worlds", label: <><Globe2 className="size-3.5" />Welten</> },
+            { value: "screenshots", label: <><Camera className="size-3.5" />Screenshots</> },
             { value: "log", label: <><Terminal className="size-3.5" />Log{running && <span className="size-1.5 animate-pulse rounded-full bg-accent-2" />}</> },
             { value: "settings", label: "Einstellungen" },
           ]}
@@ -98,6 +105,8 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
             transition={{ duration: 0.35, ease: EASE }}
           >
             {tab === "mods" && <ContentTab instance={instance} />}
+            {tab === "worlds" && <WorldsTab instance={instance} />}
+            {tab === "screenshots" && <ScreenshotsTab instance={instance} />}
             {tab === "log" && <LogTab instanceId={id} />}
             {tab === "settings" && <SettingsTab instance={instance} />}
           </motion.div>
@@ -216,6 +225,33 @@ function ContentTab({ instance }: { instance: Instance }) {
     }
   }
 
+  async function installPreset() {
+    try {
+      const r = await runTask(`Performance-Paket für ${instance.name}`, (taskId) => api.contentInstallPreset(instance.id, taskId));
+      toast(presetSummary(r), r.warnings.length ? "info" : "success");
+      load();
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  async function addFiles(files: File[]) {
+    const added: ContentType[] = [];
+    for (const f of files) {
+      try {
+        added.push(await api.contentAddLocal(instance.id, f));
+      } catch (e) {
+        toast(String(e), "error");
+      }
+    }
+    if (added.length === 0) return;
+    const label = (k: ContentType) => KINDS.find((x) => x.value === k)!.label;
+    toast(added.length === 1 ? `${files.find(Boolean)!.name} zu ${label(added[0])} hinzugefügt` : `${added.length} Dateien hinzugefügt`, "success");
+    // Jump to where the (last) file went.
+    setKind(added[added.length - 1]);
+    load();
+  }
+
   const blocked = kind === "mod" && instance.loader.type === "vanilla";
 
   return (
@@ -240,15 +276,28 @@ function ContentTab({ instance }: { instance: Instance }) {
           );
         })}
         <div className="mt-auto flex flex-col gap-2">
+          <FilePicker accept=".jar,.zip" onFiles={addFiles}>
+            {(pick) => (
+              <Button icon={<FilePlus2 className="size-4" />} onClick={pick}>
+                Datei hinzufügen
+              </Button>
+            )}
+          </FilePicker>
           <Button icon={<RefreshCw className={`size-4 ${checking ? "animate-spin" : ""}`} />} disabled={checking} onClick={checkUpdates}>
             Updates prüfen
           </Button>
+          {instance.loader.type !== "vanilla" && (
+            <Button icon={<Gauge className="size-4" />} onClick={installPreset} title="Sodium, Lithium, FerriteCore und Iris">
+              Performance-Paket
+            </Button>
+          )}
           <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => navigate({ page: "browse", target: instance.id })}>
             Hinzufügen
           </Button>
         </div>
       </div>
 
+      <DropZone label="Mods, Resourcepacks oder Shader hier ablegen" onFiles={addFiles} className="flex min-w-0 flex-1">
       <div className="glass flex min-w-0 flex-1 flex-col overflow-hidden rounded-[18px]">
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <div className="relative flex-1">
@@ -401,6 +450,7 @@ function ContentTab({ instance }: { instance: Instance }) {
           )}
         </div>
       </div>
+      </DropZone>
     </div>
   );
 }
@@ -429,6 +479,7 @@ function LogTab({ instanceId }: { instanceId: string }) {
           <Toggle checked={follow} onChange={setFollow} label="Automatisch scrollen" />
           Mitlaufen
         </label>
+        {lines.length > 0 && <ShareLogButton size="sm" variant="ghost" getText={() => lines.map((l) => l.text).join("\n")} />}
         <Button
           size="sm"
           variant="ghost"
@@ -459,18 +510,20 @@ function LogTab({ instanceId }: { instanceId: string }) {
 }
 
 function SettingsTab({ instance }: { instance: Instance }) {
-  const { refresh, toast, navigate } = useStore();
+  const { refresh, toast, navigate, overview } = useStore();
+  const groups = useMemo(() => [...new Set((overview?.instances ?? []).map((i) => i.group).filter((g): g is string => !!g))].sort(), [overview]);
   const [draft, setDraft] = useState(instance);
   const [jvmArgs, setJvmArgs] = useState(instance.java.jvmArgs.join(" "));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, setSaving] = useState(false);
   const java = draft.java;
+  const hooks = draft.hooks ?? { preLaunch: "", postExit: "" };
   const setJava = (patch: Partial<Instance["java"]>) => setDraft({ ...draft, java: { ...java, ...patch } });
 
   async function save() {
     setSaving(true);
     try {
-      await api.saveInstance({ ...draft, name: draft.name.trim() || instance.name, java: { ...java, path: java.path?.trim() || null, jvmArgs: jvmArgs.split(/\s+/).filter(Boolean) } });
+      await api.saveInstance({ ...draft, name: draft.name.trim() || instance.name, group: draft.group?.trim() || null, hooks: { preLaunch: draft.hooks?.preLaunch.trim() ?? "", postExit: draft.hooks?.postExit.trim() ?? "" }, java: { ...java, path: java.path?.trim() || null, jvmArgs: jvmArgs.split(/\s+/).filter(Boolean) } });
       await refresh();
       toast("Gespeichert", "success");
     } catch (e) {
@@ -494,9 +547,17 @@ function SettingsTab({ instance }: { instance: Instance }) {
   return (
     <div className="h-full overflow-auto px-8 pt-5 pb-8">
       <motion.div variants={stagger} initial="hidden" animate="show" className="grid max-w-2xl gap-5">
-        <motion.div variants={rise}>
+        <motion.div variants={rise} className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
           <Field label="Name">
             <input className={inputClass} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          </Field>
+          <Field label="Gruppe" hint="Gruppiert die Instanzliste. Leer lassen für keine.">
+            <input className={inputClass} list="instance-groups" placeholder="z. B. PvP" value={draft.group ?? ""} onChange={(e) => setDraft({ ...draft, group: e.target.value })} />
+            <datalist id="instance-groups">
+              {groups.map((g) => (
+                <option key={g} value={g} />
+              ))}
+            </datalist>
           </Field>
         </motion.div>
         <motion.div variants={rise} className="grid grid-cols-2 gap-4">
@@ -511,6 +572,20 @@ function SettingsTab({ instance }: { instance: Instance }) {
         <motion.div variants={rise}>
           <Field label="Zusätzliche JVM-Argumente">
             <input className={`${inputClass} font-mono`} placeholder="-XX:+UseZGC" value={jvmArgs} onChange={(e) => setJvmArgs(e.target.value)} />
+          </Field>
+        </motion.div>
+        <motion.div variants={rise} className="glass grid gap-3 rounded-[18px] p-4">
+          <div>
+            <h3 className="text-[13px] font-semibold">Befehle beim Start</h3>
+            <p className="mt-0.5 text-[12.5px] text-muted">
+              Laufen über cmd im Spielordner. Verfügbar: <code className="font-mono text-[11.5px] text-text">%INST_NAME% %INST_ID% %INST_DIR% %INST_MC_DIR% %INST_JAVA%</code>
+            </p>
+          </div>
+          <Field label="Vor dem Start" hint="Endet der Befehl mit einem Fehler, startet das Spiel nicht.">
+            <input className={`${inputClass} font-mono`} placeholder="z. B. robocopy %INST_MC_DIR%\\saves D:\\Backup /E" value={hooks.preLaunch} onChange={(e) => setDraft({ ...draft, hooks: { ...hooks, preLaunch: e.target.value } })} />
+          </Field>
+          <Field label="Nach dem Beenden" hint="Das Ergebnis steht danach im Log.">
+            <input className={`${inputClass} font-mono`} placeholder="optional" value={hooks.postExit} onChange={(e) => setDraft({ ...draft, hooks: { ...hooks, postExit: e.target.value } })} />
           </Field>
         </motion.div>
         <motion.div variants={rise} className="glass flex items-center gap-4 rounded-[18px] p-4">

@@ -139,6 +139,8 @@ enum ContentCommand {
         #[arg(long, value_enum, default_value = "modrinth")]
         source: Platform,
     },
+    /// Install the performance preset (Sodium, Lithium, FerriteCore, Iris)
+    Preset { instance: String },
     /// Remove a file (by name, file name or slug)
     Remove { instance: String, name: String },
     Enable { instance: String, name: String },
@@ -689,6 +691,7 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
     let id = match &cmd {
         ContentCommand::List { instance }
         | ContentCommand::Add { instance, .. }
+        | ContentCommand::Preset { instance }
         | ContentCommand::Remove { instance, .. }
         | ContentCommand::Enable { instance, .. }
         | ContentCommand::Disable { instance, .. }
@@ -719,6 +722,20 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
                     source,
                     if e.dependency { "  (dependency)" } else { "" }
                 );
+            }
+        }
+        ContentCommand::Preset { .. } => {
+            let (progress, bar) = progress_bar();
+            let report = manager.install_many(&daclient_core::content::PERFORMANCE_PRESET, &progress).await?;
+            bar.finish_and_clear();
+            for e in &report.installed {
+                println!("installed {} {}", e.name, e.version.as_deref().unwrap_or(""));
+            }
+            for s in &report.skipped {
+                println!("already installed: {s}");
+            }
+            for w in &report.warnings {
+                println!("warning: {w}");
             }
         }
         ContentCommand::Add { projects, source, .. } => {

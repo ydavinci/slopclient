@@ -190,6 +190,83 @@ public final class HudModules {
 		}
 	}
 
+	/** Address of the server you are on. */
+	public static final class ServerIp extends HudModule {
+		public ServerIp() {
+			super("Server-IP", "Adresse des aktuellen Servers", false, 0, 0.6, true);
+		}
+
+		private String value(Minecraft mc) {
+			var server = mc.getCurrentServer();
+			return server == null ? "Einzelspieler" : server.ip;
+		}
+
+		@Override
+		public boolean hasContent(Minecraft mc) {
+			return mc.getCurrentServer() != null;
+		}
+
+		@Override
+		public int width(Minecraft mc) {
+			return labelValueWidth("IP", value(mc));
+		}
+
+		@Override
+		public int height(Minecraft mc) {
+			return lineHeight();
+		}
+
+		@Override
+		protected void draw(GuiGraphicsExtractor g, Minecraft mc, boolean editing) {
+			labelValue(g, "IP", value(mc));
+		}
+	}
+
+	/** Horizontal speed in blocks per second, smoothed over a few ticks. */
+	public static final class Speed extends HudModule {
+		private double lastX = Double.NaN, lastZ;
+		private double speed;
+
+		public Speed() {
+			super("Geschwindigkeit", "Tempo in Blöcken pro Sekunde", false, 0, 0.68, true);
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			if (mc.player == null) {
+				lastX = Double.NaN;
+				return;
+			}
+			double x = mc.player.getX(), z = mc.player.getZ();
+			if (!Double.isNaN(lastX)) {
+				double now = Math.hypot(x - lastX, z - lastZ) * 20;
+				// Teleports would spike the value.
+				if (now < 200) speed += (now - speed) * 0.35;
+			}
+			lastX = x;
+			lastZ = z;
+		}
+
+		private String value() {
+			return String.format(java.util.Locale.GERMAN, "%.1f", speed);
+		}
+
+		@Override
+		public int width(Minecraft mc) {
+			return labelValueWidth("m/s", value());
+		}
+
+		@Override
+		public int height(Minecraft mc) {
+			return lineHeight();
+		}
+
+		@Override
+		protected void draw(GuiGraphicsExtractor g, Minecraft mc, boolean editing) {
+			labelValue(g, "m/s", value());
+		}
+	}
+
 	public static final class Clock extends HudModule {
 		private final ModeSetting format = add(new ModeSetting("Format", "24 h", "24 h", "12 h"));
 

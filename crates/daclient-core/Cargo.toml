@@ -18,6 +18,7 @@ md5.workspace = true
 dunce.workspace = true
 image.workspace = true
 base64 = "0.22"
+flate2.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys.workspace = true
