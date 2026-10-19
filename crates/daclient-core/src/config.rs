@@ -8,6 +8,8 @@ use crate::{Paths, Result};
 pub struct Settings {
     /// Azure application (client) id used for Microsoft login.
     pub msa_client_id: Option<String>,
+    /// CurseForge API key (console.curseforge.com).
+    pub curseforge_api_key: Option<String>,
     /// Parallel downloads.
     pub download_concurrency: Option<usize>,
 }
@@ -34,6 +36,15 @@ impl Settings {
             .or_else(|| self.msa_client_id.clone())
             .or_else(|| option_env!("DACLIENT_MSA_CLIENT_ID").map(str::to_owned))
             .filter(|id| !id.trim().is_empty())
+    }
+
+    /// Key from `DACLIENT_CURSEFORGE_API_KEY`, then settings, then the build-time default.
+    pub fn curseforge_api_key(&self) -> Option<String> {
+        std::env::var("DACLIENT_CURSEFORGE_API_KEY")
+            .ok()
+            .or_else(|| self.curseforge_api_key.clone())
+            .or_else(|| option_env!("DACLIENT_CURSEFORGE_API_KEY").map(str::to_owned))
+            .filter(|key| !key.trim().is_empty())
     }
 
     pub fn download_concurrency(&self) -> usize {

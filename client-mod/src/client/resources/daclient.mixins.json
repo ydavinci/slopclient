@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "dev.daclient.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"CameraMixin",
+		"GuiMixin",
+		"MouseHandlerMixin",
+		"OptionInstanceAccessor",
+		"OptionsMixin"
+	],
+	"injectors": { "defaultRequire": 1 }
+}

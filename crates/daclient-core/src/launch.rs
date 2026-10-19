@@ -200,6 +200,7 @@ pub async fn prepare(
 
     let game_dir = instance.game_dir(paths);
     std::fs::create_dir_all(&game_dir)?;
+    crate::client_mod::sync(paths, instance, concurrency, &progress).await?;
     if version.map_to_resources {
         let index = install::read_asset_index(paths, &version.asset_index_id)?;
         let objects = paths.assets().join("objects");
@@ -213,7 +214,11 @@ pub async fn prepare(
         game_dir: game_dir.clone(),
         min_memory_mb: instance.java.min_memory_mb,
         max_memory_mb: instance.java.max_memory_mb,
-        extra_jvm_args: instance.java.jvm_args.clone(),
+        // Lets the client mod know which instance it runs in.
+        extra_jvm_args: [format!("-Ddaclient.instance={}", instance.name)]
+            .into_iter()
+            .chain(instance.java.jvm_args.iter().cloned())
+            .collect(),
         resolution: None,
     };
     let mut args = build_args(&version, auth, &opts);

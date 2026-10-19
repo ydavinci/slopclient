@@ -29,6 +29,13 @@ pub struct Instance {
     /// Set when the instance was created from a modpack.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub modpack: Option<ModpackInfo>,
+    /// Put the DaClient client mod into the instance when it supports it.
+    #[serde(default = "default_true")]
+    pub client_mod: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,6 +157,7 @@ impl Instance {
             last_played: None,
             play_time_secs: 0,
             modpack: None,
+            client_mod: true,
         };
         std::fs::create_dir_all(instance.game_dir(paths))?;
         instance.save(paths)?;

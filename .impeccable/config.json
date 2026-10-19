@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "launcher/src/styles.css"
+        ],
+        "createdAt": "2026-10-18T20:53:51.133Z",
+        "reason": "Brief: user asked for a modern look similar to cheat clients, whose chroma (animated gradient) watermark is genre-native; limited to the chroma-text utility"
+      }
+    ]
+  }
+}

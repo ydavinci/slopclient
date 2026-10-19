@@ -31,6 +31,13 @@ pub struct SearchHit {
     pub icon_url: Option<String>,
     #[serde(default)]
     pub categories: Vec<String>,
+    /// `modrinth` or `curseforge`; Modrinth's API doesn't send it.
+    #[serde(default = "modrinth_source")]
+    pub source: String,
+}
+
+fn modrinth_source() -> String {
+    "modrinth".into()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

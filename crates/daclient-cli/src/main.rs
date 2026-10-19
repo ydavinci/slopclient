@@ -6,13 +6,14 @@ use std::{
 };
 
 use anyhow::{Context, bail};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::AccountStore,
     config::Settings,
     content::{
-        ContentManager, Source,
+        BlockedFile, ContentManager,
+        curseforge::CurseForge,
         modrinth::{self, SearchQuery},
         mrpack::{self, ExportOptions, PackSource},
     },
@@ -29,6 +30,13 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 struct Cli {
     #[command(subcommand)]
     command: Command,
+}
+
+/// Content platform.
+#[derive(Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum Platform {
+    Modrinth,
+    Curseforge,
 }
 
 #[derive(Subcommand)]
@@ -62,9 +70,11 @@ enum Command {
     /// Manage instances
     #[command(subcommand)]
     Instance(InstanceCommand),
-    /// Search Modrinth
+    /// Search Modrinth or CurseForge
     Search {
         query: String,
+        #[arg(long, value_enum, default_value = "modrinth")]
+        source: Platform,
         /// mod, resourcepack, shader, modpack
         #[arg(long = "type", default_value = "mod")]
         kind: String,
@@ -80,7 +90,7 @@ enum Command {
     /// Mods, resource packs and shaders of an instance
     #[command(subcommand)]
     Content(ContentCommand),
-    /// Import or export Modrinth modpacks (.mrpack)
+    /// Import modpacks (.mrpack, CurseForge zip) or export .mrpack
     #[command(subcommand)]
     Modpack(ModpackCommand),
     /// Log in with a Microsoft account (device code)
@@ -104,17 +114,21 @@ enum Command {
     },
     /// Set the Azure client id used for Microsoft login
     SetClientId { client_id: String },
+    /// Set the CurseForge API key
+    SetCurseforgeKey { key: String },
 }
 
 #[derive(Subcommand)]
 enum ContentCommand {
     /// List installed content
     List { instance: String },
-    /// Install Modrinth projects (slug or id) with their dependencies
+    /// Install projects (slug or id) with their dependencies
     Add {
         instance: String,
         #[arg(required = true)]
         projects: Vec<String>,
+        #[arg(long, value_enum, default_value = "modrinth")]
+        source: Platform,
     },
     /// Remove a file (by name, file name or slug)
     Remove { instance: String, name: String },
@@ -124,15 +138,25 @@ enum ContentCommand {
     Updates { instance: String },
     /// Install all available updates
     Update { instance: String },
-    /// Recognize manually added files on Modrinth
+    /// Recognize manually added files on Modrinth (and CurseForge with a key)
     Identify { instance: String },
+    /// CurseForge files that need a manual download; picks up downloaded ones
+    Blocked {
+        instance: String,
+        /// Folder to look in (default: Downloads)
+        #[arg(long)]
+        dir: Vec<std::path::PathBuf>,
+    },
 }
 
 #[derive(Subcommand)]
 enum ModpackCommand {
-    /// Create an instance from a .mrpack file or a Modrinth modpack (slug or id)
+    /// Create an instance from a .mrpack/CurseForge zip or a modpack project (slug or id)
     Import {
         source: String,
+        /// Where to look up a project name
+        #[arg(long, value_enum, default_value = "modrinth")]
+        platform: Platform,
         /// Instance name (default: the pack's name)
         #[arg(long)]
         name: Option<String>,
@@ -224,6 +248,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Search {
             query,
+            source,
             kind,
             instance,
             sort,
@@ -247,7 +272,10 @@ async fn main() -> anyhow::Result<()> {
                         };
                     }
             }
-            let result = modrinth::search(&q).await?;
+            let result = match source {
+                Platform::Modrinth => modrinth::search(&q).await?,
+                Platform::Curseforge => curseforge(&paths)?.search(&q).await?,
+            };
             println!("{} results", result.total_hits);
             for hit in result.hits {
                 println!(
@@ -263,22 +291,28 @@ async fn main() -> anyhow::Result<()> {
         Command::Modpack(cmd) => {
             let concurrency = Settings::load(&paths)?.download_concurrency();
             match cmd {
-                ModpackCommand::Import { source, name } => {
+                ModpackCommand::Import { source, platform, name } => {
                     let path = std::path::Path::new(&source);
                     let source = if path.is_file() {
                         PackSource::File(path)
+                    } else if platform == Platform::Curseforge {
+                        PackSource::CurseForge(&source)
                     } else {
                         PackSource::Modrinth(&source)
                     };
+                    let cf = Settings::load(&paths)?.curseforge_api_key().map(CurseForge::new);
                     let (progress, bar) = progress_bar();
-                    let instance = mrpack::import(&paths, source, name.as_deref(), concurrency, &progress).await;
+                    let instance =
+                        mrpack::import(&paths, source, name.as_deref(), cf.as_ref(), concurrency, &progress).await;
                     bar.finish_and_clear();
                     let instance = instance?;
-                    let mods = ContentManager::new(&paths, instance.clone(), concurrency).list().await?.len();
+                    let manager = ContentManager::new(&paths, instance.clone(), concurrency);
+                    let mods = manager.list().await?.len();
                     println!(
                         "created instance '{}' ({}) - Minecraft {}, {}, {} files",
                         instance.name, instance.id, instance.mc_version, instance.loader, mods
                     );
+                    print_blocked(&manager.blocked()?);
                 }
                 ModpackCommand::Export {
                     instance,
@@ -367,6 +401,12 @@ async fn main() -> anyhow::Result<()> {
             settings.save(&paths)?;
             println!("saved");
         }
+        Command::SetCurseforgeKey { key } => {
+            let mut settings = Settings::load(&paths)?;
+            settings.curseforge_api_key = Some(key);
+            settings.save(&paths)?;
+            println!("saved");
+        }
         Command::Launch {
             instance,
             account,
@@ -413,10 +453,13 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
         | ContentCommand::Disable { instance, .. }
         | ContentCommand::Updates { instance }
         | ContentCommand::Update { instance }
-        | ContentCommand::Identify { instance } => instance.clone(),
+        | ContentCommand::Identify { instance }
+        | ContentCommand::Blocked { instance, .. } => instance.clone(),
     };
     let instance = Instance::load(paths, &id)?;
-    let manager = ContentManager::new(paths, instance, Settings::load(paths)?.download_concurrency());
+    let settings = Settings::load(paths)?;
+    let manager = ContentManager::new(paths, instance, settings.download_concurrency())
+        .with_curseforge(settings.curseforge_api_key());
 
     match cmd {
         ContentCommand::List { .. } => {
@@ -425,10 +468,7 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
                 println!("no content installed");
             }
             for e in entries {
-                let source = match &e.source {
-                    Source::Modrinth { .. } => "modrinth",
-                    Source::Local => "local",
-                };
+                let source = e.source.platform();
                 println!(
                     "  [{}] {:<14} {:<30} {:<28} {:<9}{}",
                     if e.enabled { "x" } else { " " },
@@ -440,10 +480,13 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
                 );
             }
         }
-        ContentCommand::Add { projects, .. } => {
+        ContentCommand::Add { projects, source, .. } => {
             for project in projects {
                 let (progress, bar) = progress_bar();
-                let report = manager.install(&project, &progress).await;
+                let report = match source {
+                    Platform::Modrinth => manager.install(&project, &progress).await,
+                    Platform::Curseforge => manager.install_curseforge(&project, &progress).await,
+                };
                 bar.finish_and_clear();
                 let report = report?;
                 for e in &report.installed {
@@ -460,6 +503,7 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
                 for w in &report.warnings {
                     println!("warning: {w}");
                 }
+                print_blocked(&report.blocked);
             }
         }
         ContentCommand::Remove { name, .. } => {
@@ -501,10 +545,40 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
         }
         ContentCommand::Identify { .. } => {
             let n = manager.identify().await?;
-            println!("recognized {n} files on Modrinth");
+            println!("recognized {n} files");
+        }
+        ContentCommand::Blocked { dir, .. } => {
+            let (resolved, remaining) = manager.resolve_blocked(&dir).await?;
+            if resolved > 0 {
+                println!("added {resolved} downloaded files");
+            }
+            if remaining.is_empty() {
+                println!("nothing is waiting for a manual download");
+            }
+            print_blocked(&remaining);
         }
     }
     Ok(())
+}
+
+fn curseforge(paths: &Paths) -> anyhow::Result<CurseForge> {
+    let key = Settings::load(paths)?
+        .curseforge_api_key()
+        .context("no CurseForge API key, run `daclient set-curseforge-key <key>` first")?;
+    Ok(CurseForge::new(key))
+}
+
+fn print_blocked(blocked: &[BlockedFile]) {
+    if blocked.is_empty() {
+        return;
+    }
+    println!(
+        "{} files can only be downloaded on curseforge.com. Download them, then run `daclient content blocked <instance>`:",
+        blocked.len()
+    );
+    for b in blocked {
+        println!("  {:<30} {}", truncate(&b.name, 30), b.page_url);
+    }
 }
 
 fn truncate(s: &str, max: usize) -> String {

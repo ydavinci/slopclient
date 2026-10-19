@@ -97,7 +97,13 @@ impl<'a> AccountStore<'a> {
     ) -> Result<Account> {
         let code = msa::start_device_code(client_id).await?;
         on_code(&code);
-        let token = msa::poll_device_code(client_id, &code).await?;
+        self.finish_device_code(client_id, &code).await
+    }
+
+    /// Second half of the device-code login for UIs that show the code themselves
+    /// (get it from [`msa::start_device_code`]). Waits until the user confirmed.
+    pub async fn finish_device_code(&self, client_id: &str, code: &msa::DeviceCode) -> Result<Account> {
+        let token = msa::poll_device_code(client_id, code).await?;
         self.complete_login(token).await
     }
 

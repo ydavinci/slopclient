@@ -5,6 +5,8 @@
 //! `content.lock.json` remembers where tracked files came from so they can be
 //! updated; files without an entry are listed as local files.
 
+pub mod curseforge;
+pub mod cfpack;
 mod manager;
 pub mod modrinth;
 pub mod mrpack;
@@ -13,7 +15,7 @@ use std::{fmt, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
-pub use manager::{ContentManager, InstallReport, UpdateInfo};
+pub use manager::{BlockedFile, ContentManager, InstallReport, RemoteFile, RemoteVersion, UpdateInfo};
 
 use crate::{Error, Result};
 
@@ -43,6 +45,23 @@ impl ContentType {
             Self::Mod => "mod",
             Self::ResourcePack => "resourcepack",
             Self::Shader => "shader",
+        }
+    }
+
+    pub fn curseforge_class(self) -> u32 {
+        match self {
+            Self::Mod => 6,
+            Self::ResourcePack => 12,
+            Self::Shader => 6552,
+        }
+    }
+
+    pub fn from_curseforge_class(class_id: u32) -> Option<Self> {
+        match class_id {
+            6 => Some(Self::Mod),
+            12 => Some(Self::ResourcePack),
+            6552 => Some(Self::Shader),
+            _ => None,
         }
     }
 
@@ -89,7 +108,33 @@ pub enum Source {
         #[serde(default)]
         slug: Option<String>,
     },
+    #[serde(rename = "curseforge", rename_all = "camelCase")]
+    CurseForge {
+        project_id: u64,
+        file_id: u64,
+        #[serde(default)]
+        slug: Option<String>,
+    },
     Local,
+}
+
+impl Source {
+    /// Project id as a string, for either platform.
+    pub fn project_key(&self) -> Option<String> {
+        match self {
+            Source::Modrinth { project_id, .. } => Some(project_id.clone()),
+            Source::CurseForge { project_id, .. } => Some(project_id.to_string()),
+            Source::Local => None,
+        }
+    }
+
+    pub fn platform(&self) -> &'static str {
+        match self {
+            Source::Modrinth { .. } => "modrinth",
+            Source::CurseForge { .. } => "curseforge",
+            Source::Local => "local",
+        }
+    }
 }
 
 /// One installed file.
@@ -116,7 +161,7 @@ impl ContentEntry {
     pub fn project_id(&self) -> Option<&str> {
         match &self.source {
             Source::Modrinth { project_id, .. } => Some(project_id),
-            Source::Local => None,
+            Source::CurseForge { .. } | Source::Local => None,
         }
     }
 
@@ -128,6 +173,9 @@ impl ContentEntry {
             || match &self.source {
                 Source::Modrinth { project_id, slug, .. } => {
                     project_id.to_lowercase() == q || slug.as_deref().is_some_and(|s| s == q)
+                }
+                Source::CurseForge { project_id, slug, .. } => {
+                    project_id.to_string() == q || slug.as_deref().is_some_and(|s| s == q)
                 }
                 Source::Local => false,
             }

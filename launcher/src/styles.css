@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@import "@fontsource-variable/sora";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* Modern client look: glass panels over a flowing shader, chroma accent. */
+@theme {
+  --color-bg: #09080e;
+  --color-panel: rgb(20 17 30 / 0.72);
+  --color-panel-solid: #15121f;
+  --color-raised: rgb(38 32 54 / 0.72);
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-2: rgb(255 255 255 / 0.14);
+  --color-text: #efecf7;
+  --color-muted: #a39cb6;
+  --color-dim: #726b86;
+  --color-accent: #8b5cf6;
+  --color-accent-2: #c084fc;
+  --color-accent-3: #e879f9;
+  --color-on: #4ade80;
+  --color-warn: #fbbf24;
+  --color-err: #fb7185;
+
+  --font-sans: "Sora Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --radius-panel: 14px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    overflow: hidden;
+  }
+  input,
+  textarea {
+    user-select: text;
+    caret-color: var(--color-accent-2);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-2);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: rgb(139 92 246 / 0.55);
+    color: #fff;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 0.1);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(192 132 252 / 0.45);
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* Floating glass panel. */
+@utility glass {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+
+/* The client's chroma: a gradient that travels, like an ArrayList colour wave. */
+@utility chroma {
+  background-image: linear-gradient(90deg, var(--color-accent), var(--color-accent-2), var(--color-accent-3), var(--color-accent-2), var(--color-accent));
+  background-size: 300% 100%;
+  animation: chroma 6s linear infinite;
+}
+
+@utility chroma-text {
+  background-image: linear-gradient(90deg, var(--color-accent), var(--color-accent-2), var(--color-accent-3), var(--color-accent-2), var(--color-accent));
+  background-size: 300% 100%;
+  animation: chroma 6s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* A rotating chroma ring drawn as a border (primary action only). */
+@utility chroma-ring {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--color-panel-solid), var(--color-panel-solid)) padding-box,
+    conic-gradient(from var(--angle), var(--color-accent), var(--color-accent-3), var(--color-accent-2), var(--color-accent)) border-box;
+  animation: spin-angle 4s linear infinite;
+}
+
+@utility drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+@utility no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+@keyframes chroma {
+  to {
+    background-position: 300% 0;
+  }
+}
+
+@keyframes spin-angle {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@keyframes shine {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

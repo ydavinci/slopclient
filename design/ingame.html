@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DaClient In-Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #09080e;
+  --panel: rgb(20 17 30 / .78);
+  --solid: #15121f;
+  --line: rgb(255 255 255 / .07);
+  --line2: rgb(255 255 255 / .14);
+  --text: #efecf7;
+  --muted: #a39cb6;
+  --dim: #726b86;
+  --a1: #8b5cf6;
+  --a2: #c084fc;
+  --a3: #e879f9;
+  --on: #4ade80;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
+  --chroma: linear-gradient(90deg, var(--a1), var(--a2), var(--a3), var(--a2), var(--a1));
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font: 13.5px/1.45 "Sora", system-ui, sans-serif; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; display: grid; place-items: center; padding: 52px 16px 30px; overflow: hidden; user-select: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.mono { font-family: "JetBrains Mono", monospace; }
+::selection { background: rgb(139 92 246 / .55); }
+
+@keyframes chroma { to { background-position: 300% 0; } }
+@keyframes float { 50% { transform: translateY(-8px); } }
+@keyframes pulse { 50% { opacity: .45; } }
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes spin { to { --ang: 360deg; } }
+.chroma { background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; }
+.chroma-text { background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.glass { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
+
+/* Game frame (16:9). */
+.frame { position: relative; width: min(100%, calc((100vh - 82px) * 16 / 9)); aspect-ratio: 16/9; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: #000; }
+.frame > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.view { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .45s var(--ease); }
+.view.active { opacity: 1; pointer-events: auto; }
+
+/* View switcher. */
+.switch { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 4px; border-radius: 12px; z-index: 10; }
+.switch button { position: relative; padding: 6px 13px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--muted); transition: color .2s; }
+.switch button:hover { color: var(--text); }
+.switch button.on { color: #fff; background: rgb(255 255 255 / .1); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08); }
+.note { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+
+/* ========== Title screen ========== */
+.title-wrap { position: absolute; inset: 0; display: grid; place-items: center; }
+.logo { text-align: center; animation: float 6s ease-in-out infinite; }
+.logo h1 { font-size: clamp(52px, 7vw, 96px); font-weight: 800; letter-spacing: -.045em; line-height: .95; }
+.logo h1 span { display: inline-block; }
+.anim .logo h1 span { opacity: 0; transform: translateY(.4em); filter: blur(10px); }
+.anim .active .logo h1 span { animation: letter .7s var(--ease) forwards, chroma 6s linear infinite; animation-delay: calc(var(--i) * 45ms + 150ms), calc(var(--i) * -.25s); }
+@keyframes letter { to { opacity: 1; transform: none; filter: blur(0); } }
+.logo p { margin-top: 12px; color: var(--muted); font-size: 14px; }
+.menu { margin-top: 34px; display: flex; flex-direction: column; gap: 8px; width: 320px; margin-inline: auto; }
+.mbtn { position: relative; overflow: hidden; height: 46px; border-radius: 12px; display: flex; align-items: center; gap: 12px; padding: 0 16px; font-weight: 600; text-align: left; transition: border-color .25s, transform .35s var(--spring); }
+.anim .mbtn { opacity: 0; transform: translateY(10px); }
+.anim .active .mbtn { animation: rise .55s var(--ease) forwards; animation-delay: calc(var(--i) * 60ms + 500ms); }
+@keyframes rise { to { opacity: 1; transform: none; } }
+.mbtn::before { content: ""; position: absolute; inset: 0; background: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; opacity: 0; transition: opacity .3s var(--ease); }
+.mbtn:hover::before { opacity: .9; }
+.mbtn:hover { border-color: transparent; translate: 4px 0; }
+.mbtn > * { position: relative; }
+.mbtn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mbtn .key { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--muted); }
+.mbtn:hover .key { color: #fff; }
+.mbtn.primary { border: 1.5px solid transparent; background: linear-gradient(var(--solid), var(--solid)) padding-box, conic-gradient(from var(--ang), var(--a1), var(--a3), var(--a2), var(--a1)) border-box; }
+.mbtn.primary .ring { position: absolute; inset: 0; pointer-events: none; }
+.spin { animation: spin 4s linear infinite; }
+.corner { position: absolute; bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.corner.l { left: 16px; } .corner.r { right: 16px; }
+.acct { display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; border-radius: 12px; }
+.head { width: 30px; height: 30px; border-radius: 8px; image-rendering: pixelated; background: #2a2340; }
+.acct b { display: block; font-size: 13px; } .acct small { color: var(--on); font-size: 11px; }
+.news { position: absolute; top: 16px; right: 16px; width: 270px; border-radius: 14px; padding: 14px; }
+.news h3 { font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.news h3 i { width: 7px; height: 7px; border-radius: 50%; animation: chroma 6s linear infinite, pulse 1.6s infinite; }
+.news li { list-style: none; font-size: 12.5px; color: var(--muted); padding: 5px 0; border-top: 1px solid var(--line); }
+.news li b { color: var(--text); font-weight: 600; }
+.disclaimer { color: var(--muted); font-size: 11px; max-width: 360px; text-align: right; line-height: 1.5; }
+
+/* ========== Shared HUD ========== */
+.hud-root { position: absolute; inset: 0; }
+.watermark { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 8px; border-radius: 10px; font-size: 12px; color: var(--muted); }
+.watermark b { font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+.watermark i { width: 1px; height: 12px; background: var(--line2); }
+.watermark .logo-mark { width: 20px; height: 20px; border-radius: 6px; }
+.arraylist { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; }
+.arraylist .row { display: flex; background: rgb(0 0 0 / .45); backdrop-filter: blur(6px); }
+.arraylist .row:first-child { border-top-left-radius: 6px; } .arraylist .row:last-child { border-bottom-left-radius: 6px; }
+.arraylist .row span.t { padding: 2px 9px; font-size: 13px; font-weight: 600; }
+.arraylist .row span.t small { font-family: "JetBrains Mono", monospace; font-size: 10.5px; margin-left: 6px; color: var(--muted); }
+.arraylist .row span.bar { width: 2px; }
+.anim .arraylist .row.enter { animation: slide .5s var(--ease) backwards; }
+@keyframes slide { from { transform: translateX(110%); opacity: 0; } }
+.info { position: absolute; left: 10px; bottom: 58px; display: flex; flex-direction: column; gap: 4px; }
+.pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; width: fit-content; }
+.pill .k { color: var(--muted); font-weight: 500; }
+.keys { position: absolute; left: 10px; bottom: 166px; display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; }
+.keys .key { height: 40px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; font-size: 13px; transition: transform .12s, color .12s, box-shadow .12s; }
+.keys .key.wide { grid-column: span 3; height: 26px; font-size: 11px; font-family: "JetBrains Mono", monospace; }
+.keys .mouse { grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.keys .mouse .key { height: 36px; font-size: 10.5px; font-family: "JetBrains Mono", monospace; text-align: center; line-height: 1.15; }
+.key.down { background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; color: #fff; transform: scale(.93); box-shadow: 0 6px 18px -6px rgb(168 85 247 / .9); border-color: transparent; }
+.armor { position: absolute; right: 10px; bottom: 58px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.armor .pill i { display: block; width: 46px; height: 4px; border-radius: 4px; background: rgb(255 255 255 / .1); overflow: hidden; }
+.armor .pill i::after { content: ""; display: block; height: 100%; width: var(--w); background: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; }
+.effects { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.hotbar { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: rgb(0 0 0 / .45); }
+.hotbar span { width: 38px; height: 38px; border-radius: 7px; border: 1.5px solid rgb(255 255 255 / .12); }
+.hotbar span.s { border-color: var(--a2); box-shadow: 0 0 0 1px var(--a2) inset; }
+.cross { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; transform: translate(-50%, -50%); }
+.cross::before, .cross::after { content: ""; position: absolute; background: var(--a2); border-radius: 2px; }
+.cross::before { left: 7px; top: 0; width: 2px; height: 16px; } .cross::after { top: 7px; left: 0; height: 2px; width: 16px; }
+.toasts { position: absolute; right: 10px; bottom: 156px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; width: 240px; }
+.toast { position: relative; width: 100%; border-radius: 12px; padding: 10px 12px 13px; display: flex; gap: 10px; align-items: center; animation: toast-in .5s var(--spring) backwards; }
+.toast.out { animation: toast-out .3s var(--ease) forwards; }
+@keyframes toast-in { from { transform: translateX(120%); opacity: 0; } }
+@keyframes toast-out { to { transform: translateX(120%); opacity: 0; } }
+.toast .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.toast b { display: block; font-size: 12.5px; } .toast small { color: var(--muted); font-size: 11.5px; }
+.toast .timer { position: absolute; left: 12px; right: 12px; bottom: 5px; height: 2px; border-radius: 2px; overflow: hidden; background: rgb(255 255 255 / .06); }
+.toast .timer::after { content: ""; display: block; height: 100%; background: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite, drain 2.6s linear forwards; }
+@keyframes drain { from { width: 100%; } to { width: 0; } }
+
+/* ========== ClickGUI ========== */
+.dim { position: absolute; inset: 0; background: rgb(6 5 10 / .55); backdrop-filter: blur(3px); }
+.gui-search { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); width: 300px; height: 38px; border-radius: 11px; display: flex; align-items: center; gap: 9px; padding: 0 13px; color: var(--muted); font-size: 12.5px; }
+.gui-search input { flex: 1; background: none; border: 0; outline: 0; color: var(--text); font: inherit; caret-color: var(--a2); }
+.gui-search input::placeholder { color: var(--muted); }
+.cat { position: absolute; width: 196px; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 50px -20px rgb(0 0 0 / .9); }
+.anim .active .cat.fresh { animation: drop .6s var(--spring) backwards; animation-delay: calc(var(--i) * 70ms); }
+@keyframes drop { from { opacity: 0; transform: translateY(-24px) scale(.96); } }
+.cat header { position: relative; display: flex; align-items: center; gap: 9px; padding: 11px 13px; cursor: grab; font-weight: 700; font-size: 13.5px; touch-action: none; }
+.cat header:active { cursor: grabbing; }
+.cat header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; }
+.cat header svg { width: 16px; height: 16px; stroke: var(--a2); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.cat header small { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--muted); font-weight: 500; }
+.cat .mods { padding: 5px; display: flex; flex-direction: column; gap: 2px; max-height: 330px; overflow: auto; }
+.mod { border-radius: 9px; overflow: hidden; transition: background-color .25s; }
+.mod > button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--muted); text-align: left; transition: color .2s, background-color .2s; }
+.mod > button:hover { color: var(--text); background: rgb(255 255 255 / .03); }
+.mod.on { background: rgb(139 92 246 / .14); }
+.mod.on > button .name { background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.mod > button .chev { margin-left: auto; width: 14px; height: 14px; stroke: var(--dim); fill: none; stroke-width: 2; transition: transform .35s var(--ease); }
+.mod.open > button .chev { transform: rotate(180deg); }
+.mod .set { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s var(--ease); }
+.mod.open .set { grid-template-rows: 1fr; }
+.mod .set > div { overflow: hidden; }
+.mod .set .inner { padding: 4px 10px 10px; display: flex; flex-direction: column; gap: 9px; }
+.opt { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: var(--muted); gap: 8px; }
+.opt .val { font-family: "JetBrains Mono", monospace; color: var(--text); font-size: 11px; }
+.slider { position: relative; height: 4px; border-radius: 4px; background: rgb(255 255 255 / .08); margin-top: 6px; cursor: pointer; touch-action: none; }
+.slider i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; }
+.slider b { position: absolute; top: 50%; width: 11px; height: 11px; border-radius: 50%; background: #fff; transform: translate(-50%, -50%); box-shadow: 0 2px 8px rgb(168 85 247 / .8); }
+.sw { width: 30px; height: 17px; border-radius: 9px; background: rgb(255 255 255 / .1); padding: 2px; transition: background-color .3s; flex: none; }
+.sw b { display: block; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: transform .35s var(--spring); }
+.sw.on { background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; }
+.sw.on b { transform: translateX(13px); }
+.modes { display: flex; gap: 3px; } .modes button { padding: 3px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 600; color: var(--muted); background: rgb(255 255 255 / .05); transition: background-color .2s, color .2s; }
+.modes button.on { color: #fff; background: rgb(139 92 246 / .5); }
+.swatches { display: flex; gap: 5px; } .swatches button { width: 15px; height: 15px; border-radius: 5px; transition: transform .2s var(--spring); }
+.swatches button.on { outline: 1.5px solid #fff; outline-offset: 1.5px; } .swatches button:hover { transform: scale(1.15); }
+.bind { padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line2); font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--text); }
+.gui-hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 11.5px; color: var(--muted); padding: 6px 12px; border-radius: 9px; white-space: nowrap; }
+.gui-hint kbd { font-family: "JetBrains Mono", monospace; font-size: 10.5px; padding: 1px 5px; border-radius: 5px; border: 1px solid var(--line2); color: var(--text); }
+
+/* ========== HUD editor ========== */
+.editing .el { outline: 1.5px dashed rgb(192 132 252 / .55); outline-offset: 4px; border-radius: 10px; cursor: grab; transition: outline-color .2s; touch-action: none; }
+.editing .el:hover { outline-color: var(--a2); }
+.editing .el.picked { outline-style: solid; outline-color: var(--a3); }
+.guide { position: absolute; background: var(--a3); opacity: 0; transition: opacity .15s; pointer-events: none; }
+.guide.v { width: 1px; top: 0; bottom: 0; left: 50%; } .guide.h { height: 1px; left: 0; right: 0; top: 50%; }
+.guide.show { opacity: .9; }
+.side { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 240px; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; z-index: 3; }
+.side h4 { font-size: 13.5px; }
+.done { margin-top: 4px; height: 36px; border-radius: 10px; font-weight: 700; font-size: 12.5px; color: #fff; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; } }
+</style>
+</head>
+<body>
+<!--
+  THESIS: Der In-Game-Client im modernen Client-Look: Shader-Hauptmenü, ClickGUI mit Kategorie-Panels, Watermark, ArrayList mit Chroma-Welle, Notifications. Nur legitime Module (HUD, Render, Komfort, Performance).
+  OWN-WORLD: Wie der Launcher: dunkle Glas-Panels, Radius 14, Chroma-Verlauf Violett bis Fuchsia als Akzent, Sora und JetBrains Mono.
+  FORM: vom Nutzer vorgegeben (moderner Cheat-Client-Look); kein Würfel-Seed.
+-->
+<nav class="switch glass" aria-label="Ansicht">
+  <button data-v="title" class="on">Hauptmenü</button>
+  <button data-v="gui">ClickGUI</button>
+  <button data-v="hud">HUD</button>
+  <button data-v="edit">HUD-Editor</button>
+</nav>
+
+<div class="frame" id="frame">
+  <canvas id="shader"></canvas>
+  <div id="world" aria-hidden="true" style="position:absolute;inset:0;opacity:0;transition:opacity .6s;background:linear-gradient(180deg,#2a1d4d 0%,#5b3a86 38%,#9b6aa6 52%,#3d5a35 53%,#2b3f27 70%,#1d2a1b 100%);filter:blur(18px) saturate(115%);transform:scale(1.08)"></div>
+
+  <!-- ========== Title ========== -->
+  <section class="view active" id="v-title" aria-label="Hauptmenü">
+    <div class="title-wrap">
+      <div>
+        <div class="logo">
+          <h1 aria-label="DaClient" id="logo">DaClient</h1>
+          <p>Minecraft 26.3 · Fabric</p>
+        </div>
+        <div class="menu">
+          <button class="mbtn primary spin" style="--i:0"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Einzelspieler</span><span class="key">1</span></button>
+          <button class="mbtn glass" style="--i:1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span>Mehrspieler</span><span class="key">2</span></button>
+          <button class="mbtn glass" style="--i:2" data-go="gui"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>DaClient-Menü</span><span class="key">R-SHIFT</span></button>
+          <button class="mbtn glass" style="--i:3"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Optionen</span><span class="key">O</span></button>
+          <button class="mbtn glass" style="--i:4"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg><span>Beenden</span><span class="key">ESC</span></button>
+        </div>
+      </div>
+    </div>
+    <aside class="news glass">
+      <h3><i class="chroma"></i>Neu in 0.1.0</h3>
+      <ul>
+        <li><b>HUD-Editor</b> mit Einrasten an Kanten und Mitte</li>
+        <li><b>ArrayList</b> zeigt aktive Module als Chroma-Welle</li>
+        <li><b>Freelook</b> respektiert Server-Verbote</li>
+      </ul>
+    </aside>
+    <div class="corner l">
+      <div class="acct glass"><span class="head chroma" style="display:grid;place-items:center;font-weight:800;color:#fff">N</span><div><b>Notch</b><small>Microsoft-Account</small></div></div>
+    </div>
+    <div class="corner r"><p class="disclaimer">Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</p></div>
+  </section>
+
+  <!-- ========== ClickGUI ========== -->
+  <section class="view" id="v-gui" aria-label="ClickGUI">
+    <div class="dim"></div>
+    <label class="gui-search glass"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="search" placeholder="Modul suchen" spellcheck="false"></label>
+    <div id="cats"></div>
+    <div class="gui-hint glass"><kbd>Linksklick</kbd> an/aus &nbsp; <kbd>Rechtsklick</kbd> Einstellungen &nbsp; Panels am Kopf ziehen &nbsp; <kbd>R-Shift</kbd> schließen</div>
+  </section>
+
+  <!-- ========== HUD (in game) ========== -->
+  <section class="view" id="v-hud" aria-label="HUD"><div class="hud-root" id="hud"></div></section>
+
+  <!-- ========== HUD editor ========== -->
+  <section class="view editing" id="v-edit" aria-label="HUD-Editor">
+    <div class="dim" style="background: rgb(6 5 10 / .35); backdrop-filter: none"></div>
+    <div class="guide v" id="gv"></div><div class="guide h" id="gh"></div>
+    <div class="hud-root" id="edit-hud"></div>
+    <div class="side glass">
+      <h4>Ausgewählt: <span id="picked">Keystrokes</span></h4>
+      <div class="opt">Skalierung <span class="val" id="scale-val">1.00x</span></div>
+      <div class="slider" data-slider="scale"><i style="width:40%"></i><b style="left:40%"></b></div>
+      <div class="opt">Hintergrund <button class="sw on" data-sw><b></b></button></div>
+      <div class="opt">Chroma-Akzent <button class="sw on" data-sw><b></b></button></div>
+      <div class="opt">Einrasten <button class="sw on" data-sw id="snap"><b></b></button></div>
+      <button class="done chroma" data-go="hud">Fertig</button>
+    </div>
+  </section>
+</div>
+<p class="note">Interaktives Design-Mockup des In-Game-Clients. Der unscharfe Hintergrund ersetzt eine echte Spielszene. W A S D, Leertaste und Mausklicks treiben die Keystrokes.</p>
+
+<script>
+/* Entrance animations only run once frames are really drawn; otherwise everything shows plainly. */
+requestAnimationFrame(() => document.body.classList.add("anim"));
+
+/* ---------- Shader backdrop (same as the launcher) ---------- */
+(function shader() {
+  const c = document.getElementById("shader"), gl = c.getContext("webgl");
+  if (!gl) return;
+  const fs = `precision mediump float;uniform vec2 r;uniform float t;
+  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}
+  float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p*=2.02;a*=.5;}return v;}
+  void main(){vec2 uv=gl_FragCoord.xy/r;vec2 p=(gl_FragCoord.xy-.5*r)/r.y;float tt=t*.045;
+  vec2 q=vec2(fbm(p*1.5+tt),fbm(p*1.5-tt+5.2));float f=fbm(p*1.9+q*1.9+tt*.6);
+  vec3 col=vec3(.034,.03,.054);col=mix(col,vec3(.24,.11,.55),smoothstep(.38,.9,f));col=mix(col,vec3(.55,.17,.6),smoothstep(.55,1.,f*q.x*1.45));
+  float b=abs(p.y+.22*sin(p.x*2.1+tt*7.)+.12*q.y+.08);col+=vec3(.6,.45,1.)*.16*exp(-b*16.);
+  col*=1.-.6*length(uv-vec2(.5,.45));gl_FragColor=vec4(col,1.);}`;
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
+  const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}")); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p); gl.useProgram(p);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const l = gl.getAttribLocation(p, "p"); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0);
+  const ur = gl.getUniformLocation(p, "r"), ut = gl.getUniformLocation(p, "t");
+  const size = () => { c.width = Math.max(1, c.clientWidth * .5); c.height = Math.max(1, c.clientHeight * .5); gl.viewport(0, 0, c.width, c.height); gl.uniform2f(ur, c.width, c.height); };
+  size(); new ResizeObserver(size).observe(c);
+  const t0 = performance.now() - 40000;
+  const draw = (now) => { gl.uniform1f(ut, (now - t0) / 1000); gl.drawArrays(gl.TRIANGLES, 0, 3); };
+  draw(performance.now());
+  const loop = (now) => { draw(now); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+})();
+
+/* ---------- Title logo letters ---------- */
+// Each letter carries its own phase-shifted chroma, so the colour rolls through the wordmark.
+document.getElementById("logo").innerHTML = [..."DaClient"].map((ch, i) => `<span aria-hidden="true" class="chroma-text" style="--i:${i}; animation-delay: ${-i * .25}s">${ch}</span>`).join("");
+
+/* ---------- Module state (drives ClickGUI, ArrayList and notifications) ---------- */
+const ICONS = {
+  HUD: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  Render: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  Komfort: '<path d="M12 3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.3l6-.8z"/>',
+  Performance: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+};
+const modules = {
+  HUD: [
+    { n: "FPS", on: true, s: [["Hintergrund", "sw", true], ["Farbe", "color", 0]] },
+    { n: "CPS", on: true, s: [["Rechte Taste", "sw", true]] },
+    { n: "Keystrokes", on: true, s: [["Größe", "slider", .4, "1.00x"], ["Leertaste", "sw", true], ["Maus", "sw", true]] },
+    { n: "Koordinaten", on: true, s: [["Richtung", "sw", true], ["Biom", "sw", false]] },
+    { n: "Rüstung", on: true, s: [["Anzeige", "mode", ["Balken", "Zahl", "Prozent"], 0]] },
+    { n: "Trankeffekte", on: true, s: [["Sortierung", "mode", ["Zeit", "Name"], 0]] },
+    { n: "Ping", on: false, s: [] },
+    { n: "Uhrzeit", on: false, s: [["Format", "mode", ["24 h", "12 h"], 0]] },
+  ],
+  Render: [
+    { n: "Zoom", on: false, s: [["Stufe", "slider", .3, "4x"], ["Mausrad", "sw", true], ["Taste", "bind", "C"]] },
+    { n: "Helligkeit", on: false, s: [["Gamma", "slider", .6, "60 %"]] },
+    { n: "Fadenkreuz", on: true, s: [["Form", "mode", ["Kreuz", "Punkt", "Kreis"], 0], ["Farbe", "color", 1]] },
+    { n: "Motion Blur", on: false, s: [["Stärke", "slider", .25, "25 %"]] },
+    { n: "Block-Umriss", on: true, s: [["Farbe", "color", 2], ["Dicke", "slider", .5, "2 px"]] },
+  ],
+  Komfort: [
+    { n: "Toggle Sprint", on: true, s: [["Auch Schleichen", "sw", false]] },
+    { n: "Freelook", on: false, s: [["Taste", "bind", "LALT"], ["Auf Servern mit Verbot automatisch aus", "info"]] },
+    { n: "Chat+", on: true, s: [["Zeitstempel", "sw", true], ["Stapeln", "sw", true]] },
+    { n: "Scoreboard", on: false, s: [["Zahlen ausblenden", "sw", true]] },
+  ],
+  Performance: [
+    { n: "Entity Culling", on: true, s: [["Reichweite", "slider", .6, "48 Blöcke"]] },
+    { n: "Menü-FPS-Limit", on: true, s: [["Limit", "slider", .3, "60 FPS"]] },
+    { n: "Hintergrund-FPS", on: false, s: [["Limit", "slider", .1, "10 FPS"]] },
+  ],
+};
+const SWATCHES = ["#c084fc", "#ffffff", "#4ade80", "#38bdf8", "#f472b6"];
+const POS = {};
+const allModules = () => Object.values(modules).flat();
+
+function layoutPanels() {
+  const w = document.getElementById("frame").clientWidth, gap = 14, pw = 196, total = 4 * pw + 3 * gap;
+  const x0 = Math.max(12, (w - total) / 2);
+  Object.keys(modules).forEach((cat, i) => { if (!POS[cat]) POS[cat] = [x0 + i * (pw + gap), 66]; });
+}
+
+function renderGui(filter = "", fresh = false) {
+  layoutPanels();
+  document.getElementById("cats").innerHTML = Object.entries(modules).map(([cat, list], ci) => {
+    const shown = list.filter((m) => m.n.toLowerCase().includes(filter.toLowerCase()));
+    const [x, y] = POS[cat];
+    return `<div class="cat glass ${fresh ? "fresh" : ""}" data-cat="${cat}" style="left:${x}px; top:${y}px; --i:${ci}">
+      <header><svg viewBox="0 0 24 24">${ICONS[cat]}</svg>${cat}<small>${list.filter((m) => m.on).length}/${list.length}</small></header>
+      <div class="mods">${shown.map((m) => `
+        <div class="mod ${m.on ? "on" : ""}" data-mod="${m.n}">
+          <button aria-pressed="${m.on}"><span class="name">${m.n}</span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="set"><div><div class="inner">${m.s.length ? m.s.map(opt).join("") : '<div class="opt">Keine Einstellungen</div>'}</div></div></div>
+        </div>`).join("")}</div>
+    </div>`;
+  }).join("");
+}
+function opt([label, type, v, extra]) {
+  if (type === "sw") return `<div class="opt">${label}<button class="sw ${v ? "on" : ""}" data-sw aria-label="${label}"><b></b></button></div>`;
+  if (type === "slider") return `<div><div class="opt">${label}<span class="val">${extra}</span></div><div class="slider" data-slider><i style="width:${v * 100}%"></i><b style="left:${v * 100}%"></b></div></div>`;
+  if (type === "mode") return `<div class="opt">${label}<div class="modes">${v.map((m, i) => `<button class="${i === extra ? "on" : ""}" data-mode>${m}</button>`).join("")}</div></div>`;
+  if (type === "color") return `<div class="opt">${label}<div class="swatches">${SWATCHES.map((c, i) => `<button class="${i === v ? "on" : ""}" style="background:${c}" data-swatch aria-label="Farbe ${i + 1}"></button>`).join("")}</div></div>`;
+  if (type === "bind") return `<div class="opt">${label}<span class="bind">${v}</span></div>`;
+  if (type === "info") return `<div class="opt" style="color:var(--muted)">${label}<span class="bind" style="opacity:.7">fest</span></div>`;
+  return "";
+}
+
+const cats = document.getElementById("cats");
+cats.addEventListener("click", (e) => {
+  const sw = e.target.closest("[data-sw]"); if (sw) { sw.classList.toggle("on"); return; }
+  const mode = e.target.closest("[data-mode]"); if (mode) { mode.parentElement.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === mode)); return; }
+  const swatch = e.target.closest("[data-swatch]"); if (swatch) { swatch.parentElement.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === swatch)); return; }
+  const btn = e.target.closest(".mod > button"); if (!btn) return;
+  const el = btn.parentElement, m = allModules().find((x) => x.n === el.dataset.mod);
+  m.on = !m.on; el.classList.toggle("on", m.on); btn.setAttribute("aria-pressed", m.on);
+  const cat = el.closest(".cat"), list = modules[cat.dataset.cat];
+  cat.querySelector("header small").textContent = `${list.filter((x) => x.on).length}/${list.length}`;
+  renderHud();
+  toast(m.n, m.on ? "aktiviert" : "deaktiviert", m.on, true);
+});
+cats.addEventListener("contextmenu", (e) => { const btn = e.target.closest(".mod > button"); if (!btn) return; e.preventDefault(); btn.parentElement.classList.toggle("open"); });
+document.getElementById("search").addEventListener("input", (e) => renderGui(e.target.value));
+
+/* Drag category panels by their header. */
+cats.addEventListener("pointerdown", (e) => {
+  const head = e.target.closest(".cat header"); if (!head) return;
+  const cat = head.parentElement, frame = document.getElementById("frame").getBoundingClientRect();
+  const r = cat.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+  cat.style.zIndex = 5; head.setPointerCapture(e.pointerId);
+  const move = (ev) => { const x = ev.clientX - frame.left - dx, y = ev.clientY - frame.top - dy; cat.style.left = x + "px"; cat.style.top = y + "px"; POS[cat.dataset.cat] = [x, y]; };
+  head.addEventListener("pointermove", move);
+  head.addEventListener("pointerup", () => { head.removeEventListener("pointermove", move); cat.style.zIndex = ""; }, { once: true });
+});
+
+/* Sliders in the GUI and the editor. */
+document.addEventListener("pointerdown", (e) => {
+  const s = e.target.closest("[data-slider]"); if (!s) return;
+  const set = (ev) => {
+    const r = s.getBoundingClientRect(), p = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+    s.querySelector("i").style.width = p * 100 + "%"; s.querySelector("b").style.left = p * 100 + "%";
+    if (s.dataset.slider === "scale") { const k = (.5 + p * 1.25).toFixed(2); document.getElementById("scale-val").textContent = k + "x"; const el = document.querySelector("#edit-hud .picked"); if (el) el.style.scale = k; }
+  };
+  set(e); s.setPointerCapture(e.pointerId); s.addEventListener("pointermove", set);
+  s.addEventListener("pointerup", () => s.removeEventListener("pointermove", set), { once: true });
+});
+document.querySelector(".side").addEventListener("click", (e) => { const sw = e.target.closest("[data-sw]"); if (sw) sw.classList.toggle("on"); });
+
+/* ---------- HUD ---------- */
+const LOGO = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#C084FC"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><path d="M160 128h104c88 0 136 52 136 128s-48 128-136 128H160z" fill="none" stroke="#fff" stroke-width="56" stroke-linejoin="round"/><rect x="236" y="228" width="56" height="56" fill="#fff"/></svg>');
+const SUFFIX = { Zoom: "4x", "Menü-FPS-Limit": "60", "Entity Culling": "48" };
+const measure = document.createElement("canvas").getContext("2d");
+function hudHtml(edit) {
+  const on = (n) => allModules().find((m) => m.n === n)?.on;
+  measure.font = '600 13px "Sora"';
+  const sorted = allModules().filter((m) => m.on).sort((a, b) => measure.measureText(b.n + (SUFFIX[b.n] ?? "")).width - measure.measureText(a.n + (SUFFIX[a.n] ?? "")).width);
+  const cls = edit ? "el" : "";
+  return `
+    <div class="watermark glass ${cls}" data-name="Watermark"><img class="logo-mark" src="${LOGO}" alt=""><b class="chroma-text">DaClient</b><i></i><span class="mono" data-fps>142 FPS</span><i></i><span>hypixel.net</span><i></i><span class="mono">18 ms</span></div>
+    <div class="arraylist ${cls}" data-name="ArrayList">${sorted.map((m, i) => `<div class="row ${edit ? "" : "enter"}" style="animation-delay:${i * 35}ms"><span class="t"><span class="chroma-text" style="animation-delay:${-i * .35}s">${m.n}</span>${SUFFIX[m.n] ? `<small>${SUFFIX[m.n]}</small>` : ""}</span><span class="bar chroma" style="animation-delay:${-i * .35}s"></span></div>`).join("")}</div>
+    ${on("Keystrokes") ? `<div class="keys ${cls}" data-name="Keystrokes">
+      <span></span><span class="key glass" data-k="w">W</span><span></span>
+      <span class="key glass" data-k="a">A</span><span class="key glass" data-k="s">S</span><span class="key glass" data-k="d">D</span>
+      <div class="mouse"><span class="key glass" data-k="lmb">LMB<br><span data-cps="l">0</span> CPS</span><span class="key glass" data-k="rmb">RMB<br><span data-cps="r">0</span> CPS</span></div>
+      <span class="key glass wide" data-k=" ">SPACE</span></div>` : ""}
+    <div class="info ${cls}" data-name="Info">
+      ${on("Koordinaten") ? `<span class="pill glass"><span class="k">XYZ</span><span class="mono">-214 71 389</span></span><span class="pill glass"><span class="k">Richtung</span>Nordwest</span>` : ""}
+      ${on("FPS") ? `<span class="pill glass"><span class="k">FPS</span><span class="mono" data-fps2>142</span></span>` : ""}
+    </div>
+    ${on("Rüstung") ? `<div class="armor ${cls}" data-name="Rüstung">
+      <span class="pill glass"><span class="k">Helm</span><i style="--w:88%"></i></span><span class="pill glass"><span class="k">Brust</span><i style="--w:96%"></i></span>
+      <span class="pill glass"><span class="k">Hose</span><i style="--w:31%"></i></span><span class="pill glass"><span class="k">Schuhe</span><i style="--w:74%"></i></span></div>` : ""}
+    ${on("Trankeffekte") ? `<div class="effects ${cls}" data-name="Trankeffekte"><span class="pill glass">Stärke II <span class="mono k">1:32</span></span><span class="pill glass">Schnelligkeit <span class="mono k">0:48</span></span></div>` : ""}
+    ${edit ? "" : `${on("Fadenkreuz") ? '<div class="cross"></div>' : ""}<div class="hotbar"><span class="s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>`}`;
+}
+function renderHud() {
+  document.getElementById("hud").innerHTML = hudHtml(false) + '<div class="toasts" id="toasts"></div>';
+  document.getElementById("edit-hud").innerHTML = hudHtml(true);
+  const first = document.querySelector("#edit-hud .keys") || document.querySelector("#edit-hud .el");
+  if (first) first.classList.add("picked");
+}
+renderHud();
+
+/* Notifications: queued while the GUI is open, shown in the HUD toast stack. */
+const pending = [];
+function toast(title, text, on, queue) {
+  if (queue && current !== "hud") { pending.push([title, text, on]); return; }
+  const host = document.getElementById("toasts"); if (!host) return;
+  const el = document.createElement("div");
+  el.className = "toast glass";
+  el.innerHTML = `<span class="dot ${on ? "chroma" : ""}" style="${on ? "" : "background:#726b86"}"></span><div><b>${title}</b><small>${text}</small></div><span class="timer"></span>`;
+  host.appendChild(el);
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 300); }, 2600);
+}
+
+/* Real keystrokes and CPS from your own keyboard and mouse. */
+const cps = { l: [], r: [] };
+const press = (k, down) => document.querySelectorAll(`[data-k="${CSS.escape(k)}"]`).forEach((el) => el.classList.toggle("down", down));
+addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  const k = e.key.toLowerCase();
+  if ("wasd ".includes(k)) { press(k, true); if (k === " ") e.preventDefault(); }
+  if (e.code === "ShiftRight") show(current === "gui" ? "hud" : "gui");
+});
+addEventListener("keyup", (e) => { const k = e.key.toLowerCase(); if ("wasd ".includes(k)) press(k, false); });
+const frameEl = document.getElementById("frame");
+frameEl.addEventListener("mousedown", (e) => { if (current !== "hud") return; const k = e.button === 2 ? "r" : "l"; cps[k].push(performance.now()); press(k === "l" ? "lmb" : "rmb", true); });
+addEventListener("mouseup", (e) => press(e.button === 2 ? "rmb" : "lmb", false));
+frameEl.addEventListener("contextmenu", (e) => current === "hud" && e.preventDefault());
+setInterval(() => {
+  const now = performance.now();
+  for (const k of ["l", "r"]) { cps[k] = cps[k].filter((t) => now - t < 1000); document.querySelectorAll(`[data-cps="${k}"]`).forEach((el) => (el.textContent = cps[k].length)); }
+  const fps = 136 + Math.round(Math.random() * 14);
+  document.querySelectorAll("[data-fps]").forEach((el) => (el.textContent = fps + " FPS"));
+  document.querySelectorAll("[data-fps2]").forEach((el) => (el.textContent = fps));
+}, 150);
+
+/* HUD editor: drag elements, snap to the centre lines. */
+document.getElementById("edit-hud").addEventListener("pointerdown", (e) => {
+  const el = e.target.closest(".el"); if (!el) return;
+  document.querySelectorAll("#edit-hud .el").forEach((x) => x.classList.toggle("picked", x === el));
+  document.getElementById("picked").textContent = el.dataset.name;
+  const f = frameEl.getBoundingClientRect(), r = el.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+  const gv = document.getElementById("gv"), gh = document.getElementById("gh"), snap = () => document.getElementById("snap").classList.contains("on");
+  el.setPointerCapture(e.pointerId);
+  const move = (ev) => {
+    let x = ev.clientX - f.left - dx, y = ev.clientY - f.top - dy;
+    const sx = snap() && Math.abs(x + r.width / 2 - f.width / 2) < 10, sy = snap() && Math.abs(y + r.height / 2 - f.height / 2) < 10;
+    if (sx) x = f.width / 2 - r.width / 2; if (sy) y = f.height / 2 - r.height / 2;
+    x = Math.max(6, Math.min(f.width - r.width - 6, x)); y = Math.max(6, Math.min(f.height - r.height - 6, y));
+    Object.assign(el.style, { left: x + "px", top: y + "px", right: "auto", bottom: "auto", transform: "none" });
+    gv.classList.toggle("show", sx); gh.classList.toggle("show", sy);
+  };
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", () => { el.removeEventListener("pointermove", move); gv.classList.remove("show"); gh.classList.remove("show"); }, { once: true });
+});
+
+/* ---------- View switching ---------- */
+let current = "title";
+function show(v) {
+  current = v;
+  document.querySelectorAll(".view").forEach((el) => el.classList.toggle("active", el.id === "v-" + v));
+  document.querySelectorAll(".switch button").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
+  document.getElementById("world").style.opacity = v === "title" ? 0 : 1;
+  if (v === "gui") renderGui(document.getElementById("search").value, true);
+  if (v === "hud") {
+    renderHud();
+    const queued = pending.splice(0);
+    if (queued.length) queued.slice(-3).forEach((q, i) => setTimeout(() => toast(...q), 300 + i * 160));
+    else setTimeout(() => toast("Willkommen zurück", "R-Shift öffnet das DaClient-Menü", true), 600);
+  }
+}
+document.querySelectorAll(".switch button").forEach((b) => b.addEventListener("click", () => show(b.dataset.v)));
+document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)));
+</script>
+</body>
+</html>

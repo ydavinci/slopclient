@@ -1,0 +1,57 @@
+package dev.daclient.module;
+
+import dev.daclient.hud.HudModule;
+import dev.daclient.hud.HudModules;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.Minecraft;
+
+public final class ModuleManager {
+	private final List<Module> modules = new ArrayList<>();
+
+	public final Features.Zoom zoom = add(new Features.Zoom());
+	public final Features.Brightness brightness = add(new Features.Brightness());
+	public final Features.Crosshair crosshair = add(new Features.Crosshair());
+	public final Features.ToggleSprint toggleSprint = add(new Features.ToggleSprint());
+	public final Features.TitleScreenModule titleScreen = add(new Features.TitleScreenModule());
+
+	public ModuleManager() {
+		add(new HudModules.Watermark());
+		add(new HudModules.ArrayListHud());
+		add(new HudModules.Fps());
+		add(new HudModules.CpsHud());
+		add(new HudModules.Ping());
+		add(new HudModules.Clock());
+		add(new HudModules.Coordinates());
+		add(new HudModules.Keystrokes());
+		add(new HudModules.Armor());
+		add(new HudModules.Effects());
+	}
+
+	private <M extends Module> M add(M module) {
+		modules.add(module);
+		return module;
+	}
+
+	public List<Module> all() {
+		return modules;
+	}
+
+	public List<Module> in(Category category) {
+		return modules.stream().filter(m -> m.category == category).toList();
+	}
+
+	public List<HudModule> hud() {
+		return modules.stream().filter(m -> m instanceof HudModule).map(m -> (HudModule) m).toList();
+	}
+
+	public Module byName(String name) {
+		return modules.stream().filter(m -> m.name.equals(name)).findFirst().orElse(null);
+	}
+
+	public void tick(Minecraft mc) {
+		for (Module m : modules) {
+			if (m.enabled()) m.tick(mc);
+		}
+	}
+}

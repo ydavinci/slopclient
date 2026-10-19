@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-18T23:30:00Z",
+  "title": "Design System: DaClient Launcher",
+  "extensions": {
+    "colorMeta": {
+      "accent": { "role": "primary", "displayName": "Electric Violet", "canonical": "#8b5cf6", "tonalRamp": ["#1e1038", "#2e1065", "#4c1d95", "#6d28d9", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ede9fe"] },
+      "accent-2": { "role": "primary", "displayName": "Lavender Glow", "canonical": "#c084fc", "tonalRamp": ["#2a0f40", "#3b0764", "#6b21a8", "#9333ea", "#c084fc", "#d8b4fe", "#e9d5ff", "#faf5ff"] },
+      "accent-3": { "role": "primary", "displayName": "Fuchsia Spark", "canonical": "#e879f9", "tonalRamp": ["#3a0a3f", "#4a044e", "#86198f", "#c026d3", "#e879f9", "#f0abfc", "#f5d0fe", "#fdf4ff"] },
+      "bg": { "role": "neutral", "displayName": "Void", "canonical": "#09080e", "tonalRamp": ["#09080e", "#15121f", "#211c30", "#2e2742", "#4a4260", "#726b86", "#a39cb6", "#efecf7"] },
+      "panel": { "role": "neutral", "displayName": "Smoked Glass", "canonical": "rgb(20 17 30 / 0.72)" },
+      "panel-solid": { "role": "neutral", "displayName": "Ink Plum", "canonical": "#15121f" },
+      "raised": { "role": "neutral", "displayName": "Raised Plum", "canonical": "rgb(38 32 54 / 0.72)" },
+      "line": { "role": "neutral", "displayName": "Hairline", "canonical": "rgb(255 255 255 / 0.07)" },
+      "line-2": { "role": "neutral", "displayName": "Hairline Strong", "canonical": "rgb(255 255 255 / 0.14)" },
+      "text": { "role": "neutral", "displayName": "Pale Lilac", "canonical": "#efecf7" },
+      "muted": { "role": "neutral", "displayName": "Muted Heather", "canonical": "#a39cb6" },
+      "dim": { "role": "neutral", "displayName": "Dusk", "canonical": "#726b86" },
+      "on-accent": { "role": "neutral", "displayName": "White", "canonical": "#ffffff" },
+      "on": { "role": "status", "displayName": "Signal Green", "canonical": "#4ade80", "tonalRamp": ["#052e16", "#14532d", "#166534", "#16a34a", "#4ade80", "#86efac", "#bbf7d0", "#f0fdf4"] },
+      "warn": { "role": "status", "displayName": "Amber", "canonical": "#fbbf24", "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#fbbf24", "#fcd34d", "#fde68a", "#fffbeb"] },
+      "err": { "role": "status", "displayName": "Coral", "canonical": "#fb7185", "tonalRamp": ["#4c0519", "#881337", "#be123c", "#e11d48", "#fb7185", "#fda4af", "#fecdd3", "#fff1f2"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Selected instance name on Start, revealed letter by letter; welcome headline; in-game title logo." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles." },
+      "title": { "displayName": "Title", "purpose": "Modal titles; watermark brand at 15px/800 in chroma." },
+      "body": { "displayName": "Body", "purpose": "Base text with tabular numerals." },
+      "body-strong": { "displayName": "Body Strong", "purpose": "Buttons, row and module names." },
+      "label": { "displayName": "Label", "purpose": "Chips, field labels, column headers; sentence case, never uppercase." },
+      "mono": { "displayName": "Mono", "purpose": "Versions, counts, play time, keybinds, ArrayList suffixes, logs." }
+    },
+    "gradients": [
+      { "name": "chroma", "value": "linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6) 0 0 / 300% 100%, animated 6s linear infinite", "purpose": "The only form the accent takes at full strength: primary buttons, toggles on, progress, accent bars, chroma text." },
+      { "name": "chroma-ring", "value": "conic-gradient(from var(--angle), #8b5cf6, #e879f9, #c084fc, #8b5cf6) border-box, 1.5px border, rotating 4s linear infinite", "purpose": "Play button and the selected instance strip card; in-game primary menu button; device-code display." }
+    ],
+    "materials": [
+      { "name": "glass", "value": "background: rgb(20 17 30 / 0.72); border: 1px solid rgb(255 255 255 / 0.07); backdrop-filter: blur(20px) saturate(140%)", "purpose": "Every floating panel over the shader (in-game: 78% fill, 18px blur)." },
+      { "name": "arraylist-strip", "value": "background: rgb(0 0 0 / 0.45); backdrop-filter: blur(4px)", "purpose": "ArrayList rows and the in-game hotbar." },
+      { "name": "scrim", "value": "background: rgb(0 0 0 / 0.55); backdrop-filter: blur(12px)", "purpose": "Modal backdrop." }
+    ],
+    "shadows": [
+      { "name": "float-deep", "value": "0 30px 80px -20px rgb(0 0 0 / 0.8)", "purpose": "Modals." },
+      { "name": "float", "value": "0 24px 60px -16px rgb(0 0 0 / 0.8)", "purpose": "Account popover; in-game category panels." },
+      { "name": "toast", "value": "0 18px 50px -18px rgb(0 0 0 / 0.9)", "purpose": "Notifications." },
+      { "name": "play-glow", "value": "0 14px 40px -10px rgb(168 85 247 / 0.75)", "purpose": "Under the Play button only." },
+      { "name": "toggle-glow", "value": "0 4px 14px -4px rgb(168 85 247 / 0.8)", "purpose": "Active toggle; slider thumbs use 0 2px 10px rgb(168 85 247 / 0.7)." },
+      { "name": "inset-hairline", "value": "inset 0 0 0 1px rgb(255 255 255 / 0.07)", "purpose": "Sliding selection pills." },
+      { "name": "selected-hairline", "value": "inset 0 0 0 1px rgb(192 132 252 / 0.18)", "purpose": "Selected instance rows and enabled module rows." },
+      { "name": "input-halo", "value": "0 0 0 4px rgb(139 92 246 / 0.15)", "purpose": "Focused inputs." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Default easing for entries, swaps, progress." },
+      { "name": "spring", "value": "spring(stiffness 520, damping 34, mass 0.7)", "purpose": "Sliding pills, toggle knobs, hover lifts, notifications." },
+      { "name": "rise", "value": "opacity 0, y 10px, blur 6px to sharp; 0.42s expo; stagger 28ms", "purpose": "Standard entry for page content and list rows." },
+      { "name": "page-transition", "value": "in 0.34s (y 10px, blur 8px); out 0.14s (y -6px, blur 4px)", "purpose": "Route changes." },
+      { "name": "chroma-flow", "value": "6s linear infinite; -0.35s phase per stacked item", "purpose": "Gradient travel and ArrayList wave." },
+      { "name": "ring-spin", "value": "4s linear infinite", "purpose": "Chroma ring rotation." },
+      { "name": "press", "value": "scale 0.97, 200ms", "purpose": "All buttons on active." },
+      { "name": "reduced-motion", "value": "all animations and transitions 1ms; shader renders a still frame", "purpose": "prefers-reduced-motion: reduce." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Chroma-filled commit action with a hover sheen.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>Neue Instanz</button>",
+      "css": "@keyframes ds-chroma { to { background-position: 300% 0; } } .ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 0; border-radius: 10px; color: #fff; font: 600 13px 'Sora Variable', Sora, system-ui, sans-serif; background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; cursor: pointer; transition: filter .2s, transform .2s; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Raised plum button with hairline border for neutral actions.",
+      "html": "<button class=\"ds-btn-secondary\">Modpack importieren</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid rgb(255 255 255 / .07); background: rgb(38 32 54 / .72); color: #efecf7; font: 600 13px 'Sora Variable', Sora, system-ui, sans-serif; cursor: pointer; transition: background-color .2s, border-color .2s, transform .2s; } .ds-btn-secondary:hover { border-color: rgb(255 255 255 / .14); background: rgb(255 255 255 / .08); } .ds-btn-secondary:active { transform: scale(.97); } .ds-btn-secondary:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Play Button",
+      "kind": "custom",
+      "refersTo": "button-play",
+      "description": "The hero launch action: rotating chroma ring, chroma face, violet glow.",
+      "html": "<button class=\"ds-play\"><span class=\"ds-play-face\"></span><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M7 4v16l13-8z\"/></svg>Spielen</button>",
+      "css": "@property --ds-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; } @keyframes ds-spin { to { --ds-angle: 360deg; } } @keyframes ds-chroma { to { background-position: 300% 0; } } .ds-play { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 32px; border-radius: 16px; color: #fff; font: 700 15px 'Sora Variable', Sora, system-ui, sans-serif; letter-spacing: .025em; border: 1.5px solid transparent; background: linear-gradient(#15121f, #15121f) padding-box, conic-gradient(from var(--ds-angle), #8b5cf6, #e879f9, #c084fc, #8b5cf6) border-box; animation: ds-spin 4s linear infinite; box-shadow: 0 14px 40px -10px rgb(168 85 247 / .75); cursor: pointer; transition: transform .25s cubic-bezier(.16,1,.3,1); } .ds-play-face { position: absolute; inset: 3px; z-index: -1; border-radius: 13px; opacity: .9; background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; } .ds-play:hover { transform: scale(1.02); } .ds-play:active { transform: scale(.97); } .ds-play:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Dark inset field with lavender focus and violet halo.",
+      "html": "<label class=\"ds-field\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#726b86\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input class=\"ds-input\" placeholder=\"Instanzen durchsuchen\"></label>",
+      "css": ".ds-field { position: relative; display: block; width: 256px; } .ds-field svg { position: absolute; left: 14px; top: 12px; } .ds-input { width: 100%; height: 40px; padding: 0 14px 0 40px; border-radius: 10px; border: 1px solid rgb(255 255 255 / .07); background: rgb(0 0 0 / .3); color: #efecf7; font: 13px 'Sora Variable', Sora, system-ui, sans-serif; caret-color: #c084fc; outline: none; transition: border-color .2s, background-color .2s, box-shadow .2s; } .ds-input::placeholder { color: #726b86; } .ds-input:focus { border-color: rgb(192 132 252 / .6); background: rgb(0 0 0 / .4); box-shadow: 0 0 0 4px rgb(139 92 246 / .15); }"
+    },
+    {
+      "name": "Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Status and metadata chips below the instance name.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip ds-chip-on\"><i></i>Bereit</span><span class=\"ds-chip\">Minecraft 1.21.4</span><span class=\"ds-chip ds-chip-accent\">läuft</span></div>",
+      "css": ".ds-chips { display: flex; gap: 6px; } .ds-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 6px; font: 600 11.5px 'Sora Variable', Sora, system-ui, sans-serif; background: rgb(255 255 255 / .07); color: #a39cb6; } .ds-chip i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; } .ds-chip-on { background: rgb(74 222 128 / .12); color: #4ade80; } .ds-chip-accent { background: rgb(139 92 246 / .18); color: #c084fc; }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "custom",
+      "refersTo": "toggle",
+      "description": "Chroma switch with glow when on.",
+      "html": "<button class=\"ds-toggle\" role=\"switch\" aria-checked=\"true\"><b></b></button><button class=\"ds-toggle\" role=\"switch\" aria-checked=\"false\"><b></b></button>",
+      "css": "@keyframes ds-chroma { to { background-position: 300% 0; } } .ds-toggle { width: 40px; height: 22px; padding: 3px; border: 0; border-radius: 999px; background: rgb(255 255 255 / .1); cursor: pointer; margin-right: 8px; transition: background-color .3s; } .ds-toggle b { display: block; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .35s cubic-bezier(.34,1.56,.64,1); } .ds-toggle[aria-checked=true] { background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; box-shadow: 0 4px 14px -4px rgb(168 85 247 / .8); } .ds-toggle[aria-checked=true] b { transform: translateX(18px); } .ds-toggle:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Nav Rail",
+      "kind": "nav",
+      "refersTo": "nav-rail",
+      "description": "Floating glass category rail with sliding pill and chroma edge bar.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-rail-btn on\" aria-label=\"Start\"><span class=\"ds-bar\"></span><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z\"/></svg></button><button class=\"ds-rail-btn\" aria-label=\"Instanzen\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/></svg></button></nav>",
+      "css": "@keyframes ds-chroma { to { background-position: 300% 0; } } .ds-rail { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; width: 60px; padding: 10px 0; border-radius: 16px; background: rgb(20 17 30 / .72); border: 1px solid rgb(255 255 255 / .07); backdrop-filter: blur(20px) saturate(140%); } .ds-rail-btn { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: #a39cb6; cursor: pointer; transition: color .2s, background-color .2s; } .ds-rail-btn:hover { color: #efecf7; } .ds-rail-btn.on { color: #fff; background: rgb(255 255 255 / .09); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .07); } .ds-bar { position: absolute; top: 10px; bottom: 10px; left: -9px; width: 3px; border-radius: 999px; background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; } .ds-rail-btn:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "ArrayList",
+      "kind": "custom",
+      "refersTo": "arraylist",
+      "description": "Right-aligned active-mod list sorted by width, chroma wave down the rows.",
+      "html": "<div class=\"ds-al\"><div class=\"ds-al-row\" style=\"--d:0s\"><span class=\"ds-al-t\"><span class=\"ds-ct\">Sodium Extra</span><small>0.6.0</small></span><span class=\"ds-al-bar\"></span></div><div class=\"ds-al-row\" style=\"--d:-.35s\"><span class=\"ds-al-t\"><span class=\"ds-ct\">Zoomify</span><small>2.14</small></span><span class=\"ds-al-bar\"></span></div><div class=\"ds-al-row\" style=\"--d:-.7s\"><span class=\"ds-al-t\"><span class=\"ds-ct\">Sodium</span></span><span class=\"ds-al-bar\"></span></div></div>",
+      "css": "@keyframes ds-chroma { to { background-position: 300% 0; } } .ds-al { display: inline-flex; flex-direction: column; align-items: flex-end; } .ds-al-row { display: flex; align-items: stretch; background: rgb(0 0 0 / .45); backdrop-filter: blur(4px); } .ds-al-row:first-child { border-top-left-radius: 6px; } .ds-al-row:last-child { border-bottom-left-radius: 6px; } .ds-al-t { padding: 3px 10px; font: 600 13px 'Sora Variable', Sora, system-ui, sans-serif; } .ds-al-t small { margin-left: 6px; font: 11px 'JetBrains Mono Variable', 'JetBrains Mono', monospace; color: #a39cb6; } .ds-ct, .ds-al-bar { background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; animation-delay: var(--d); } .ds-ct { -webkit-background-clip: text; background-clip: text; color: transparent; } .ds-al-bar { width: 2px; }"
+    },
+    {
+      "name": "Module Row",
+      "kind": "custom",
+      "refersTo": "module-row",
+      "description": "ClickGUI-style list row: the whole row toggles; enabled rows are violet-tinted.",
+      "html": "<div class=\"ds-mods\"><div class=\"ds-mod on\" role=\"button\" tabindex=\"0\" aria-pressed=\"true\"><span class=\"ds-mod-n\">Sodium</span><span class=\"ds-mod-v\">0.6.13</span></div><div class=\"ds-mod\" role=\"button\" tabindex=\"0\" aria-pressed=\"false\"><span class=\"ds-mod-n\">Zoomify</span><span class=\"ds-mod-v\">2.14.2</span></div></div>",
+      "css": ".ds-mods { display: flex; flex-direction: column; gap: 4px; width: 320px; padding: 8px; border-radius: 18px; background: rgb(20 17 30 / .72); border: 1px solid rgb(255 255 255 / .07); } .ds-mod { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: rgb(255 255 255 / .02); cursor: pointer; transition: background-color .3s, box-shadow .3s; } .ds-mod:hover { background: rgb(255 255 255 / .04); } .ds-mod.on { background: rgb(139 92 246 / .18); box-shadow: inset 0 0 0 1px rgb(192 132 252 / .18); } .ds-mod-n { flex: 1; font: 600 13px 'Sora Variable', Sora, system-ui, sans-serif; color: #efecf7; } .ds-mod:not(.on) .ds-mod-n { color: #a39cb6; } .ds-mod-v { font: 11.5px 'JetBrains Mono Variable', 'JetBrains Mono', monospace; color: #a39cb6; } .ds-mod:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Notification",
+      "kind": "card",
+      "refersTo": "notification",
+      "description": "Client notification with status icon and draining chroma timer.",
+      "html": "<div class=\"ds-toast\"><span class=\"ds-toast-dot\"></span><div><b>Fabulously Optimized</b><p>Lädt Bibliotheken · 42 MB / 120 MB</p></div><i class=\"ds-toast-track\"><i></i></i></div>",
+      "css": "@keyframes ds-chroma { to { background-position: 300% 0; } } .ds-toast { position: relative; display: flex; gap: 12px; width: 340px; padding: 14px 14px 22px; border-radius: 16px; border: 1px solid rgb(255 255 255 / .14); background: rgb(21 18 31 / .92); backdrop-filter: blur(24px); box-shadow: 0 18px 50px -18px rgb(0 0 0 / .9); font-family: 'Sora Variable', Sora, system-ui, sans-serif; } .ds-toast-dot { flex: none; width: 8px; height: 8px; margin: 6px; border-radius: 50%; } .ds-toast-dot, .ds-toast-track i { background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; } .ds-toast b { display: block; font-size: 13px; font-weight: 600; color: #efecf7; } .ds-toast p { margin: 0; font-size: 12.5px; line-height: 1.6; color: #a39cb6; } .ds-toast-track { position: absolute; left: 14px; right: 14px; bottom: 10px; height: 3px; border-radius: 999px; overflow: hidden; background: rgb(255 255 255 / .08); } .ds-toast-track i { display: block; height: 100%; width: 35%; border-radius: 999px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Client Overlay",
+    "overview": "The launcher is not a tool window; it is the client's own HUD, opened before the game. Every surface borrows the vocabulary of modern Minecraft clients (LiquidBounce, Rise, Vape): a watermark top left, an ArrayList of active mods top right, a floating category rail, ClickGUI-style module rows that toggle on click, and notifications sliding in bottom right. The content is strictly legit (fair-play mods, instances, resource packs); only the form is borrowed. The in-game mockup (`design/ingame.html`) is the same world in its native habitat: shader main menu, ClickGUI category panels, HUD, HUD editor.\n\nDepth comes from a near-black ground under a slowly flowing violet shader, with dark translucent glass panels floating over it. The accent is never a flat colour: it is a travelling chroma gradient (violet, lavender, fuchsia) that moves like an ArrayList colour wave. Motion is constant but cheap: springs on selection pills, blur-to-sharp rises on entry, letter-by-letter reveals of the instance name. The shader pauses while a game runs. The UI rejects the grey utility look of Prism-style launchers and the interchangeable card dashboard.\n\nDensity is client-dense: 13.5px body, compact rows, tabular numerals, mono for every version and count. Copy is German and plain (\"Spielen\", \"Instanzen\", \"Bereit\", \"Neue Instanz\").",
+    "keyCharacteristics": [
+      "Near-black ground (`bg`) under a half-resolution WebGL fbm shader in violet and magenta.",
+      "Glass panels: 72% dark fill, 20px backdrop blur at 140% saturation, 1px white hairline at 7%.",
+      "One accent expressed as a moving gradient (`chroma`), 6s linear loop, 300% background width.",
+      "Glow reserved for the Play button and active toggles/sliders.",
+      "Sora for everything; JetBrains Mono for numbers, versions, counts, keybinds.",
+      "Client-native components: watermark, ArrayList, nav rail, module rows, notifications with drain timers."
+    ],
+    "rules": [
+      { "name": "The Moving Accent Rule", "body": "The accent is always the chroma gradient in motion (`linear-gradient(90deg, accent, accent-2, accent-3, accent-2, accent)` at 300% width, 6s linear). Flat accent colour appears only at low alpha as a selection tint or as `accent-2` in small signals.", "section": "colors" },
+      { "name": "The Phase Shift Rule", "body": "When chroma repeats down a stack (ArrayList rows), each row's animation is offset by `-0.35s` per index so the colour flows down the list as a wave.", "section": "colors" },
+      { "name": "The Signal-Only Status Rule", "body": "Green, amber and coral never decorate; they mark state (ready, warning, error/stop) at chip or icon scale.", "section": "colors" },
+      { "name": "The Numbers Are Mono Rule", "body": "Every version string, count, duration, keybind and build number is set in JetBrains Mono; prose and names never are.", "section": "typography" },
+      { "name": "The No Uppercase Rule", "body": "Labels and headers are sentence case at 600 weight; hierarchy comes from weight and colour, not letter-spacing or capitals.", "section": "typography" },
+      { "name": "The Glow Is Earned Rule", "body": "Violet glow appears only on the Play button and on controls that are currently on (toggles, slider thumbs, pressed keys). Nothing glows at rest for decoration.", "section": "elevation" },
+      { "name": "The Glass Over Shader Rule", "body": "Panels never use an opaque fill unless they must read over other panels (modals, notifications, menus); everything else lets the shader show through the blur.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do express the accent as the moving chroma gradient; use flat violet only as a 15 to 18% tint for selection and focus.",
+      "Do float every panel as glass (72% `panel`, 20px blur at 140% saturation, 1px `line` hairline) over the shader.",
+      "Do set every number, version, count and keybind in JetBrains Mono with tabular numerals.",
+      "Do build lists as ClickGUI modules: the whole row toggles or selects, the on state is a violet tint with an inset lavender hairline.",
+      "Do use the shared spring for anything that slides between positions and the rise pattern for entries.",
+      "Do phase-shift repeated chroma by -0.35s per item so it flows as a wave.",
+      "Do keep module names and content fair-play: HUD, render, comfort and performance modules only."
+    ],
+    "donts": [
+      "Don't add violet glow to anything other than the Play button and controls that are currently on.",
+      "Don't use opaque panels except for modals, notifications and popovers that must read over other surfaces.",
+      "Don't fall back to a grey utility launcher look or a grid of interchangeable dashboard cards; dense lists inside one glass container replace card grids.",
+      "Don't introduce a second accent hue; status colours stay at chip and icon scale.",
+      "Don't add uppercase, letter-spaced eyebrow labels above headings; hierarchy is weight, size and colour.",
+      "Don't load player avatars from third-party services; faces are cropped from the profile's own skin texture with pixelated rendering.",
+      "Don't let the shader run while a game is running."
+    ]
+  }
+}

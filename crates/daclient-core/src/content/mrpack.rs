@@ -11,7 +11,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use super::{ContentManager, ContentType, Source, modrinth};
+use super::{ContentManager, ContentType, Source, cfpack, curseforge::CurseForge, modrinth};
 use crate::{
     Error, Paths, ProgressFn, Result,
     download::{DownloadTask, download_all},
@@ -62,9 +62,12 @@ pub struct PackEnv {
 
 /// Where a pack to import comes from.
 pub enum PackSource<'a> {
+    /// `.mrpack` or CurseForge zip (detected by content).
     File(&'a Path),
     /// Modrinth modpack project (slug or id); the newest release is used.
     Modrinth(&'a str),
+    /// CurseForge modpack project (id or slug); the newest release is used.
+    CurseForge(&'a str),
 }
 
 /// Rejects absolute paths and `..` so a pack can't write outside the game directory.
@@ -107,15 +110,29 @@ fn loader_dep_key(kind: LoaderKind) -> &'static str {
 }
 
 /// Creates a new instance from a modpack. `name` overrides the pack's name.
+/// CurseForge packs need `cf`; their blocked files end up in `blocked.json`.
 pub async fn import(
     paths: &Paths,
     source: PackSource<'_>,
     name: Option<&str>,
+    cf: Option<&CurseForge>,
     concurrency: usize,
     progress: &ProgressFn,
 ) -> Result<Instance> {
+    let need_cf = || cf.ok_or(Error::MissingCurseForgeKey);
     let (pack_path, origin) = match source {
-        PackSource::File(path) => (path.to_path_buf(), None),
+        PackSource::CurseForge(query) => {
+            let cf = need_cf()?;
+            let (path, info) = cfpack::download_pack(paths, cf, query, progress).await?;
+            return cfpack::import(paths, cf, &path, Some(info), name, concurrency, progress).await;
+        }
+        PackSource::File(path) => {
+            let p = path.to_path_buf();
+            if tokio::task::spawn_blocking(move || cfpack::is_curseforge_pack(&p)).await?? {
+                return cfpack::import(paths, need_cf()?, path, None, name, concurrency, progress).await;
+            }
+            (path.to_path_buf(), None)
+        }
         PackSource::Modrinth(query) => {
             stage(progress, "Resolving modpack");
             let project = modrinth::project(query).await?;
@@ -188,6 +205,7 @@ pub async fn import(
 
     stage(progress, "Linking files to Modrinth");
     ContentManager::new(paths, instance.clone(), concurrency)
+        .with_curseforge(cf.map(|c| c.key().to_owned()))
         .identify()
         .await?;
     Ok(instance)
@@ -225,14 +243,15 @@ async fn install_files(
 
     stage(progress, "Applying overrides");
     let (pack, dir) = (pack_path.to_path_buf(), game_dir.clone());
-    tokio::task::spawn_blocking(move || extract_overrides(&pack, &dir)).await??;
+    tokio::task::spawn_blocking(move || extract_prefixes(&pack, &dir, &["overrides/", "client-overrides/"]))
+        .await??;
     Ok(())
 }
 
-/// Copies `overrides/` then `client-overrides/` (which wins) into the game directory.
-fn extract_overrides(pack: &Path, game_dir: &Path) -> Result<()> {
+/// Copies the zip folders `prefixes` into the game directory; later ones win.
+pub(super) fn extract_prefixes(pack: &Path, game_dir: &Path, prefixes: &[&str]) -> Result<()> {
     let mut zip = zip::ZipArchive::new(std::fs::File::open(pack)?)?;
-    for prefix in ["overrides/", "client-overrides/"] {
+    for &prefix in prefixes {
         for i in 0..zip.len() {
             let mut entry = zip.by_index(i)?;
             let Some(rel) = entry.name().strip_prefix(prefix).map(str::to_owned) else {
@@ -280,7 +299,7 @@ pub async fn export(
         .iter()
         .filter_map(|e| match &e.source {
             Source::Modrinth { version_id, .. } => Some(version_id.clone()),
-            Source::Local => None,
+            _ => None,
         })
         .collect();
     let versions: HashMap<String, modrinth::Version> = modrinth::versions(&version_ids)
@@ -298,7 +317,8 @@ pub async fn export(
             Source::Modrinth { version_id, .. } => versions
                 .get(version_id)
                 .and_then(|v| v.files.iter().find(|f| f.hashes.sha1 == entry.sha1)),
-            Source::Local => None,
+            // CurseForge URLs aren't allowed in .mrpack, so those files get bundled.
+            _ => None,
         };
         match remote {
             Some(file) => {

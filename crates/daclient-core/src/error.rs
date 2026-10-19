@@ -24,6 +24,8 @@ pub enum Error {
     Auth(String),
     #[error("no Microsoft client id configured (set DACLIENT_MSA_CLIENT_ID or msaClientId in settings.json)")]
     MissingClientId,
+    #[error("no CurseForge API key configured (set DACLIENT_CURSEFORGE_API_KEY or curseforgeApiKey in settings.json)")]
+    MissingCurseForgeKey,
     #[error("{0}")]
     Other(String),
 }

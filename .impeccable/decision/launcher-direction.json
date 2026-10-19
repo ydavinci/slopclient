@@ -1,0 +1,129 @@
+{
+  "title": "Neue Welt für Launcher und Mod",
+  "question": "Ausgewürfelt wurde die Serverliste. Behalten, eine Alternative nehmen oder neu würfeln.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Die Serverliste",
+      "kicker": "THE ROLL",
+      "lineage": "Minecrafts Mehrspieler-Bildschirm",
+      "thesis": "Der Launcher ist die Liste, die jeder Spieler auswendig kennt: Instanzen und Mods als Zeilen mit Icon, zweizeiliger farbiger Beschreibung und Status-Balken.",
+      "palette": ["#0c0a10", "#c084fc", "#55ff55", "#ffff55", "#ff5555", "#aaaaaa"],
+      "materials": ["Chat-Farbcodes mit harten Schatten", "Ping-Balken als Status", "weißer Auswahlrahmen"],
+      "viewport": "Abgedunkeltes Panorama, der Name der gewählten Instanz riesig oben links, darunter die Instanz-Liste als Zeilen, unten eine feste Buttonleiste wie im Spiel: Spielen, Mods, Bearbeiten, Neu.",
+      "risk": "Kippt in einen Klon des Spielmenüs, wenn die Zeilen nicht dichter und nützlicher sind als das Original.",
+      "raised": [
+        { "from": "variable-font-specimen", "raise": "Hierarchie nur über Größe: der Name der gewählten Instanz steht riesig, alles andere bleibt klein und ruhig." },
+        { "from": "design-annual-s-plate-section", "raise": "Strenges Spaltenraster: Icon, Name, Beschreibung, Status und Balken stehen in jeder Liste auf denselben Achsen." },
+        { "from": "pop-culture-shelf-character-goods-catalog", "raise": "Jede Instanz hat feste persönliche Daten: Erstelldatum, Spielzeit, eine Notizzeile, sortiert nach zuletzt gespielt." },
+        { "from": "notation-diagram-systems-star-atlas", "raise": "Eine feste Stufen-Skala: Downloads, Größe und Spielzeit als Balkenstufen statt Zahlenwüste." },
+        { "from": "wayfinding-cartography-signage-midnight-transit-diagram", "raise": "Feste Linienfarben pro Loader: Fabric, Quilt, NeoForge und Forge tragen überall dieselbe Chat-Farbe." },
+        { "from": "vernacular-ephemera-jet-age-ticket-wallet", "raise": "Nichts verschwindet: deaktivierte Mods bleiben durchgestrichen in der Liste stehen, statt nur blass zu werden." }
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Der F3-Bildschirm",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Minecrafts Debug-Overlay",
+      "thesis": "Der Launcher als F3-Overlay: links die Daten der Instanz, rechts System und Java, alles als Textzeilen auf grauen Streifen, live aktualisiert.",
+      "palette": ["#0a0a0a", "#e0e0e0", "#9a9a9a", "#c084fc", "#55ff55"],
+      "materials": ["halbtransparente Textstreifen", "Live-Zahlen", "Frametime-Graph"],
+      "viewport": "Zweispaltiges Datenfeld über dem Panorama, die gewählte Instanz als Zeilenblock links oben, unten rechts der Frametime-Graph als Download-Fortschritt.",
+      "risk": "Dicht und technisch; für Gelegenheitsspieler kann es nach Entwicklerwerkzeug aussehen.",
+      "comp": ".impeccable/mocks/decision/model-pick.webp"
+    },
+    {
+      "id": "challenger-specimen",
+      "label": "Schriftmuster-Bogen",
+      "verdict": "declined",
+      "lineage": "interaktive Schriftmuster",
+      "thesis": "Ein riesiges Zeichen und ein Raster, das live mit dem Regler mitatmet.",
+      "palette": ["#f4f3ef", "#111111", "#ff4f1f"],
+      "materials": ["Papierweiß", "Variable Font"],
+      "viewport": "Eine Instanz als riesiger Buchstabe, Achsen-Regler darunter.",
+      "case": "Verschmilzt schlecht: Spieler erkennen sich darin nicht, und Instanzen sind keine Glyphen.",
+      "risk": "Wirkt wie eine Designer-Spielerei statt eines Launchers.",
+      "kept": "Hierarchie allein über Größe."
+    },
+    {
+      "id": "challenger-annual",
+      "label": "Design-Jahrbuch",
+      "verdict": "declined",
+      "lineage": "Tafelteil eines Design-Jahrbuchs",
+      "thesis": "Ein fast weißer Bogen mit Passkreuzen, Haarlinien und einem Stempel.",
+      "palette": ["#f5f4f6", "#16181a", "#dcddf3", "#c9c7c4"],
+      "materials": ["Naturpapier", "Passkreuze"],
+      "viewport": "Instanzen als Tafeln mit Haarlinien-Credits.",
+      "case": "Verschmilzt schlecht: helles Druckpapier passt weder zur Szene am Abend noch zum Spiel.",
+      "risk": "Zu leise und zu hell für einen Spiele-Client.",
+      "kept": "Strenges Raster aus festen Achsen."
+    },
+    {
+      "id": "challenger-goods",
+      "label": "Figuren-Katalog",
+      "verdict": "declined",
+      "lineage": "Charakterwaren-Kataloge",
+      "thesis": "Eine nach Beliebtheit sortierte Besetzung mit Geburtstag und Notiz.",
+      "palette": ["#ffe3ec", "#d9f2ff", "#fff4c2", "#ff6f91"],
+      "materials": ["Pastellflächen", "weiße Konturen"],
+      "viewport": "Instanzen als Figuren in einem Pastell-Raster.",
+      "case": "Verschmilzt halb: das Ranking passt, der Pastell-Look nicht zur Zielgruppe.",
+      "risk": "Zu niedlich für Hypixel-Spieler.",
+      "kept": "Feste persönliche Daten pro Eintrag."
+    },
+    {
+      "id": "challenger-atlas",
+      "label": "Sternatlas",
+      "verdict": "declined",
+      "lineage": "Himmelskarten",
+      "thesis": "Wichtigkeit als Punktgröße auf einem Koordinatennetz.",
+      "palette": ["#0d1633", "#f2f2ea", "#ff7a4d"],
+      "materials": ["Nachtblau", "Rotlicht-Annotation"],
+      "viewport": "Mods als Sterne, nach Downloads skaliert.",
+      "case": "Verschmilzt schlecht: hübsch, aber Mods zu finden und zu verwalten wird schwerer.",
+      "risk": "Schön, aber unbedienbar für Listenarbeit.",
+      "kept": "Eine feste Stufen-Skala statt Zahlen."
+    },
+    {
+      "id": "challenger-transit",
+      "label": "Liniennetzplan",
+      "verdict": "declined",
+      "lineage": "Emaille-Liniennetzpläne",
+      "thesis": "Vier Linienfarben, Umstiege als Kreise, Bewegung als Versprechen.",
+      "palette": ["#101a3a", "#e63b2e", "#2f6fe0", "#f2b134", "#2fa65a"],
+      "materials": ["Emaille", "45°-Linien"],
+      "viewport": "Versionen als Stationen, Loader als Linien.",
+      "case": "Verschmilzt halb: Loader als Linien sind klar, der Rest der Metapher trägt nicht.",
+      "risk": "Die Metapher wird schnell anstrengend.",
+      "kept": "Feste Farbe pro Loader."
+    },
+    {
+      "id": "challenger-ticket",
+      "label": "Flugschein-Mappe",
+      "verdict": "declined",
+      "lineage": "Ticketmappen der Jet-Ära",
+      "thesis": "Coupons, die sich selbst abstempeln: gültig, benutzt, storniert.",
+      "palette": ["#14213d", "#d62828", "#ffffff", "#5b3c88"],
+      "materials": ["Durchschlagpapier", "Stempel"],
+      "viewport": "Jeder Spielstart als abreißbarer Coupon.",
+      "case": "Verschmilzt schlecht: Reise-Ephemera haben mit Minecraft-Abenden nichts zu tun.",
+      "risk": "Nostalgie-Kostüm ohne Bezug.",
+      "kept": "Zustände bleiben sichtbar statt zu verschwinden."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "label": "Der Kategorie-Standard",
+    "thesis": "Ein dunkles Launcher-Dashboard wie Lunar oder die Modrinth-App, sauber umgesetzt.",
+    "palette": ["#0f0d14", "#1b1824", "#8b5cf6", "#ebe8f2"],
+    "materials": ["Keyart-Bild", "abgerundete Karten"],
+    "viewport": "Seitenleiste links, großes Instanz-Keyart mit Spielen-Button, darunter Kartenreihen.",
+    "risk": "Austauschbar mit der Konkurrenz, genau so gewollt.",
+    "comp": ".impeccable/mocks/decision/canon.webp"
+  },
+  "steer": true
+}

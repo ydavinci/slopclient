@@ -3,6 +3,7 @@
 //! The Tauri app and the test CLI are thin layers on top of this crate.
 
 pub mod auth;
+pub mod client_mod;
 pub mod config;
 pub mod content;
 pub mod download;

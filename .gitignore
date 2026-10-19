@@ -9,3 +9,4 @@
 /web/.astro
 /.impeccable/review
 /.impeccable/live
+/launcher/*.tsbuildinfo
