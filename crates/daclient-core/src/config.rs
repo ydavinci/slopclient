@@ -12,6 +12,8 @@ pub struct Settings {
     pub curseforge_api_key: Option<String>,
     /// Parallel downloads.
     pub download_concurrency: Option<usize>,
+    /// Cape from the Cape Studio that the client mod shows.
+    pub active_cape: Option<String>,
 }
 
 impl Settings {

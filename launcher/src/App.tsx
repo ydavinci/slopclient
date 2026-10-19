@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { StoreProvider, useStore } from "./lib/store";
 import { Browse } from "./pages/Browse";
+import { Cosmetics } from "./pages/Cosmetics";
 import { Home } from "./pages/Home";
 import { InstanceDetail } from "./pages/InstanceDetail";
 import { Instances } from "./pages/Instances";
@@ -21,6 +22,8 @@ function Page() {
       return <InstanceDetail id={route.id} tab={route.tab} />;
     case "browse":
       return <Browse target={route.target} />;
+    case "cosmetics":
+      return <Cosmetics />;
     case "settings":
       return <SettingsPage />;
   }

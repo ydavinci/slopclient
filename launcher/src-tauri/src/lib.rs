@@ -11,6 +11,7 @@ use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::{Account, AccountStore, DeviceCode, msa},
     config::Settings,
+    cosmetics::{self, CapeInfo, CapeMeta, NewCape},
     crash::{self, CrashReport},
     icon,
     foreign::{self, ForeignInstance},
@@ -528,6 +529,111 @@ async fn search(state: State<'_, AppState>, args: SearchArgs) -> CmdResult<Searc
     .map_err(err)
 }
 
+// ---------- cosmetics (Cape Studio) ----------
+
+fn b64(bytes: &[u8]) -> String {
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.encode(bytes)
+}
+
+fn unb64(data: &str) -> CmdResult<Vec<u8>> {
+    use base64::Engine;
+    // Accepts plain base64 and data URLs.
+    let raw = data.split_once(',').map_or(data, |(_, b)| b);
+    base64::engine::general_purpose::STANDARD.decode(raw).map_err(err)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CapeLibrary {
+    capes: Vec<CapeInfo>,
+    active_id: Option<String>,
+}
+
+#[tauri::command]
+async fn capes_list(state: State<'_, AppState>) -> CmdResult<CapeLibrary> {
+    Ok(CapeLibrary {
+        capes: cosmetics::list(&state.paths).map_err(err)?,
+        active_id: cosmetics::active(&state.paths).map_err(err)?.map(|c| c.id),
+    })
+}
+
+/// The spritesheet as a data URL (previews animate it by shifting frames).
+#[tauri::command]
+async fn cape_image(state: State<'_, AppState>, id: String) -> CmdResult<String> {
+    Ok(format!("data:image/png;base64,{}", b64(&cosmetics::cape_png(&state.paths, &id).map_err(err)?)))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CapeSave {
+    id: Option<String>,
+    name: String,
+    /// Base64 PNG spritesheet.
+    png: String,
+    meta: CapeMeta,
+    source_ext: Option<String>,
+    /// Base64 original upload.
+    source: Option<String>,
+    #[serde(default)]
+    editor: serde_json::Value,
+}
+
+#[tauri::command]
+async fn cape_save(state: State<'_, AppState>, cape: CapeSave) -> CmdResult<CapeInfo> {
+    let png = unb64(&cape.png)?;
+    let source = match &cape.source {
+        Some(s) => Some(unb64(s)?),
+        None => None,
+    };
+    let ext = cape.source_ext.as_deref().unwrap_or("png");
+    cosmetics::save(
+        &state.paths,
+        NewCape {
+            id: cape.id.as_deref(),
+            name: &cape.name,
+            png: &png,
+            meta: cape.meta,
+            source: source.as_deref().map(|b| (ext, b)),
+            editor: cape.editor,
+        },
+    )
+    .map_err(err)
+}
+
+#[tauri::command]
+async fn cape_delete(state: State<'_, AppState>, id: String) -> CmdResult<()> {
+    cosmetics::delete(&state.paths, &id).map_err(err)
+}
+
+#[tauri::command]
+async fn cape_set_active(state: State<'_, AppState>, id: Option<String>) -> CmdResult<()> {
+    cosmetics::set_active(&state.paths, id.as_deref()).map_err(err)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CapeSource {
+    ext: String,
+    data_url: String,
+    editor: serde_json::Value,
+}
+
+/// Original upload plus editor state, to open a cape in the editor again.
+#[tauri::command]
+async fn cape_source(state: State<'_, AppState>, id: String) -> CmdResult<Option<CapeSource>> {
+    let Some((ext, bytes, editor)) = cosmetics::source(&state.paths, &id).map_err(err)? else {
+        return Ok(None);
+    };
+    let mime = match ext.as_str() {
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "jpg" | "jpeg" => "image/jpeg",
+        _ => "image/png",
+    };
+    Ok(Some(CapeSource { data_url: format!("data:{mime};base64,{}", b64(&bytes)), ext, editor }))
+}
+
 // ---------- other launchers ----------
 
 /// Instances of Prism/PolyMC (default folders) plus an optional extra folder.
@@ -664,6 +770,12 @@ pub fn run() {
             modpack_export,
             foreign_scan,
             foreign_import,
+            capes_list,
+            cape_image,
+            cape_save,
+            cape_delete,
+            cape_set_active,
+            cape_source,
         ])
         .run(tauri::generate_context!())
         .expect("error while running DaClient");

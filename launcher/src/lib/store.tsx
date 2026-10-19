@@ -7,6 +7,7 @@ export type Route =
   | { page: "instances" }
   | { page: "instance"; id: string; tab?: InstanceTab }
   | { page: "browse"; target?: string }
+  | { page: "cosmetics" }
   | { page: "settings" };
 
 export type InstanceTab = "mods" | "log" | "settings";

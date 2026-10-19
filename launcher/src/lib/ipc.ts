@@ -7,6 +7,7 @@ import { mockCall, mockEmitter } from "./mock";
 import type {
   Account,
   BlockedFile,
+  CapeInfo,
   ContentEntry,
   DeviceCode,
   ForeignInstance,
@@ -78,6 +79,13 @@ export const api = {
 
   modpackImport: (source: string, isFile: boolean, platform: Platform, name: string | null, taskId: string) =>
     call<Instance>("modpack_import", { source, isFile, platform, name, taskId }),
+  capesList: () => call<{ capes: CapeInfo[]; activeId: string | null }>("capes_list"),
+  capeImage: (id: string) => call<string>("cape_image", { id }),
+  capeSave: (cape: { id: string | null; name: string; png: string; meta: CapeInfo["meta"]; sourceExt: string; source: string; editor: unknown }) =>
+    call<CapeInfo>("cape_save", { cape }),
+  capeDelete: (id: string) => call<void>("cape_delete", { id }),
+  capeSetActive: (id: string | null) => call<void>("cape_set_active", { id }),
+  capeSource: (id: string) => call<{ ext: string; dataUrl: string; editor: unknown } | null>("cape_source", { id }),
   foreignScan: (extraDir: string | null) => call<ForeignInstance[]>("foreign_scan", { extraDir }),
   foreignImport: (path: string, name: string | null, taskId: string) => call<Instance>("foreign_import", { path, name, taskId }),
   modpackExport: (id: string, output: string, name: string, version: string, include: string[]) =>

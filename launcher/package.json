@@ -18,7 +18,8 @@
     "lucide-react": "^1.59.0",
     "motion": "^14.3.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "skinview3d": "^3.4.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

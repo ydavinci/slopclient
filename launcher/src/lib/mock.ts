@@ -1,5 +1,5 @@
 // Fake backend for previewing the UI in a normal browser (no Tauri).
-import type { ContentEntry, Instance, Overview, SearchHit } from "./types";
+import type { CapeInfo, ContentEntry, Instance, Overview, SearchHit } from "./types";
 
 type Handler = (payload: unknown) => void;
 
@@ -83,6 +83,8 @@ const hits: SearchHit[] = [
 }));
 
 const mockIcons = new Map<string, string>();
+let mockCapes: { info: CapeInfo; png: string; source: string; ext: string; editor: unknown }[] = [];
+let mockActiveCape: string | null = null;
 
 const delay = <T,>(value: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(value), ms));
 
@@ -129,6 +131,31 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
         { launcher: "Prism Launcher", name: "1.21.1", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\1.21.1", mcVersion: "1.21.1", loader: { type: "neoforge", version: "21.1.262" }, mods: 3 },
         { launcher: "Prism Launcher", name: "Skyblock", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\Skyblock", mcVersion: "1.21.10", loader: { type: "fabric", version: "0.19.5" }, mods: 41 },
       ]);
+    case "capes_list":
+      return delay({ capes: mockCapes.map((c) => c.info), activeId: mockActiveCape });
+    case "cape_image":
+      return delay(mockCapes.find((c) => c.info.id === args.id)?.png ?? "");
+    case "cape_source": {
+      const c = mockCapes.find((c) => c.info.id === args.id);
+      return delay(c ? { ext: c.ext, dataUrl: c.source, editor: c.editor } : null);
+    }
+    case "cape_save": {
+      const cape = args.cape as { id: string | null; name: string; png: string; meta: CapeInfo["meta"]; sourceExt: string; source: string; editor: unknown };
+      const id = cape.id ?? Math.random().toString(36).slice(2, 10);
+      const info: CapeInfo = { id, name: cape.name || "Cape", meta: cape.meta, createdAt: now, updatedAt: Math.floor(Date.now() / 1000), hasSource: true };
+      const entry = { info, png: `data:image/png;base64,${cape.png}`, source: `data:image/${cape.sourceExt === "jpg" ? "jpeg" : cape.sourceExt};base64,${cape.source}`, ext: cape.sourceExt, editor: cape.editor };
+      const i = mockCapes.findIndex((c) => c.info.id === id);
+      if (i >= 0) mockCapes[i] = entry;
+      else mockCapes.unshift(entry);
+      return delay(info);
+    }
+    case "cape_delete":
+      mockCapes = mockCapes.filter((c) => c.info.id !== args.id);
+      if (mockActiveCape === args.id) mockActiveCape = null;
+      return delay(null);
+    case "cape_set_active":
+      mockActiveCape = (args.id as string | null) ?? null;
+      return delay(null);
     case "instance_icon":
       return delay(mockIcons.get(args.id as string) ?? null);
     case "set_instance_icon": {

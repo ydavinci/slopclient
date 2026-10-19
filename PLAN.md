@@ -39,7 +39,7 @@ Design-System: [launcher/DESIGN.md](launcher/DESIGN.md) (Launcher und Client-Mod
 
 ```
 M8  Instanz-Icons ────────────────► umgesetzt
-M9  Cape-Studio (lokal) ──┐
+M9  Cape-Studio (lokal) ──┐   (M9 umgesetzt)
 M10 Capes im Client-Mod ──┴──────► eigene Cape sofort im Spiel sichtbar (nur für dich)
 M11 Cosmetics-Konto & Backend ───► andere DaClient-Spieler sehen deine Cape
 M12 Backlog & Release-Vorbereitung
@@ -76,7 +76,7 @@ Begründung: M8 ist klein und sofort spürbar. M9 und M10 liefern den sichtbaren
 
 ---
 
-### M9 · Cape-Studio im Launcher
+### M9 · Cape-Studio im Launcher · umgesetzt
 
 **Ziel:** Aus einem Bild oder GIF eine eigene (auch animierte) Cape machen, mit Editor und 3D-Vorschau.
 

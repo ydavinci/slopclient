@@ -186,6 +186,16 @@ export interface DeviceCode {
   message: string;
 }
 
+/** A cape from the Cape Studio (daclient-core cosmetics.rs). */
+export interface CapeInfo {
+  id: string;
+  name: string;
+  meta: { version: 1; frames: number; frameTimeMs: number; scale: 1 | 2 | 4 | 8; elytra: boolean };
+  createdAt: number;
+  updatedAt: number;
+  hasSource: boolean;
+}
+
 /** An instance of Prism Launcher, PolyMC or MultiMC that can be copied over. */
 export interface ForeignInstance {
   launcher: string;
