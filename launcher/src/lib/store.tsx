@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, newTaskId, onEvent } from "./ipc";
-import type { Overview, Progress } from "./types";
+import type { CrashReport, Overview, Progress } from "./types";
 
 export type Route =
   | { page: "home" }
@@ -11,7 +11,13 @@ export type Route =
 
 export type InstanceTab = "mods" | "log" | "settings";
 
-export type ModalState = null | { kind: "new-instance" } | { kind: "import" } | { kind: "login" } | { kind: "export"; instanceId: string };
+export type ModalState =
+  | null
+  | { kind: "new-instance" }
+  | { kind: "import" }
+  | { kind: "login" }
+  | { kind: "export"; instanceId: string }
+  | { kind: "crash"; instanceId: string; report: CrashReport };
 
 export interface Task {
   id: string;
@@ -132,6 +138,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ...l, [instanceId]: next };
         });
       }),
+      onEvent<{ instanceId: string; report: CrashReport }>("game-crash", ({ instanceId, report }) => setModal({ kind: "crash", instanceId, report })),
       onEvent<{ instanceId: string; running: boolean; exitCode: number | null }>("game-state", ({ instanceId, running, exitCode }) => {
         setLaunching((s) => {
           const n = new Set(s);

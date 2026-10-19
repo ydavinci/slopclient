@@ -122,6 +122,11 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
         { entry: content[0], new_version: { id: "a", project_id: "sodium", version_number: "mc26.3-0.9.4", version_type: "release" } },
         { entry: content[1], new_version: { id: "b", project_id: "iris", version_number: "1.10.3+26.3", version_type: "release" } },
       ]);
+    case "foreign_scan":
+      return delay([
+        { launcher: "Prism Launcher", name: "1.21.1", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\1.21.1", mcVersion: "1.21.1", loader: { type: "neoforge", version: "21.1.262" }, mods: 3 },
+        { launcher: "Prism Launcher", name: "Skyblock", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\Skyblock", mcVersion: "1.21.10", loader: { type: "fabric", version: "0.19.5" }, mods: 41 },
+      ]);
     case "content_blocked":
     case "content_resolve_blocked":
       return delay(
@@ -147,6 +152,25 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       ["[Render thread/INFO]: Setting user: Notch", "[Render thread/INFO]: Backend library: LWJGL version 3.4.3", "[Render thread/WARN]: Unable to locate English counter names", "[Render thread/INFO]: Sound engine started"].forEach((line, i) =>
         setTimeout(() => mockEmitter.emit("game-log", { instanceId: args.id, line, stderr: false }), 300 * (i + 1)),
       );
+      // Preview of the crash dialog: "Create: Above" crashes a few seconds after the start.
+      if (args.id === "create-above") {
+        setTimeout(() => {
+          overview.running = overview.running.filter((r) => r !== args.id);
+          mockEmitter.emit("game-state", { instanceId: args.id, running: false, exitCode: 1 });
+          mockEmitter.emit("game-crash", {
+            instanceId: args.id,
+            report: {
+              title: "Mod-Fehler beim Start",
+              summary: "Die Mod „create_sa“ ist beim Laden abgestürzt.",
+              details: ["java.lang.NoSuchMethodError: 'void com.simibubi.create.content.Foo.bar()'"],
+              suggestions: ["Deaktiviere die Mod und starte erneut.", "Suche nach einem Update der Mod oder prüfe, ob sie zu dieser Minecraft-Version passt."],
+              culprit: { modId: "create_sa", fileName: "create-stuff-additions-2.1.0.jar", name: "Create Stuff & Additions" },
+              reportFile: "C:\\Users\\you\\AppData\\Roaming\\DaClient\\instances\\create-above\\minecraft\\crash-reports\\crash-2026-10-19_11.02.11-client.txt",
+              exitCode: 1,
+            },
+          });
+        }, 2500);
+      }
       return null;
     case "stop_instance":
       overview.running = overview.running.filter((r) => r !== args.id);

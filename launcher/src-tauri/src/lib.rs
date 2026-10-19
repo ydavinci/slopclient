@@ -11,6 +11,8 @@ use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::{Account, AccountStore, DeviceCode, msa},
     config::Settings,
+    crash::{self, CrashReport},
+    foreign::{self, ForeignInstance},
     content::{
         BlockedFile, ContentEntry, ContentManager, InstallReport, UpdateInfo,
         curseforge::CurseForge,
@@ -42,6 +44,8 @@ struct AppState {
     paths: Paths,
     /// Running games: instance id -> process id.
     games: Mutex<HashMap<String, u32>>,
+    /// Games the user stopped; their exit is not a crash.
+    stopping: Mutex<std::collections::HashSet<String>>,
 }
 
 impl AppState {
@@ -83,6 +87,14 @@ struct GameState {
     instance_id: String,
     running: bool,
     exit_code: Option<i32>,
+}
+
+/// Sent after a game ended abnormally, with the analysis of its logs.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GameCrash {
+    instance_id: String,
+    report: CrashReport,
 }
 
 fn progress_for(app: &AppHandle, task_id: &str) -> ProgressFn {
@@ -258,15 +270,24 @@ async fn launch_instance(
         },
     );
 
+    // The last lines feed the crash analysis.
+    let tail = Arc::new(std::sync::Mutex::new(std::collections::VecDeque::<String>::with_capacity(400)));
     for (stream, stderr) in [
         (child.stdout.take().map(|s| Box::new(s) as Box<dyn tokio::io::AsyncRead + Unpin + Send>), false),
         (child.stderr.take().map(|s| Box::new(s) as Box<dyn tokio::io::AsyncRead + Unpin + Send>), true),
     ] {
         let Some(stream) = stream else { continue };
-        let (app, id) = (app.clone(), id.clone());
+        let (app, id, tail) = (app.clone(), id.clone(), tail.clone());
         tokio::spawn(async move {
             let mut lines = BufReader::new(stream).lines();
             while let Ok(Some(line)) = lines.next_line().await {
+                {
+                    let mut t = tail.lock().unwrap();
+                    if t.len() == 400 {
+                        t.pop_front();
+                    }
+                    t.push_back(line.clone());
+                }
                 let _ = app.emit(
                     "game-log",
                     GameLog {
@@ -280,20 +301,31 @@ async fn launch_instance(
     }
 
     let started = now();
+    let started_at = std::time::SystemTime::now();
     let app2 = app.clone();
     tokio::spawn(async move {
         let status = child.wait().await.ok();
+        let exit_code = status.and_then(|s| s.code());
         let _ = launch::record_session(&paths, &id, started);
         let state = app2.state::<AppState>();
         state.games.lock().await.remove(&id);
+        let stopped = state.stopping.lock().await.remove(&id);
         let _ = app2.emit(
             "game-state",
             GameState {
-                instance_id: id,
+                instance_id: id.clone(),
                 running: false,
-                exit_code: status.and_then(|s| s.code()),
+                exit_code,
             },
         );
+        if !stopped {
+            // Give the log pipes a moment to flush their last lines.
+            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+            let lines: Vec<String> = tail.lock().unwrap().iter().cloned().collect();
+            if let Ok(Some(report)) = crash::analyze(&paths, &instance, started_at, exit_code, &lines).await {
+                let _ = app2.emit("game-crash", GameCrash { instance_id: id, report });
+            }
+        }
     });
     Ok(())
 }
@@ -303,6 +335,7 @@ async fn stop_instance(state: State<'_, AppState>, id: String) -> CmdResult<()> 
     let Some(pid) = state.games.lock().await.get(&id).copied() else {
         return Ok(());
     };
+    state.stopping.lock().await.insert(id.clone());
     std::process::Command::new("taskkill")
         .args(["/F", "/T", "/PID", &pid.to_string()])
         .output()
@@ -464,6 +497,37 @@ async fn search(state: State<'_, AppState>, args: SearchArgs) -> CmdResult<Searc
     .map_err(err)
 }
 
+// ---------- other launchers ----------
+
+/// Instances of Prism/PolyMC (default folders) plus an optional extra folder.
+#[tauri::command]
+async fn foreign_scan(extra_dir: Option<String>) -> CmdResult<Vec<ForeignInstance>> {
+    let mut roots = foreign::default_roots();
+    if let Some(dir) = extra_dir {
+        roots.push(("MultiMC".into(), PathBuf::from(dir)));
+    }
+    Ok(tokio::task::spawn_blocking(move || foreign::scan(&roots)).await.map_err(err)?)
+}
+
+#[tauri::command]
+async fn foreign_import(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    path: String,
+    name: Option<String>,
+    task_id: String,
+) -> CmdResult<Instance> {
+    foreign::import(
+        &state.paths,
+        &PathBuf::from(path),
+        name.as_deref(),
+        state.curseforge_key(),
+        &progress_for(&app, &task_id),
+    )
+    .await
+    .map_err(err)
+}
+
 // ---------- modpacks ----------
 
 #[tauri::command]
@@ -534,6 +598,7 @@ pub fn run() {
         .manage(AppState {
             paths,
             games: Mutex::new(HashMap::new()),
+            stopping: Mutex::new(Default::default()),
         })
         .invoke_handler(tauri::generate_handler![
             get_overview,
@@ -563,6 +628,8 @@ pub fn run() {
             search,
             modpack_import,
             modpack_export,
+            foreign_scan,
+            foreign_import,
         ])
         .run(tauri::generate_context!())
         .expect("error while running DaClient");

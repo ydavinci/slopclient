@@ -1,9 +1,10 @@
-import { Copy, ExternalLink, FileUp, Upload } from "lucide-react";
+import { Copy, ExternalLink, FileText, FileUp, PowerOff, Terminal, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, isTauri, openUrl, pickExportPath, pickModpackFile } from "../lib/ipc";
+import { api, isTauri, openUrl, pickExportPath, pickFolder, pickModpackFile } from "../lib/ipc";
+import { loaderLabel } from "../lib/format";
 import { useStore } from "../lib/store";
-import type { DeviceCode, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
+import type { CrashReport, DeviceCode, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
 import { Button, Field, Modal, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "./kit";
 
 export function Modals() {
@@ -22,7 +23,74 @@ export function Modals() {
       <Modal open={modal?.kind === "export"} title="Als Modrinth-Modpack exportieren" onClose={closeModal} width={460}>
         {modal?.kind === "export" && <Export instanceId={modal.instanceId} onClose={closeModal} />}
       </Modal>
+      <Modal open={modal?.kind === "crash"} title={modal?.kind === "crash" ? modal.report.title : ""} onClose={closeModal} width={560}>
+        {modal?.kind === "crash" && <Crash instanceId={modal.instanceId} report={modal.report} onClose={closeModal} />}
+      </Modal>
     </>
+  );
+}
+
+/** What went wrong after a crash, with the fixes DaClient can apply directly. */
+function Crash({ instanceId, report, onClose }: { instanceId: string; report: CrashReport; onClose: () => void }) {
+  const { navigate, toast } = useStore();
+  const [disabled, setDisabled] = useState(false);
+  const culprit = report.culprit;
+  const culpritName = culprit?.name ?? culprit?.modId;
+
+  async function disableCulprit() {
+    if (!culprit?.fileName) return;
+    try {
+      await api.contentSetEnabled(instanceId, culprit.fileName, false);
+      setDisabled(true);
+      toast(`${culpritName} deaktiviert. Starte die Instanz erneut.`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  return (
+    <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-4">
+      <motion.p variants={rise} className="text-[13.5px] leading-relaxed text-muted">
+        {report.summary}
+        {report.exitCode != null && <span className="ml-1 font-mono text-[12.5px] text-dim">(Code {report.exitCode})</span>}
+      </motion.p>
+      {report.details.length > 0 && (
+        <motion.pre variants={rise} className="max-h-36 overflow-auto rounded-[10px] border border-line bg-black/40 p-3 font-mono text-[12.5px] leading-relaxed whitespace-pre-wrap text-text select-text">
+          {report.details.join("\n")}
+        </motion.pre>
+      )}
+      {report.suggestions.length > 0 && (
+        <motion.ul variants={rise} className="grid gap-1.5 text-[13.5px]">
+          {report.suggestions.map((s) => (
+            <li key={s} className="flex gap-2.5">
+              <span className="chroma mt-[7px] size-1.5 shrink-0 rounded-full" />
+              {s}
+            </li>
+          ))}
+        </motion.ul>
+      )}
+      <motion.div variants={rise} className="flex flex-wrap justify-end gap-2 pt-1">
+        {report.reportFile && (
+          <Button icon={<FileText className="size-4" />} onClick={() => api.openPath(report.reportFile!)}>
+            Crash-Report öffnen
+          </Button>
+        )}
+        <Button
+          icon={<Terminal className="size-4" />}
+          onClick={() => {
+            onClose();
+            navigate({ page: "instance", id: instanceId, tab: "log" });
+          }}
+        >
+          Log ansehen
+        </Button>
+        {culprit?.fileName && (
+          <Button variant="primary" icon={<PowerOff className="size-4" />} disabled={disabled} onClick={disableCulprit}>
+            {disabled ? "Deaktiviert" : `${culpritName} deaktivieren`}
+          </Button>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -221,6 +289,69 @@ function Import({ onClose }: { onClose: () => void }) {
           Importieren
         </Button>
       </motion.div>
+      <ForeignList onClose={onClose} />
+    </motion.div>
+  );
+}
+
+/** Instances of Prism, PolyMC and MultiMC; importing copies them, the originals stay. */
+function ForeignList({ onClose }: { onClose: () => void }) {
+  const { runTask, refresh, toast, navigate, select } = useStore();
+  const [found, setFound] = useState<ForeignInstance[] | null>(null);
+  const [extraDir, setExtraDir] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.foreignScan(extraDir).then(setFound).catch(() => setFound([]));
+  }, [extraDir]);
+
+  async function run(i: ForeignInstance) {
+    onClose();
+    try {
+      const instance = await runTask(`${i.name} übernehmen`, (taskId) => api.foreignImport(i.path, null, taskId));
+      await refresh();
+      select(instance.id);
+      navigate({ page: "instance", id: instance.id });
+      toast(`${instance.name} aus ${i.launcher} übernommen`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  return (
+    <motion.div variants={rise} className="grid gap-2 border-t border-line pt-4">
+      <div className="flex items-center gap-3">
+        <h3 className="mr-auto text-[13px] font-semibold">Aus anderen Launchern</h3>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={!isTauri}
+          onClick={async () => {
+            const dir = await pickFolder("Instanzen-Ordner von MultiMC wählen");
+            if (dir) setExtraDir(dir);
+          }}
+        >
+          MultiMC-Ordner …
+        </Button>
+      </div>
+      {found === null ? (
+        <Spinner className="size-4" />
+      ) : found.length === 0 ? (
+        <p className="text-[13px] text-muted">Keine Instanzen von Prism, PolyMC oder MultiMC gefunden.</p>
+      ) : (
+        <div className="grid max-h-48 gap-1 overflow-auto">
+          {found.map((i) => (
+            <button key={i.path} onClick={() => run(i)} className="group flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors duration-200 hover:bg-white/[0.05]">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-semibold">{i.name}</span>
+                <span className="block truncate text-[11.5px] text-muted">
+                  {i.launcher} · {i.mcVersion} · {loaderLabel(i.loader)} · {i.mods} Mods
+                </span>
+              </span>
+              <span className="text-[11.5px] font-semibold text-accent-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">Übernehmen</span>
+            </button>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }

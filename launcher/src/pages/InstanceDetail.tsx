@@ -33,7 +33,7 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
           <InstanceIcon id={instance.id} name={instance.name} size={56} />
         </motion.div>
         <motion.div variants={rise} className="min-w-0">
-          <h1 className="truncate text-[26px] font-extrabold tracking-[-0.03em]">{instance.name}</h1>
+          <h1 className="truncate text-[30px] font-extrabold tracking-[-0.03em]">{instance.name}</h1>
           <p className="mt-0.5 text-[13px] text-muted">
             Minecraft {instance.mcVersion} · {loaderLabel(instance.loader)}
             {instance.lastPlayed ? ` · ${playTime(instance.playTimeSecs)} · zuletzt ${relativeTime(instance.lastPlayed)}` : " · noch nicht gespielt"}

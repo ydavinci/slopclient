@@ -154,7 +154,7 @@ export function Chip({ children, tone = "default", className = "" }: { children:
 }
 
 export function Kbd({ children }: { children: ReactNode }) {
-  return <kbd className="rounded-md border border-line-2 bg-white/[0.05] px-1.5 py-px font-mono text-[11px] text-muted">{children}</kbd>;
+  return <kbd className="rounded-md border border-line-2 bg-white/[0.05] px-1.5 py-px font-mono text-[11.5px] text-muted">{children}</kbd>;
 }
 
 export function Panel({ children, className = "", ...props }: { children: ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {

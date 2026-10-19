@@ -9,6 +9,7 @@ import type {
   BlockedFile,
   ContentEntry,
   DeviceCode,
+  ForeignInstance,
   InstallReport,
   Instance,
   LoaderKind,
@@ -74,6 +75,8 @@ export const api = {
 
   modpackImport: (source: string, isFile: boolean, platform: Platform, name: string | null, taskId: string) =>
     call<Instance>("modpack_import", { source, isFile, platform, name, taskId }),
+  foreignScan: (extraDir: string | null) => call<ForeignInstance[]>("foreign_scan", { extraDir }),
+  foreignImport: (path: string, name: string | null, taskId: string) => call<Instance>("foreign_import", { path, name, taskId }),
   modpackExport: (id: string, output: string, name: string, version: string, include: string[]) =>
     call<[number, number]>("modpack_export", { id, output, name, version, include }),
 };
@@ -92,6 +95,12 @@ export async function pickModpackFile(): Promise<string | null> {
   if (!isTauri) return null;
   const file = await dialogOpen({ filters: [{ name: "Modpack (Modrinth, CurseForge)", extensions: ["mrpack", "zip"] }] });
   return typeof file === "string" ? file : null;
+}
+
+export async function pickFolder(title: string): Promise<string | null> {
+  if (!isTauri) return null;
+  const dir = await dialogOpen({ directory: true, title });
+  return typeof dir === "string" ? dir : null;
 }
 
 export async function pickExportPath(defaultName: string): Promise<string | null> {

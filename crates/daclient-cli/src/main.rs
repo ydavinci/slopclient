@@ -11,6 +11,7 @@ use daclient_core::{
     Paths, Progress, ProgressFn,
     auth::AccountStore,
     config::Settings,
+    crash, foreign,
     content::{
         BlockedFile, ContentManager,
         curseforge::CurseForge,
@@ -90,6 +91,9 @@ enum Command {
     /// Mods, resource packs and shaders of an instance
     #[command(subcommand)]
     Content(ContentCommand),
+    /// Import instances from Prism Launcher, PolyMC or MultiMC
+    #[command(subcommand)]
+    Import(ImportCommand),
     /// Import modpacks (.mrpack, CurseForge zip) or export .mrpack
     #[command(subcommand)]
     Modpack(ModpackCommand),
@@ -116,6 +120,8 @@ enum Command {
     SetClientId { client_id: String },
     /// Set the CurseForge API key
     SetCurseforgeKey { key: String },
+    /// Explain a crash from a log or crash report file
+    Diagnose { file: std::path::PathBuf },
 }
 
 #[derive(Subcommand)]
@@ -173,6 +179,22 @@ enum ModpackCommand {
         /// Files or folders of the game directory to bundle
         #[arg(long, default_values_t = ["config".to_string()])]
         include: Vec<String>,
+    },
+}
+
+#[derive(Subcommand)]
+enum ImportCommand {
+    /// List instances of other launchers
+    List {
+        /// Extra instances folder, e.g. of a portable MultiMC
+        #[arg(long)]
+        dir: Option<std::path::PathBuf>,
+    },
+    /// Copy an instance folder into DaClient
+    Run {
+        path: std::path::PathBuf,
+        #[arg(long)]
+        name: Option<String>,
     },
 }
 
@@ -288,6 +310,46 @@ async fn main() -> anyhow::Result<()> {
             }
         }
         Command::Content(cmd) => content_command(&paths, cmd).await?,
+        Command::Import(cmd) => match cmd {
+            ImportCommand::List { dir } => {
+                let mut roots = foreign::default_roots();
+                if let Some(dir) = dir {
+                    roots.push(("MultiMC".into(), dir));
+                }
+                let found = foreign::scan(&roots);
+                if found.is_empty() {
+                    println!("no instances found");
+                }
+                for i in found {
+                    println!(
+                        "  {:<28} {:<10} {:<22} {:>3} mods  {}  ({})",
+                        truncate(&i.name, 28),
+                        i.mc_version,
+                        i.loader.to_string(),
+                        i.mods,
+                        i.path,
+                        i.launcher
+                    );
+                }
+            }
+            ImportCommand::Run { path, name } => {
+                let key = Settings::load(&paths)?.curseforge_api_key();
+                let (progress, bar) = progress_bar();
+                let instance = foreign::import(&paths, &path, name.as_deref(), key, &progress).await;
+                bar.finish_and_clear();
+                let instance = instance?;
+                let list = ContentManager::new(&paths, instance.clone(), 8).list().await?;
+                let linked = list.iter().filter(|e| e.source.project_key().is_some()).count();
+                println!(
+                    "imported '{}' ({}) - Minecraft {}, {}, {} files ({linked} linked to Modrinth/CurseForge)",
+                    instance.name,
+                    instance.id,
+                    instance.mc_version,
+                    instance.loader,
+                    list.len()
+                );
+            }
+        },
         Command::Modpack(cmd) => {
             let concurrency = Settings::load(&paths)?.download_concurrency();
             match cmd {
@@ -400,6 +462,20 @@ async fn main() -> anyhow::Result<()> {
             settings.msa_client_id = Some(client_id);
             settings.save(&paths)?;
             println!("saved");
+        }
+        Command::Diagnose { file } => {
+            let text = std::fs::read_to_string(&file)?;
+            let input = crash::CrashInput {
+                exit_code: Some(1),
+                crash_report: text.contains("---- Minecraft Crash Report ----").then(|| text.clone()),
+                log: text,
+                max_memory_mb: 4096,
+                ..Default::default()
+            };
+            match crash::diagnose(&input) {
+                Some(report) => print_crash(&report),
+                None => println!("no known crash cause found"),
+            }
         }
         Command::SetCurseforgeKey { key } => {
             let mut settings = Settings::load(&paths)?;
@@ -617,20 +693,34 @@ async fn run_game(paths: &Paths, instance: &Instance, auth: &LaunchAuth) -> anyh
     bar.finish_and_clear();
 
     let started = now();
+    let started_at = std::time::SystemTime::now();
     let mut child = cmd.spawn().context("failed to start Java")?;
     println!("game started (pid {})", child.id().unwrap_or(0));
 
+    // The last lines feed the crash analysis.
+    let tail = Arc::new(Mutex::new(std::collections::VecDeque::<String>::new()));
+    let keep = |tail: &Arc<Mutex<std::collections::VecDeque<String>>>, line: &str| {
+        let mut t = tail.lock().unwrap();
+        if t.len() == 400 {
+            t.pop_front();
+        }
+        t.push_back(line.to_owned());
+    };
     let stdout = child.stdout.take().expect("piped stdout");
     let stderr = child.stderr.take().expect("piped stderr");
+    let out_tail = tail.clone();
     let out = tokio::spawn(async move {
         let mut lines = BufReader::new(stdout).lines();
         while let Ok(Some(line)) = lines.next_line().await {
+            keep(&out_tail, &line);
             println!("{line}");
         }
     });
+    let err_tail = tail.clone();
     let err = tokio::spawn(async move {
         let mut lines = BufReader::new(stderr).lines();
         while let Ok(Some(line)) = lines.next_line().await {
+            keep(&err_tail, &line);
             eprintln!("{line}");
         }
     });
@@ -639,7 +729,27 @@ async fn run_game(paths: &Paths, instance: &Instance, auth: &LaunchAuth) -> anyh
     let _ = tokio::join!(out, err);
     launch::record_session(paths, &instance.id, started)?;
     println!("game exited with {status}");
+    let tail: Vec<String> = tail.lock().unwrap().iter().cloned().collect();
+    if let Some(report) = crash::analyze(paths, instance, started_at, status.code(), &tail).await? {
+        print_crash(&report);
+    }
     Ok(())
+}
+
+fn print_crash(report: &crash::CrashReport) {
+    println!("\ncrash: {}\n  {}", report.title, report.summary);
+    for d in &report.details {
+        println!("    {d}");
+    }
+    if let Some(c) = &report.culprit {
+        println!("  likely cause: {}", c.name.as_deref().unwrap_or(&c.mod_id));
+    }
+    for s in &report.suggestions {
+        println!("  - {s}");
+    }
+    if let Some(f) = &report.report_file {
+        println!("  report: {f}");
+    }
 }
 
 fn progress_bar() -> (ProgressFn, ProgressBar) {

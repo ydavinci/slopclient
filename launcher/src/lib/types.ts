@@ -184,6 +184,27 @@ export interface DeviceCode {
   message: string;
 }
 
+/** An instance of Prism Launcher, PolyMC or MultiMC that can be copied over. */
+export interface ForeignInstance {
+  launcher: string;
+  name: string;
+  path: string;
+  mcVersion: string;
+  loader: Loader;
+  mods: number;
+}
+
+/** Analysis of a game that ended abnormally (daclient-core crash.rs). */
+export interface CrashReport {
+  title: string;
+  summary: string;
+  details: string[];
+  suggestions: string[];
+  culprit?: { modId: string; fileName?: string | null; name?: string | null } | null;
+  reportFile?: string | null;
+  exitCode?: number | null;
+}
+
 export type Progress =
   | { type: "stage"; name: string }
   | { type: "download"; finished: number; total: number; bytes: number; totalBytes: number };
