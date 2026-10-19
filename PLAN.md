@@ -212,7 +212,7 @@ cache/               API-Antworten, Icons
 | **M3** | Launcher-UI v1 | Design-System, alle Screens aus 5.2, Downloads-Drawer, Account-Switcher |
 | **M4** | Modrinth | Suche, Installation, Abhängigkeiten, Mod-Liste, Updates, `.mrpack` Import/Export |
 | **M5** | CurseForge | Suche/Installation, manueller Download-Fallback, CF-Modpack-Import (Backend, CLI, UI umgesetzt; Live-Test braucht API-Schlüssel) |
-| **M6** | Client-Mod v1 | Title Screen, ClickGUI, HUD-Editor, Font-Renderer, ~15 Module, Auto-Install durch Launcher (Stand: Title Screen, ClickGUI, HUD-Editor, 15 Module und Auto-Install umgesetzt; offen: Sora-Font, Freelook mit Server-Opt-out, Profile) |
+| **M6** | Client-Mod v1 | Title Screen, ClickGUI, HUD-Editor, Font-Renderer, ~15 Module, Auto-Install durch Launcher (Stand: umgesetzt inkl. Sora-Font, Freelook mit Server-Opt-out `daclient:disable` und Config-Profilen) |
 | **M7** | Polish & Release | Auto-Updater, Crash-Analyse, Import aus Prism/MultiMC, i18n, Installer (MSI/NSIS), Code-Signing |
 | **M8** | Erweiterungen | Multi-Version-Client-Mod, NeoForge-Port, Kosmetik-Backend, Freunde |
 

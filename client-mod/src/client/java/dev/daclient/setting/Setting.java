@@ -6,10 +6,17 @@ import com.google.gson.JsonElement;
 public abstract sealed class Setting<T> permits BoolSetting, NumberSetting, ModeSetting {
 	private final String name;
 	protected T value;
+	private final T initial;
 
 	protected Setting(String name, T value) {
 		this.name = name;
 		this.value = value;
+		this.initial = value;
+	}
+
+	/** Back to the built-in default (new profiles start from here). */
+	public void reset() {
+		value = initial;
 	}
 
 	public String name() {

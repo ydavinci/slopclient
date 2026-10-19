@@ -13,6 +13,8 @@ public final class ModuleManager {
 	public final Features.Brightness brightness = add(new Features.Brightness());
 	public final Features.Crosshair crosshair = add(new Features.Crosshair());
 	public final Features.ToggleSprint toggleSprint = add(new Features.ToggleSprint());
+	public final Features.Freelook freelook = add(new Features.Freelook());
+	public final Features.UiFont uiFont = add(new Features.UiFont());
 	public final Features.TitleScreenModule titleScreen = add(new Features.TitleScreenModule());
 
 	public ModuleManager() {
@@ -45,13 +47,17 @@ public final class ModuleManager {
 		return modules.stream().filter(m -> m instanceof HudModule).map(m -> (HudModule) m).toList();
 	}
 
+	public Module byId(String id) {
+		return modules.stream().filter(m -> m.id().equals(id)).findFirst().orElse(null);
+	}
+
 	public Module byName(String name) {
 		return modules.stream().filter(m -> m.name.equals(name)).findFirst().orElse(null);
 	}
 
 	public void tick(Minecraft mc) {
 		for (Module m : modules) {
-			if (m.enabled()) m.tick(mc);
+			if (m.active()) m.tick(mc);
 		}
 	}
 }

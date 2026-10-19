@@ -109,7 +109,7 @@ public final class DaTitleScreen extends Screen {
 
 	private void drawLogo(GuiGraphicsExtractor g, double t) {
 		float scale = logoScale();
-		int logoW = Math.round(Draw.width(LOGO) * scale);
+		int logoW = Math.round(Draw.displayWidth(LOGO) * scale);
 		float float_ = (float) Math.sin(t * 1.05) * 2f;
 		float x = (width - logoW) / 2f;
 		float y = blockTop() + float_;
@@ -118,9 +118,9 @@ public final class DaTitleScreen extends Screen {
 			double k = Theme.ease((t - 0.15 - i * 0.045) / 0.7);
 			if (k > 0) {
 				int color = Theme.alpha(Theme.chroma(-i * 0.07), k);
-				Draw.scaledText(g, ch, x, y + (float) ((1 - k) * 12), scale, color, false);
+				Draw.displayText(g, ch, x, y + (float) ((1 - k) * 12), scale, color);
 			}
-			x += Draw.width(ch) * scale;
+			x += Draw.displayWidth(ch) * scale;
 		}
 		String sub = "Minecraft " + SharedConstants.getCurrentVersion().name() + " · Legit-Client";
 		double ks = Theme.ease((t - 0.5) / 0.6);

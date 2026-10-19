@@ -6,6 +6,7 @@ import dev.daclient.render.Theme;
 import dev.daclient.setting.BoolSetting;
 import dev.daclient.setting.ModeSetting;
 import dev.daclient.setting.NumberSetting;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -43,7 +44,7 @@ public final class Features {
 		}
 
 		public boolean zooming() {
-			return enabled() && key != null && key.isDown() && Minecraft.getInstance().gui.screen() == null;
+			return active() && key != null && key.isDown() && Minecraft.getInstance().gui.screen() == null;
 		}
 
 		/** Divides the field of view; 1 means no zoom. */
@@ -174,6 +175,92 @@ public final class Features {
 		@Override
 		protected void onDisable() {
 			Minecraft.getInstance().options.keySprint.setDown(false);
+		}
+	}
+
+	/**
+	 * Hold (or toggle) the freelook key to look around the player in third person
+	 * while walking straight on. Servers can switch it off (see ServerRules).
+	 */
+	public static final class Freelook extends Module {
+		public final ModeSetting mode = add(new ModeSetting("Modus", "Halten", "Halten", "Umschalten"));
+		private KeyMapping key;
+		private boolean toggled;
+		private boolean looking;
+		private CameraType before;
+		private float yaw;
+		private float pitch;
+
+		public Freelook() {
+			super("Freelook", "Umsehen, ohne die Laufrichtung zu ändern", Category.COMFORT, true);
+		}
+
+		public void bind(KeyMapping key) {
+			this.key = key;
+		}
+
+		/** Whether the camera currently uses the freelook angles. */
+		public boolean looking() {
+			return looking;
+		}
+
+		public float yaw() {
+			return yaw;
+		}
+
+		public float pitch() {
+			return pitch;
+		}
+
+		/** Mouse movement goes to the camera instead of the player while looking. */
+		public void turn(double dx, double dy) {
+			yaw += (float) dx * 0.15f;
+			pitch = Math.max(-90, Math.min(90, pitch + (float) dy * 0.15f));
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			if (key == null) return;
+			if (mode.is("Umschalten")) {
+				while (key.consumeClick()) toggled = !toggled;
+			} else {
+				toggled = false;
+			}
+			boolean want = mc.player != null && mc.gui.screen() == null && (mode.is("Halten") ? key.isDown() : toggled);
+			if (want && !looking) start(mc);
+			else if (!want && looking) stop(mc);
+		}
+
+		private void start(Minecraft mc) {
+			looking = true;
+			yaw = mc.player.getYRot();
+			pitch = mc.player.getXRot();
+			before = mc.options.getCameraType();
+			if (before.isFirstPerson()) mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+		}
+
+		private void stop(Minecraft mc) {
+			looking = false;
+			toggled = false;
+			if (before != null) mc.options.setCameraType(before);
+			before = null;
+		}
+
+		@Override
+		protected void onDisable() {
+			if (looking) stop(Minecraft.getInstance());
+		}
+	}
+
+	/** Sora as the font of all DaClient menus and HUD elements (off: Minecraft font). */
+	public static final class UiFont extends Module {
+		public UiFont() {
+			super("Sora-Schrift", "Moderne Schrift in Menüs und HUD", Category.COMFORT, true);
+		}
+
+		@Override
+		public boolean listed() {
+			return false;
 		}
 	}
 

@@ -1,16 +1,42 @@
 package dev.daclient.render;
 
+import dev.daclient.DaClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.resources.Identifier;
 
-/** Small 2D helpers on top of GuiGraphicsExtractor (rounded boxes, chroma text, scaled text). */
+/**
+ * Small 2D helpers on top of GuiGraphicsExtractor (rounded boxes, chroma text, scaled text).
+ * All DaClient text goes through here, so the Sora font can be switched in one place.
+ */
 public final class Draw {
+	/** Sora SemiBold for UI text, see assets/daclient/font/sora.json. */
+	public static final FontDescription SORA = new FontDescription.Resource(Identifier.fromNamespaceAndPath(DaClient.ID, "sora"));
+	/** Sora ExtraBold for the wordmark. */
+	public static final FontDescription DISPLAY = new FontDescription.Resource(Identifier.fromNamespaceAndPath(DaClient.ID, "sora_display"));
+
 	private Draw() {
 	}
 
 	public static Font font() {
 		return Minecraft.getInstance().font;
+	}
+
+	private static boolean sora() {
+		return DaClient.ready() && DaClient.modules().uiFont.active();
+	}
+
+	/** Text as a component in the current UI font. */
+	public static Component styled(String s) {
+		return styled(s, SORA);
+	}
+
+	private static Component styled(String s, FontDescription font) {
+		Component c = Component.literal(s);
+		return sora() ? c.copy().withStyle(st -> st.withFont(font)) : c;
 	}
 
 	/** Filled rectangle with corners cut to an approximate radius (0 to 4 px). */
@@ -57,15 +83,15 @@ public final class Draw {
 	}
 
 	public static void text(GuiGraphicsExtractor g, String s, int x, int y, int color) {
-		g.text(font(), s, x, y, color, false);
+		g.text(font(), styled(s), x, y, color, false);
 	}
 
 	public static void shadowText(GuiGraphicsExtractor g, String s, int x, int y, int color) {
-		g.text(font(), s, x, y, color, true);
+		g.text(font(), styled(s), x, y, color, true);
 	}
 
 	public static int width(String s) {
-		return font().width(s);
+		return font().width(styled(s));
 	}
 
 	/** Text where every letter carries its own chroma phase, so the colour rolls through. */
@@ -73,7 +99,7 @@ public final class Draw {
 		Font font = font();
 		int cx = x;
 		for (int i = 0; i < s.length(); i++) {
-			String ch = String.valueOf(s.charAt(i));
+			Component ch = styled(String.valueOf(s.charAt(i)));
 			g.text(font, ch, cx, y, Theme.chroma(phase - i * 0.07), shadow);
 			cx += font.width(ch);
 		}
@@ -81,10 +107,23 @@ public final class Draw {
 	}
 
 	public static void scaledText(GuiGraphicsExtractor g, String s, float x, float y, float scale, int color, boolean shadow) {
+		scaled(g, styled(s), x, y, scale, color, shadow);
+	}
+
+	/** Wordmark text (Sora ExtraBold when the Sora font is on). */
+	public static void displayText(GuiGraphicsExtractor g, String s, float x, float y, float scale, int color) {
+		scaled(g, styled(s, DISPLAY), x, y, scale, color, false);
+	}
+
+	public static int displayWidth(String s) {
+		return font().width(styled(s, DISPLAY));
+	}
+
+	private static void scaled(GuiGraphicsExtractor g, Component c, float x, float y, float scale, int color, boolean shadow) {
 		g.pose().pushMatrix();
 		g.pose().translate(x, y);
 		g.pose().scale(scale, scale);
-		g.text(font(), s, 0, 0, color, shadow);
+		g.text(font(), c, 0, 0, color, shadow);
 		g.pose().popMatrix();
 	}
 

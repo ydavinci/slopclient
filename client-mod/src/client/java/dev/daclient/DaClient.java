@@ -62,6 +62,9 @@ public final class DaClient implements ClientModInitializer {
 		KeyMapping zoomKey = KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.daclient.zoom", InputConstants.KEY_C, category));
 		modules.zoom.bind(zoomKey);
+		modules.freelook.bind(KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.daclient.freelook", InputConstants.KEY_LALT, category)));
+		ServerRules.register();
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (clickGuiKey.consumeClick()) {
@@ -78,12 +81,12 @@ public final class DaClient implements ClientModInitializer {
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(ID, "hud"), (g, delta) -> {
 			Minecraft mc = Minecraft.getInstance();
 			for (HudModule hud : modules.hud()) {
-				if (hud.enabled()) hud.render(g, mc, false);
+				if (hud.active()) hud.render(g, mc, false);
 			}
 		});
 		HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, vanilla -> (g, delta) -> {
 			Minecraft mc = Minecraft.getInstance();
-			if (modules.crosshair.enabled() && mc.options.getCameraType().isFirstPerson()) modules.crosshair.draw(g);
+			if (modules.crosshair.active() && mc.options.getCameraType().isFirstPerson()) modules.crosshair.draw(g);
 			else vanilla.extractRenderState(g, delta);
 		});
 		LOG.info("DaClient {} ready ({} modules)", VERSION, modules.all().size());

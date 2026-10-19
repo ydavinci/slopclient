@@ -16,7 +16,7 @@ Funktioniert:
 - Modrinth: Suche (gefiltert nach Instanz), Installation von Mods/Resourcepacks/Shadern mit Abhängigkeiten, Liste pro Instanz, (De)aktivieren, Entfernen, Updates, Erkennung manuell kopierter Dateien
 - CurseForge (mit API-Schlüssel): Suche, Installation mit Abhängigkeiten, Updates, Erkennung per Fingerprint. Dateien, deren Autoren Downloads außerhalb der Website sperren, landen in `blocked.json` und werden aus dem Download-Ordner übernommen
 - Start mit Live-Log
-- DaClient-Mod (Fabric/Quilt, Minecraft 26.3): eigener Titelbildschirm, ClickGUI (Rechts-Shift) mit Suche, HUD-Editor mit Snapping, HUD-Module (Watermark, ArrayList, FPS, CPS, Keystrokes, Koordinaten, Rüstung, Trankeffekte, Ping, Uhrzeit), Zoom (C), Helligkeit, Fadenkreuz, Toggle Sprint. Der Launcher legt die Mod beim Start in passende Instanzen und installiert Fabric API mit; abschaltbar pro Instanz
+- DaClient-Mod (Fabric/Quilt, Minecraft 26.3): eigener Titelbildschirm, ClickGUI (Rechts-Shift) mit Suche, HUD-Editor mit Snapping, HUD-Module (Watermark, ArrayList, FPS, CPS, Keystrokes, Koordinaten, Rüstung, Trankeffekte, Ping, Uhrzeit), Zoom (C), Freelook (Alt), Helligkeit, Fadenkreuz, Toggle Sprint, Sora-Schrift, Config-Profile. Der Launcher legt die Mod beim Start in passende Instanzen und installiert Fabric API mit; abschaltbar pro Instanz
 - Microsoft-Login (Device Code → Xbox → XSTS → Minecraft), Tokens per DPAPI verschlüsselt
 
 ## CLI
@@ -54,6 +54,10 @@ gradlew build        # braucht JDK 25; Ergebnis: build/libs/daclient-<version>.j
 ```
 
 `cargo build` bündelt das Jar danach automatisch in den Launcher (`crates/daclient-core/build.rs`). Ohne gebautes Jar startet der Launcher Instanzen einfach ohne Mod.
+
+### Module serverseitig abschalten
+
+Server können einzelne Module für die Sitzung abschalten (wie bei Lunar): ein Play-Payload auf dem Kanal `daclient:disable` mit einer Liste von Modul-IDs als UTF-8-Strings (Länge als VarInt, dann je String als VarInt-Länge + Bytes), z. B. `["freelook"]`. IDs sind die kleingeschriebenen Modulnamen mit Bindestrichen (`freelook`, `zoom`, `toggle-sprint`, `helligkeit`). Beim Verlassen des Servers gilt wieder die Auswahl des Spielers.
 
 ## Microsoft-Login einrichten
 

@@ -43,8 +43,13 @@ final class SelfTest {
 					mc.gui.setScreen(gui);
 					gui.expand("Keystrokes");
 					gui.expand("Zoom");
+					// Shows how a module switched off by a server looks.
+					DaClient.modules().freelook.setServerLocked(true);
 				}
-				case 2 -> mc.gui.setScreen(new HudEditorScreen(title));
+				case 2 -> {
+					DaClient.modules().freelook.setServerLocked(false);
+					mc.gui.setScreen(new HudEditorScreen(title));
+				}
 				default -> {
 				}
 			}

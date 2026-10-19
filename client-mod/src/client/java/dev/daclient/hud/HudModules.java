@@ -55,16 +55,18 @@ public final class HudModules {
 			super("ArrayList", "Liste der aktiven Module", true, 1, 0, true);
 		}
 
-		private List<String> rows() {
-			List<String> rows = new ArrayList<>();
+		/** {name, suffix} per active module. */
+		private List<String[]> rows() {
+			List<String[]> rows = new ArrayList<>();
 			for (Module m : DaClient.modules().all()) {
-				if (m.enabled() && m.listed()) {
-					String suffix = m.suffix();
-					rows.add(suffix.isEmpty() ? m.name : m.name + " §7" + suffix);
-				}
+				if (m.active() && m.listed()) rows.add(new String[] {m.name, m.suffix()});
 			}
-			rows.sort(Comparator.comparingInt(Draw::width).reversed());
+			rows.sort(Comparator.comparingInt(ArrayListHud::rowWidth).reversed());
 			return rows;
+		}
+
+		private static int rowWidth(String[] row) {
+			return Draw.width(row[0]) + (row[1].isEmpty() ? 0 : 4 + Draw.width(row[1]));
 		}
 
 		@Override
@@ -74,7 +76,7 @@ public final class HudModules {
 
 		@Override
 		public int width(Minecraft mc) {
-			return rows().stream().mapToInt(Draw::width).max().orElse(60) + 8;
+			return rows().stream().mapToInt(ArrayListHud::rowWidth).max().orElse(60) + 8;
 		}
 
 		@Override
@@ -84,18 +86,19 @@ public final class HudModules {
 
 		@Override
 		protected void draw(GuiGraphicsExtractor g, Minecraft mc, boolean editing) {
-			List<String> rows = rows();
+			List<String[]> rows = rows();
 			int width = width(mc);
 			// Rows align to the side of the screen the element sits on.
 			boolean right = fx > 0.5;
 			for (int i = 0; i < rows.size(); i++) {
-				String row = rows.get(i);
-				int rw = Draw.width(row) + 8;
+				String[] row = rows.get(i);
+				int rw = rowWidth(row) + 8;
 				int rx = right ? width - rw : 0;
 				int color = Theme.chroma(-i * 0.06);
 				if (background.on()) g.fill(rx, i * 11, rx + rw, i * 11 + 11, Theme.alpha(Theme.PANEL_SOLID, 0.6));
 				g.fill(right ? width - 1 : 0, i * 11, right ? width : 1, i * 11 + 11, color);
-				Draw.shadowText(g, row, rx + 4, i * 11 + 2, color);
+				Draw.shadowText(g, row[0], rx + 4, i * 11 + 2, color);
+				if (!row[1].isEmpty()) Draw.shadowText(g, row[1], rx + 8 + Draw.width(row[0]), i * 11 + 2, Theme.MUTED);
 			}
 			if (rows.isEmpty() && editing) Draw.shadowText(g, "ArrayList", 4, 2, Theme.MUTED);
 		}

@@ -19,6 +19,8 @@ public abstract class HudModule extends Module {
 
 	public double fx;
 	public double fy;
+	private final double defaultFx;
+	private final double defaultFy;
 	public final NumberSetting scale = add(new NumberSetting("Größe", 1, 0.5, 2, 0.05, v -> String.format("%.2fx", v)));
 	public final BoolSetting background;
 
@@ -29,7 +31,16 @@ public abstract class HudModule extends Module {
 		super(name, description, Category.HUD, enabled);
 		this.fx = fx;
 		this.fy = fy;
+		this.defaultFx = fx;
+		this.defaultFy = fy;
 		this.background = add(new BoolSetting("Hintergrund", background));
+	}
+
+	@Override
+	public void reset() {
+		super.reset();
+		fx = defaultFx;
+		fy = defaultFy;
 	}
 
 	public abstract int width(Minecraft mc);

@@ -134,11 +134,15 @@ public final class ClickGuiScreen extends Screen {
 			else if (hover) g.fill(x + 2, ry, x + PANEL_W - 2, ry + ROW, 0x0AFFFFFF);
 			if (m.enabled()) Draw.chromaText(g, m.name, x + 8, ry + 4, -index * 0.15 - row * 0.05, false);
 			else Draw.text(g, m.name, x + 8, ry + 4, hover ? Theme.TEXT : Theme.MUTED);
-			if (!m.settings().isEmpty()) {
+			if (m.serverLocked()) {
+				// Switched off by the server for this session; the choice is kept.
+				String tag = "Server";
+				Draw.scaledText(g, tag, x + PANEL_W - 8 - Draw.width(tag) * 0.75f, ry + 5, 0.75f, Theme.ERR, false);
+			} else if (!m.settings().isEmpty()) {
 				String marker = expanded.contains(m.name) ? "-" : "+";
 				Draw.text(g, marker, x + PANEL_W - 12, ry + 4, Theme.DIM);
 			}
-			if (hover) hint = m.description;
+			if (hover) hint = m.serverLocked() ? m.name + " ist auf diesem Server deaktiviert." : m.description;
 			ry += ROW;
 			if (expanded.contains(m.name)) {
 				g.fill(x + 2, ry, x + PANEL_W - 2, ry + m.settings().size() * SETTING + 3, 0x33000000);
@@ -179,18 +183,52 @@ public final class ClickGuiScreen extends Screen {
 		}
 	}
 
-	private int[] hudButton() {
-		int w = 92, h = 18;
-		return new int[] {width - w - 10, height - h - 8, w, h};
+	/** A footer button; `action` gets the mouse button. */
+	private record FooterButton(String label, String hint, int x, int y, int w, int h, java.util.function.IntConsumer action) {
+		boolean hit(double mx, double my) {
+			return Draw.inside(mx, my, x, y, w, h);
+		}
+	}
+
+	/** Right-aligned row: profile switcher, new, delete, HUD editor. */
+	private List<FooterButton> footerButtons() {
+		var config = DaClient.config();
+		var modules = DaClient.modules();
+		List<String> profiles = config.profiles();
+		int h = 18, y = height - h - 8, x = width - 10;
+		List<FooterButton> buttons = new java.util.ArrayList<>();
+		String hud = "HUD bearbeiten";
+		int w = Draw.width(hud) + 16;
+		x -= w;
+		buttons.add(new FooterButton(hud, "HUD-Elemente verschieben und skalieren", x, y, w, h,
+			b -> minecraft.gui.setScreen(new HudEditorScreen(this))));
+		if (profiles.size() > 1) {
+			x -= h + 4;
+			buttons.add(new FooterButton("x", "Profil „" + config.profile() + "“ löschen", x, y, h, h, b -> config.deleteCurrent(modules)));
+		}
+		x -= h + 4;
+		buttons.add(new FooterButton("+", "Neues Profil mit den aktuellen Einstellungen", x, y, h, h, b -> config.create(modules)));
+		String label = "Profil: " + config.profile();
+		w = Draw.width(label) + 16;
+		x -= w + 4;
+		buttons.add(new FooterButton(label, profiles.size() > 1 ? "Klick: nächstes Profil · Rechtsklick: vorheriges" : "Nur ein Profil. Mit + legst du weitere an.", x, y, w, h, b -> {
+			if (profiles.size() < 2) return;
+			int i = profiles.indexOf(config.profile());
+			config.switchTo(modules, profiles.get(Math.floorMod(i + (b == 1 ? -1 : 1), profiles.size())));
+		}));
+		return buttons;
 	}
 
 	private void drawFooter(GuiGraphicsExtractor g, int mx, int my) {
-		int[] b = hudButton();
-		boolean hover = Draw.inside(mx, my, b[0], b[1], b[2], b[3]);
-		Draw.round(g, b[0], b[1], b[2], b[3], 4, hover ? Theme.chroma(0) : Theme.alpha(Theme.PANEL_SOLID, 0.92));
-		if (!hover) Draw.roundOutline(g, b[0], b[1], b[2], b[3], 4, Theme.LINE_2);
-		String label = "HUD bearbeiten";
-		Draw.text(g, label, b[0] + (b[2] - Draw.width(label)) / 2, b[1] + 5, hover ? 0xFFFFFFFF : Theme.TEXT);
+		String buttonHint = "";
+		for (FooterButton b : footerButtons()) {
+			boolean hover = b.hit(mx, my);
+			if (hover) buttonHint = b.hint();
+			Draw.round(g, b.x(), b.y(), b.w(), b.h(), 4, hover ? Theme.chroma(0) : Theme.alpha(Theme.PANEL_SOLID, 0.92));
+			if (!hover) Draw.roundOutline(g, b.x(), b.y(), b.w(), b.h(), 4, Theme.LINE_2);
+			Draw.text(g, b.label(), b.x() + (b.w() - Draw.width(b.label())) / 2, b.y() + 5, hover ? 0xFFFFFFFF : Theme.TEXT);
+		}
+		if (hint.isEmpty()) hint = buttonHint;
 
 		String line = !query.isEmpty() ? "Suche: " + query + "_" : !hint.isEmpty() ? hint
 			: "Linksklick: an/aus · Rechtsklick: Einstellungen · Tippen: suchen";
@@ -207,10 +245,11 @@ public final class ClickGuiScreen extends Screen {
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		double mx = event.x(), my = event.y();
 		int button = event.button();
-		int[] b = hudButton();
-		if (button == 0 && Draw.inside(mx, my, b[0], b[1], b[2], b[3])) {
-			minecraft.gui.setScreen(new HudEditorScreen(this));
-			return true;
+		for (FooterButton b : footerButtons()) {
+			if (b.hit(mx, my) && (button == 0 || button == 1)) {
+				b.action().accept(button);
+				return true;
+			}
 		}
 		// Topmost panel first: the last one drawn wins.
 		List<Map.Entry<Category, int[]>> order = List.copyOf(panels.entrySet()).reversed();

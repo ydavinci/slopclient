@@ -2,6 +2,7 @@ package dev.daclient;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -12,21 +13,95 @@ import dev.daclient.setting.Setting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * Stores modules, settings, HUD positions and ClickGUI panel positions in
- * `config/daclient/config.json`, where the launcher can find it too.
+ * Config in `config/daclient/` (where the launcher can find it too):
+ * `client.json` holds the active profile and ClickGUI panel positions,
+ * `profiles/<name>.json` the modules, settings and HUD positions of each profile.
  */
 public final class Config {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-	private final Path file = FabricLoader.getInstance().getConfigDir().resolve("daclient").resolve("config.json");
+	private static final String DEFAULT_PROFILE = "Standard";
+
+	private final Path dir = FabricLoader.getInstance().getConfigDir().resolve("daclient");
+	private final Path profiles = dir.resolve("profiles");
+	private final Path clientFile = dir.resolve("client.json");
 	/** ClickGUI panel positions by category name. */
 	public final Map<String, int[]> panels = new HashMap<>();
+	private String profile = DEFAULT_PROFILE;
+
+	public String profile() {
+		return profile;
+	}
+
+	/** Profile names, sorted, always containing the active one. */
+	public List<String> profiles() {
+		List<String> names = new ArrayList<>();
+		try (Stream<Path> files = Files.list(profiles)) {
+			files.map(p -> p.getFileName().toString())
+				.filter(n -> n.endsWith(".json"))
+				.map(n -> n.substring(0, n.length() - 5))
+				.forEach(names::add);
+		} catch (IOException ignored) {
+			// No profiles yet.
+		}
+		if (!names.contains(profile)) names.add(profile);
+		names.sort(String.CASE_INSENSITIVE_ORDER);
+		return names;
+	}
+
+	private Path file(String name) {
+		return profiles.resolve(name + ".json");
+	}
 
 	public void load(ModuleManager modules) {
+		migrate();
+		try {
+			if (Files.isRegularFile(clientFile)) {
+				JsonObject root = JsonParser.parseString(Files.readString(clientFile)).getAsJsonObject();
+				if (root.has("profile")) profile = sanitize(root.get("profile").getAsString());
+				if (root.has("panels")) {
+					for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("panels").entrySet()) {
+						JsonArray arr = e.getValue().getAsJsonArray();
+						panels.put(e.getKey(), new int[] {arr.get(0).getAsInt(), arr.get(1).getAsInt()});
+					}
+				}
+			}
+		} catch (IOException | RuntimeException e) {
+			DaClient.LOG.warn("Could not read {}", clientFile, e);
+		}
+		loadProfile(modules, profile);
+	}
+
+	/** Moves the single-file config of DaClient 0.1.0 into the default profile. */
+	private void migrate() {
+		Path old = dir.resolve("config.json");
+		if (!Files.isRegularFile(old) || Files.exists(file(DEFAULT_PROFILE))) return;
+		try {
+			Files.createDirectories(profiles);
+			JsonObject root = JsonParser.parseString(Files.readString(old)).getAsJsonObject();
+			JsonObject profileJson = new JsonObject();
+			if (root.has("modules")) profileJson.add("modules", root.get("modules"));
+			Files.writeString(file(DEFAULT_PROFILE), GSON.toJson(profileJson));
+			JsonObject client = new JsonObject();
+			client.addProperty("profile", DEFAULT_PROFILE);
+			if (root.has("panels")) client.add("panels", root.get("panels"));
+			Files.writeString(clientFile, GSON.toJson(client));
+			Files.delete(old);
+		} catch (IOException | RuntimeException e) {
+			DaClient.LOG.warn("Could not migrate {}", old, e);
+		}
+	}
+
+	private void loadProfile(ModuleManager modules, String name) {
+		for (Module m : modules.all()) m.reset();
+		Path file = file(name);
 		if (!Files.isRegularFile(file)) return;
 		try {
 			JsonObject root = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
@@ -46,19 +121,12 @@ public final class Config {
 				}
 				if (o.has("enabled")) m.setEnabled(o.get("enabled").getAsBoolean());
 			}
-			if (root.has("panels")) {
-				for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("panels").entrySet()) {
-					var arr = e.getValue().getAsJsonArray();
-					panels.put(e.getKey(), new int[] {arr.get(0).getAsInt(), arr.get(1).getAsInt()});
-				}
-			}
 		} catch (IOException | RuntimeException e) {
-			DaClient.LOG.warn("Could not read {}, using defaults", file, e);
+			DaClient.LOG.warn("Could not read profile {}, using defaults", file, e);
 		}
 	}
 
 	public void save(ModuleManager modules) {
-		JsonObject root = new JsonObject();
 		JsonObject mods = new JsonObject();
 		for (Module m : modules.all()) {
 			JsonObject o = new JsonObject();
@@ -72,20 +140,66 @@ public final class Config {
 			}
 			mods.add(m.name, o);
 		}
-		root.add("modules", mods);
+		JsonObject profileJson = new JsonObject();
+		profileJson.add("modules", mods);
+
+		JsonObject client = new JsonObject();
+		client.addProperty("profile", profile);
 		JsonObject panelJson = new JsonObject();
 		panels.forEach((name, pos) -> {
-			var arr = new com.google.gson.JsonArray();
+			JsonArray arr = new JsonArray();
 			arr.add(pos[0]);
 			arr.add(pos[1]);
 			panelJson.add(name, arr);
 		});
-		root.add("panels", panelJson);
+		client.add("panels", panelJson);
 		try {
-			Files.createDirectories(file.getParent());
-			Files.writeString(file, GSON.toJson(root));
+			Files.createDirectories(profiles);
+			Files.writeString(file(profile), GSON.toJson(profileJson));
+			Files.writeString(clientFile, GSON.toJson(client));
 		} catch (IOException e) {
-			DaClient.LOG.warn("Could not save {}", file, e);
+			DaClient.LOG.warn("Could not save the DaClient config", e);
 		}
+	}
+
+	/** Saves the current profile, then loads `name`. */
+	public void switchTo(ModuleManager modules, String name) {
+		save(modules);
+		profile = sanitize(name);
+		loadProfile(modules, profile);
+		save(modules);
+	}
+
+	/** New profile ("Profil 2", …) starting from the current settings. */
+	public String create(ModuleManager modules) {
+		save(modules);
+		List<String> existing = profiles();
+		int n = 2;
+		while (existing.contains("Profil " + n)) n++;
+		profile = "Profil " + n;
+		save(modules);
+		return profile;
+	}
+
+	/** Deletes the active profile and switches to the first remaining one. */
+	public void deleteCurrent(ModuleManager modules) {
+		List<String> names = profiles();
+		if (names.size() <= 1) return;
+		try {
+			Files.deleteIfExists(file(profile));
+		} catch (IOException e) {
+			DaClient.LOG.warn("Could not delete profile {}", profile, e);
+			return;
+		}
+		names.remove(profile);
+		profile = names.getFirst();
+		loadProfile(modules, profile);
+		save(modules);
+	}
+
+	/** Profile names become file names, so keep them simple. */
+	private static String sanitize(String name) {
+		String clean = name.replaceAll("[\\\\/:*?\"<>|]", "").trim();
+		return clean.isEmpty() ? DEFAULT_PROFILE : clean;
 	}
 }

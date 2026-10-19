@@ -1,5 +1,6 @@
 {
 	"key.category.daclient.main": "DaClient",
 	"key.daclient.clickgui": "DaClient-Menü öffnen",
-	"key.daclient.zoom": "Zoom"
+	"key.daclient.zoom": "Zoom",
+	"key.daclient.freelook": "Freelook"
 }
