@@ -11,7 +11,7 @@ Funktioniert:
 - Installation beliebiger Versionen: Client, Libraries, Natives (alt & neu), Assets, Log-Config
 - Java-Runtimes automatisch von Mojang (Java 8 / 17 / 21 / 25 je nach Version)
 - Mod-Loader: Fabric, Quilt, NeoForge, Forge (1.13+) mit Versionsauswahl
-- Instanzen anlegen/listen/löschen, Spielzeit-Erfassung
+- Instanzen anlegen/listen/löschen, Spielzeit-Erfassung, eigene Icons (Zuschnitt-Dialog; Modpacks und Prism-Instanzen bringen ihr Icon mit)
 - Modpacks: `.mrpack` und CurseForge-ZIP importieren (Datei oder Projekt-Slug), Instanzen als `.mrpack` exportieren
 - Modrinth: Suche (gefiltert nach Instanz), Installation von Mods/Resourcepacks/Shadern mit Abhängigkeiten, Liste pro Instanz, (De)aktivieren, Entfernen, Updates, Erkennung manuell kopierter Dateien
 - CurseForge (mit API-Schlüssel): Suche, Installation mit Abhängigkeiten, Updates, Erkennung per Fingerprint. Dateien, deren Autoren Downloads außerhalb der Website sperren, landen in `blocked.json` und werden aus dem Download-Ordner übernommen
@@ -26,6 +26,7 @@ Funktioniert:
 cargo build
 target/debug/daclient versions
 target/debug/daclient instance create "Survival" 26.3
+target/debug/daclient instance icon survival bild.png    # --clear setzt zurück
 target/debug/daclient loaders neoforge 26.3
 target/debug/daclient instance create "Modded" 26.3 --loader fabric   # neueste stabile Version
 target/debug/daclient search sodium --instance modded

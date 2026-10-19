@@ -3,6 +3,8 @@ import { LoaderCircle, Play, Square, X } from "lucide-react";
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useEffect, useId, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { initials } from "../lib/format";
+import { useInstanceIconUrl } from "../lib/icons";
+import type { Instance } from "../lib/types";
 
 export const EASE = [0.16, 1, 0.3, 1] as const;
 export const SPRING = { type: "spring", stiffness: 520, damping: 34, mass: 0.7 } as const;
@@ -257,8 +259,13 @@ export function tileGradient(id: string) {
   return TILE_GRADIENTS[hash % TILE_GRADIENTS.length];
 }
 
-export function InstanceIcon({ id, name, size = 40 }: { id: string; name: string; size?: number }) {
+/** Custom icon when the instance has one, otherwise a colour tile with initials. */
+export function InstanceIcon({ id, name, size = 40, icon }: { id: string; name: string; size?: number; icon?: Instance["icon"] }) {
+  const url = useInstanceIconUrl(id, icon);
   const [a, b] = tileGradient(id);
+  if (url) {
+    return <img src={url} alt="" draggable={false} className="shrink-0 bg-white/5 object-cover" style={{ width: size, height: size, borderRadius: size * 0.28 }} />;
+  }
   return (
     <div
       className="relative grid shrink-0 place-items-center overflow-hidden font-bold text-white"

@@ -120,16 +120,17 @@ pub async fn import(
     progress: &ProgressFn,
 ) -> Result<Instance> {
     let need_cf = || cf.ok_or(Error::MissingCurseForgeKey);
+    let mut project_icon = None;
     let (pack_path, origin) = match source {
         PackSource::CurseForge(query) => {
             let cf = need_cf()?;
-            let (path, info) = cfpack::download_pack(paths, cf, query, progress).await?;
-            return cfpack::import(paths, cf, &path, Some(info), name, concurrency, progress).await;
+            let (path, info, icon) = cfpack::download_pack(paths, cf, query, progress).await?;
+            return cfpack::import(paths, cf, &path, Some(info), icon, name, concurrency, progress).await;
         }
         PackSource::File(path) => {
             let p = path.to_path_buf();
             if tokio::task::spawn_blocking(move || cfpack::is_curseforge_pack(&p)).await?? {
-                return cfpack::import(paths, need_cf()?, path, None, name, concurrency, progress).await;
+                return cfpack::import(paths, need_cf()?, path, None, None, name, concurrency, progress).await;
             }
             (path.to_path_buf(), None)
         }
@@ -156,6 +157,7 @@ pub async fn import(
                 progress,
             )
             .await?;
+            project_icon = project.icon_url.clone();
             let origin = ModpackInfo {
                 project_id: Some(project.id),
                 version_id: Some(version.id),
@@ -208,6 +210,7 @@ pub async fn import(
         .with_curseforge(cf.map(|c| c.key().to_owned()))
         .identify()
         .await?;
+    crate::icon::after_import(paths, &mut instance, project_icon.as_deref()).await;
     Ok(instance)
 }
 
@@ -341,6 +344,10 @@ pub async fn export(
             }
             None => bundled.push((rel, game_dir.join(entry.kind.folder()).join(&entry.file_name))),
         }
+    }
+    // The instance icon travels as minecraft/icon.png, where Prism and DaClient pick it up.
+    if let Some(icon) = crate::icon::path(paths, instance) {
+        bundled.push(("icon.png".into(), icon));
     }
     for item in &options.include {
         let rel = safe_relative(item)

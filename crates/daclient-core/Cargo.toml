@@ -16,6 +16,7 @@ zip.workspace = true
 dirs.workspace = true
 md5.workspace = true
 dunce.workspace = true
+image.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys.workspace = true

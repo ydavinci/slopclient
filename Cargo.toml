@@ -20,6 +20,7 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 dirs = "6"
 md5 = "0.7"
 dunce = "1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 indicatif = "0.17"

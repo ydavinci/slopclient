@@ -12,6 +12,7 @@ use daclient_core::{
     auth::{Account, AccountStore, DeviceCode, msa},
     config::Settings,
     crash::{self, CrashReport},
+    icon,
     foreign::{self, ForeignInstance},
     content::{
         BlockedFile, ContentEntry, ContentManager, InstallReport, UpdateInfo,
@@ -214,6 +215,36 @@ async fn delete_instance(state: State<'_, AppState>, id: String) -> CmdResult<()
         return Err("Die Instanz läuft gerade.".into());
     }
     Instance::delete(&state.paths, &id).map_err(err)
+}
+
+/// Custom icon as a data URL, or none for the colour tile.
+#[tauri::command]
+async fn instance_icon(state: State<'_, AppState>, id: String) -> CmdResult<Option<String>> {
+    use base64::Engine;
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    let Some(path) = icon::path(&state.paths, &instance) else {
+        return Ok(None);
+    };
+    let bytes = std::fs::read(path).map_err(err)?;
+    Ok(Some(format!(
+        "data:image/png;base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(bytes)
+    )))
+}
+
+/// Sets the icon from image bytes (the crop dialog sends a square PNG).
+#[tauri::command]
+async fn set_instance_icon(state: State<'_, AppState>, id: String, bytes: Vec<u8>) -> CmdResult<Instance> {
+    let mut instance = Instance::load(&state.paths, &id).map_err(err)?;
+    icon::set(&state.paths, &mut instance, &bytes, None).map_err(err)?;
+    Ok(instance)
+}
+
+#[tauri::command]
+async fn clear_instance_icon(state: State<'_, AppState>, id: String) -> CmdResult<Instance> {
+    let mut instance = Instance::load(&state.paths, &id).map_err(err)?;
+    icon::clear(&state.paths, &mut instance).map_err(err)?;
+    Ok(instance)
 }
 
 #[tauri::command]
@@ -611,6 +642,9 @@ pub fn run() {
             save_instance,
             delete_instance,
             instance_dir,
+            instance_icon,
+            set_instance_icon,
+            clear_instance_icon,
             launch_instance,
             stop_instance,
             login_start,

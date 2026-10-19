@@ -215,6 +215,14 @@ enum InstanceCommand {
     List,
     /// Delete an instance and its game directory
     Delete { id: String },
+    /// Set the icon from an image (PNG, JPG, GIF, WebP), or reset it
+    Icon {
+        id: String,
+        #[arg(required_unless_present = "clear")]
+        image: Option<std::path::PathBuf>,
+        #[arg(long)]
+        clear: bool,
+    },
 }
 
 #[tokio::main]
@@ -432,6 +440,19 @@ async fn main() -> anyhow::Result<()> {
             InstanceCommand::Delete { id } => {
                 Instance::delete(&paths, &id)?;
                 println!("deleted {id}");
+            }
+            InstanceCommand::Icon { id, image, clear } => {
+                let mut instance = Instance::load(&paths, &id)?;
+                match image {
+                    Some(file) if !clear => {
+                        daclient_core::icon::set_from_file(&paths, &mut instance, &file, None)?;
+                        println!("icon set ({} px)", daclient_core::icon::SIZE);
+                    }
+                    _ => {
+                        daclient_core::icon::clear(&paths, &mut instance)?;
+                        println!("icon reset");
+                    }
+                }
             }
         },
         Command::Login => {

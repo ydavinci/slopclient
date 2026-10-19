@@ -111,7 +111,7 @@ pub async fn download_pack(
     cf: &CurseForge,
     query: &str,
     progress: &ProgressFn,
-) -> Result<(std::path::PathBuf, ModpackInfo)> {
+) -> Result<(std::path::PathBuf, ModpackInfo, Option<String>)> {
     stage(progress, "Resolving modpack");
     let project = cf.find_mod(query).await?;
     if project.class_id != Some(curseforge::CLASS_MODPACK) {
@@ -133,13 +133,14 @@ pub async fn download_pack(
         progress,
     )
     .await?;
+    let icon = project.icon_url();
     let info = ModpackInfo {
         project_id: Some(project.id.to_string()),
         version_id: Some(file.id.to_string()),
         name: project.name,
         version: file.display_name,
     };
-    Ok((path, info))
+    Ok((path, info, icon))
 }
 
 /// Creates a new instance from a CurseForge pack zip.
@@ -148,6 +149,7 @@ pub async fn import(
     cf: &CurseForge,
     pack: &Path,
     origin: Option<ModpackInfo>,
+    project_icon: Option<String>,
     name: Option<&str>,
     concurrency: usize,
     progress: &ProgressFn,
@@ -174,6 +176,7 @@ pub async fn import(
         let _ = Instance::delete(paths, &instance.id);
         return Err(e);
     }
+    crate::icon::after_import(paths, &mut instance, project_icon.as_deref()).await;
     Ok(instance)
 }
 

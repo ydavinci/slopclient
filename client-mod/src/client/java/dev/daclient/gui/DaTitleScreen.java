@@ -2,6 +2,7 @@ package dev.daclient.gui;
 
 import dev.daclient.DaClient;
 import dev.daclient.render.Draw;
+import dev.daclient.render.InstanceIconTexture;
 import dev.daclient.render.MenuShader;
 import dev.daclient.render.Theme;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -163,6 +165,16 @@ public final class DaTitleScreen extends Screen {
 		float scale = nameScale();
 		float x = PAD + 2;
 		float y = chipsY() - 8 - 8 * scale;
+		// The instance icon from the launcher sits in front of the name.
+		int icon = InstanceIconTexture.size();
+		if (icon > 0) {
+			int s = Math.round(8 * scale + 4);
+			double ki = Theme.ease((t - 0.1) / 0.6);
+			if (ki > 0) {
+				g.blit(RenderPipelines.GUI_TEXTURED, InstanceIconTexture.ID, (int) x, (int) (y - 3 + (1 - ki) * 8), 0, 0, s, s, icon, icon, icon, icon, Theme.alpha(0xFFFFFF, ki));
+			}
+			x += s + 10;
+		}
 		for (int i = 0; i < instanceName.length(); i++) {
 			String ch = String.valueOf(instanceName.charAt(i));
 			double k = Theme.ease((t - 0.15 - i * 0.045) / 0.7);

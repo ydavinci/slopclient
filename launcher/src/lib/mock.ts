@@ -82,6 +82,8 @@ const hits: SearchHit[] = [
   source: "modrinth" as const,
 }));
 
+const mockIcons = new Map<string, string>();
+
 const delay = <T,>(value: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(value), ms));
 
 async function fakeTask(taskId: string, stages: string[]) {
@@ -127,6 +129,23 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
         { launcher: "Prism Launcher", name: "1.21.1", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\1.21.1", mcVersion: "1.21.1", loader: { type: "neoforge", version: "21.1.262" }, mods: 3 },
         { launcher: "Prism Launcher", name: "Skyblock", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\Skyblock", mcVersion: "1.21.10", loader: { type: "fabric", version: "0.19.5" }, mods: 41 },
       ]);
+    case "instance_icon":
+      return delay(mockIcons.get(args.id as string) ?? null);
+    case "set_instance_icon": {
+      const bytes = new Uint8Array(args.bytes as number[]);
+      let bin = "";
+      bytes.forEach((b) => (bin += String.fromCharCode(b)));
+      mockIcons.set(args.id as string, `data:image/png;base64,${btoa(bin)}`);
+      const inst = overview.instances.find((i) => i.id === args.id)!;
+      inst.icon = { updated: Date.now() };
+      return delay(structuredClone(inst));
+    }
+    case "clear_instance_icon": {
+      mockIcons.delete(args.id as string);
+      const inst = overview.instances.find((i) => i.id === args.id)!;
+      inst.icon = null;
+      return delay(structuredClone(inst));
+    }
     case "content_blocked":
     case "content_resolve_blocked":
       return delay(

@@ -5,6 +5,7 @@ import { api, isTauri, openUrl, pickExportPath, pickFolder, pickModpackFile } fr
 import { loaderLabel } from "../lib/format";
 import { useStore } from "../lib/store";
 import type { CrashReport, DeviceCode, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
+import { IconEditor } from "./IconEditor";
 import { Button, Field, Modal, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "./kit";
 
 export function Modals() {
@@ -22,6 +23,9 @@ export function Modals() {
       </Modal>
       <Modal open={modal?.kind === "export"} title="Als Modrinth-Modpack exportieren" onClose={closeModal} width={460}>
         {modal?.kind === "export" && <Export instanceId={modal.instanceId} onClose={closeModal} />}
+      </Modal>
+      <Modal open={modal?.kind === "icon"} title="Instanz-Icon" onClose={closeModal} width={560}>
+        {modal?.kind === "icon" && <IconEditor instanceId={modal.instanceId} onClose={closeModal} />}
       </Modal>
       <Modal open={modal?.kind === "crash"} title={modal?.kind === "crash" ? modal.report.title : ""} onClose={closeModal} width={560}>
         {modal?.kind === "crash" && <Crash instanceId={modal.instanceId} report={modal.report} onClose={closeModal} />}

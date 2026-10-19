@@ -2,6 +2,7 @@ import { ArrowDownToLine, ArrowLeft, ChevronDown, ExternalLink, FileWarning, Fol
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, openUrl } from "../lib/ipc";
+import { pendingIcon } from "../lib/icons";
 import { loaderLabel, playTime, relativeTime } from "../lib/format";
 import { useLaunch, useStore, type InstanceTab } from "../lib/store";
 import { supportsClientMod, CLIENT_MOD_MC, type BlockedFile, type ContentEntry, type ContentType, type Instance, type Source, type UpdateInfo } from "../lib/types";
@@ -30,7 +31,24 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
           </IconButton>
         </motion.div>
         <motion.div variants={rise}>
-          <InstanceIcon id={instance.id} name={instance.name} size={56} />
+          {/* Click or drop an image to change the icon. */}
+          <button
+            aria-label="Icon ändern"
+            onClick={() => openModal({ kind: "icon", instanceId: instance.id })}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const file = e.dataTransfer.files[0];
+              if (file) {
+                pendingIcon.file = file;
+                openModal({ kind: "icon", instanceId: instance.id });
+              }
+            }}
+            className="group relative rounded-[16px] focus-visible:outline-2 focus-visible:outline-accent-2"
+          >
+            <InstanceIcon id={instance.id} name={instance.name} icon={instance.icon} size={56} />
+            <span className="absolute inset-0 grid place-items-center rounded-[16px] bg-black/55 text-[11.5px] font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">Ändern</span>
+          </button>
         </motion.div>
         <motion.div variants={rise} className="min-w-0">
           <h1 className="truncate text-[30px] font-extrabold tracking-[-0.03em]">{instance.name}</h1>

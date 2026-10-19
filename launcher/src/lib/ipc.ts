@@ -49,6 +49,9 @@ export const api = {
   saveInstance: (instance: Instance) => call<void>("save_instance", { instance }),
   deleteInstance: (id: string) => call<void>("delete_instance", { id }),
   instanceDir: (id: string) => call<string>("instance_dir", { id }),
+  instanceIcon: (id: string) => call<string | null>("instance_icon", { id }),
+  setInstanceIcon: (id: string, bytes: number[]) => call<Instance>("set_instance_icon", { id, bytes }),
+  clearInstanceIcon: (id: string) => call<Instance>("clear_instance_icon", { id }),
 
   launch: (id: string, taskId: string, offlineName: string | null) =>
     call<void>("launch_instance", { id, taskId, offlineName }),

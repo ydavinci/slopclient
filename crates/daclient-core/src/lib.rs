@@ -11,6 +11,7 @@ pub mod download;
 pub mod error;
 pub mod foreign;
 pub mod http;
+pub mod icon;
 pub mod install;
 pub mod instance;
 pub mod java;

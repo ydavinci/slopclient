@@ -190,7 +190,7 @@ export function Browse({ target }: { target?: string }) {
                   >
                     {active && <motion.span layoutId="target-active" transition={SPRING} className="absolute inset-0 rounded-xl bg-white/[0.08] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]" />}
                     <span className="relative">
-                      <InstanceIcon id={i.id} name={i.name} size={30} />
+                      <InstanceIcon id={i.id} name={i.name} icon={i.icon} size={30} />
                     </span>
                     <span className="relative min-w-0">
                       <span className={`block truncate text-[13px] font-semibold ${active ? "text-text" : "text-muted"}`}>{i.name}</span>

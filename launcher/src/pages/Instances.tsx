@@ -78,7 +78,7 @@ export function Instances() {
                     }`}
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <InstanceIcon id={i.id} name={i.name} size={36} />
+                      <InstanceIcon id={i.id} name={i.name} icon={i.icon} size={36} />
                       <span className={`truncate text-[14px] font-semibold ${selected ? "chroma-text" : ""}`}>{i.name}</span>
                       {running && <Chip tone="accent">läuft</Chip>}
                       {i.modpack && <Chip>Modpack</Chip>}

@@ -17,6 +17,7 @@ export type ModalState =
   | { kind: "import" }
   | { kind: "login" }
   | { kind: "export"; instanceId: string }
+  | { kind: "icon"; instanceId: string }
   | { kind: "crash"; instanceId: string; report: CrashReport };
 
 export interface Task {

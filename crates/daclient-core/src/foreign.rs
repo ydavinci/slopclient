@@ -195,6 +195,21 @@ pub async fn import(
         return Err(e.into());
     }
 
+    // Prism keeps custom icons in <data>/icons/<iconKey>.*; built-in keys have no file.
+    let icons = dir.parent().and_then(Path::parent).map(|data| data.join("icons"));
+    let custom = cfg.get("iconKey").zip(icons).and_then(|(key, icons)| {
+        ["png", "jpg", "jpeg", "gif", "webp"]
+            .iter()
+            .map(|ext| icons.join(format!("{key}.{ext}")))
+            .find(|p| p.is_file())
+    });
+    match custom {
+        Some(file) => {
+            let _ = crate::icon::set_from_file(paths, &mut instance, &file, None);
+        }
+        None => crate::icon::adopt_from_game_dir(paths, &mut instance),
+    }
+
     stage(progress, "Linking mods to Modrinth and CurseForge");
     // Recognising mods is a bonus; an offline import still succeeds.
     let _ = ContentManager::new(paths, instance.clone(), 8)

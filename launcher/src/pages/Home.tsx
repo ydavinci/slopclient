@@ -155,7 +155,7 @@ function InstanceStrip({ instances, selectedId, running, onSelect, onNew }: { in
             aria-pressed={active}
             className={`group relative flex w-[220px] shrink-0 items-center gap-3 rounded-2xl p-3 text-left transition-colors duration-200 ${active ? "chroma-ring" : "glass hover:border-line-2"}`}
           >
-            <InstanceIcon id={inst.id} name={inst.name} size={40} />
+            <InstanceIcon id={inst.id} name={inst.name} icon={inst.icon} size={40} />
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-semibold">{inst.name}</span>
               <span className="block truncate text-xs text-muted">

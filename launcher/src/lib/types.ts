@@ -33,6 +33,8 @@ export interface Instance {
   modpack?: ModpackInfo | null;
   /** Install the DaClient client mod (title screen, ClickGUI, HUD) on start. */
   clientMod: boolean;
+  /** Custom icon; without one the colour tile shows. */
+  icon?: { updated: number } | null;
 }
 
 /** Minecraft versions the bundled client mod supports (mirrors daclient-core client_mod::SUPPORTED_MC). */

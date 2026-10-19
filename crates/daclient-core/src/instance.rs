@@ -32,6 +32,9 @@ pub struct Instance {
     /// Put the DaClient client mod into the instance when it supports it.
     #[serde(default = "default_true")]
     pub client_mod: bool,
+    /// Custom icon (instances/<id>/icon.png); none shows the colour tile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<crate::icon::InstanceIcon>,
 }
 
 fn default_true() -> bool {
@@ -158,6 +161,7 @@ impl Instance {
             play_time_secs: 0,
             modpack: None,
             client_mod: true,
+            icon: None,
         };
         std::fs::create_dir_all(instance.game_dir(paths))?;
         instance.save(paths)?;
