@@ -1,10 +1,10 @@
-import { Copy, CopyPlus, ExternalLink, FileText, FileUp, Link2, PowerOff, Share2, Terminal, Upload } from "lucide-react";
+import { Check, Copy, CopyPlus, ExternalLink, FileText, FileUp, Link2, PowerOff, Share2, Terminal, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, isTauri, openUrl, pickExportPath, pickFolder, pickModpackFile } from "../lib/ipc";
 import { loaderLabel } from "../lib/format";
 import { useStore } from "../lib/store";
-import type { CrashReport, DeviceCode, InstallReport, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
+import type { CopyPart, CrashReport, DeviceCode, InstallReport, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
 import { IconEditor } from "./IconEditor";
 import { Button, Field, Modal, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "./kit";
 
@@ -120,7 +120,7 @@ export function presetSummary(r: InstallReport): string {
   return `Performance-Paket: ${added} ${added === 1 ? "Mod" : "Mods"} installiert${missing ? `, ${missing} für diese Version nicht verfügbar` : ""}`;
 }
 
-/** What went wrong after a crash, with the fixes DaClient can apply directly. */
+/** What went wrong after a crash, with the fixes SlopClient can apply directly. */
 function Crash({ instanceId, report, onClose }: { instanceId: string; report: CrashReport; onClose: () => void }) {
   const { navigate, toast, logs } = useStore();
   const [disabled, setDisabled] = useState(false);
@@ -185,6 +185,16 @@ function Crash({ instanceId, report, onClose }: { instanceId: string; report: Cr
   );
 }
 
+/** Parts a new instance can take over, with label and hint. */
+const COPY_PARTS: [CopyPart, string, string][] = [
+  ["options", "Spieloptionen", "Tastenbelegung, FOV, Grafik und Sound (options.txt)"],
+  ["servers", "Serverliste", "Gespeicherte Mehrspieler-Server"],
+  ["slopclient", "SlopClient", "Module, HUD-Layout und Profile"],
+  ["modConfigs", "Mod-Einstellungen", "Der config-Ordner der Mods"],
+  ["resourcePacks", "Resourcepacks", "Alle Resourcepacks"],
+  ["shaderPacks", "Shader", "Alle Shaderpacks"],
+];
+
 type LoaderChoice = "vanilla" | LoaderKind;
 const LOADERS: { value: LoaderChoice; label: string }[] = [
   { value: "vanilla", label: "Vanilla" },
@@ -195,7 +205,7 @@ const LOADERS: { value: LoaderChoice; label: string }[] = [
 ];
 
 function NewInstance({ onClose }: { onClose: () => void }) {
-  const { refresh, toast, navigate, select, runTask } = useStore();
+  const { refresh, toast, navigate, select, runTask, overview } = useStore();
   const [versions, setVersions] = useState<ManifestEntry[] | null>(null);
   const [snapshots, setSnapshots] = useState(false);
   const [mc, setMc] = useState("");
@@ -204,6 +214,8 @@ function NewInstance({ onClose }: { onClose: () => void }) {
   const [loaderVersion, setLoaderVersion] = useState("");
   const [name, setName] = useState("");
   const [preset, setPreset] = useState(true);
+  const [copyFrom, setCopyFrom] = useState("");
+  const [copyParts, setCopyParts] = useState<Set<CopyPart>>(new Set(["options", "servers", "slopclient"]));
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -247,6 +259,13 @@ function NewInstance({ onClose }: { onClose: () => void }) {
       onClose();
       navigate({ page: "home" });
       toast(`${instance.name} angelegt. Fehlende Dateien lädt der erste Start.`, "success");
+      if (copyFrom && copyParts.size) {
+        const source = overview?.instances.find((i) => i.id === copyFrom);
+        api
+          .copyInstanceSettings(instance.id, copyFrom, [...copyParts])
+          .then((n) => n && toast(`Einstellungen aus ${source?.name ?? "der Instanz"} übernommen`, "success"))
+          .catch((e) => toast(String(e), "error"));
+      }
       if (preset && loader !== "vanilla") {
         // Runs as a background task; the instance is usable meanwhile.
         runTask(`Performance-Paket für ${instance.name}`, (taskId) => api.contentInstallPreset(instance.id, taskId))
@@ -310,6 +329,51 @@ function NewInstance({ onClose }: { onClose: () => void }) {
               </select>
             )}
           </Field>
+        </motion.div>
+      )}
+      {(overview?.instances.length ?? 0) > 0 && (
+        <motion.div variants={rise} className="glass grid gap-3 rounded-[14px] px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold">Einstellungen übernehmen</div>
+              <div className="text-[12px] text-muted">Tastenbelegung, FOV, Server und mehr aus einer anderen Instanz.</div>
+            </div>
+            <select className={`${inputClass} w-44`} value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)} aria-label="Instanz, aus der übernommen wird">
+              <option value="">Nichts übernehmen</option>
+              {overview!.instances.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {copyFrom && (
+            <div className="grid grid-cols-2 gap-1.5">
+              {COPY_PARTS.map(([part, label, hint]) => {
+                const on = copyParts.has(part);
+                return (
+                  <button
+                    key={part}
+                    type="button"
+                    aria-pressed={on}
+                    title={hint}
+                    onClick={() =>
+                      setCopyParts((s) => {
+                        const n = new Set(s);
+                        if (on) n.delete(part);
+                        else n.add(part);
+                        return n;
+                      })
+                    }
+                    className={`flex items-center gap-2 rounded-[10px] border px-2.5 py-1.5 text-left text-[12px] font-semibold transition duration-200 ${on ? "border-accent-2/50 bg-accent/[0.14] text-text" : "border-line text-muted hover:border-line-2 hover:text-text"}`}
+                  >
+                    <span className={`grid size-4 shrink-0 place-items-center rounded-[5px] ${on ? "chroma text-white" : "bg-white/[0.08]"}`}>{on && <Check className="size-3" />}</span>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
       )}
       {loader !== "vanilla" && (
@@ -494,7 +558,7 @@ function Login({ onClose }: { onClose: () => void }) {
   if (!overview?.hasClientId) {
     return (
       <div className="grid gap-4">
-        <p className="text-[13px] leading-relaxed text-muted">Für den Login braucht DaClient eine Azure-Client-ID, die Mojang für die Minecraft-API freigeschaltet hat. Trag sie in den Einstellungen ein.</p>
+        <p className="text-[13px] leading-relaxed text-muted">Für den Login braucht SlopClient eine Azure-Client-ID, die Mojang für die Minecraft-API freigeschaltet hat. Trag sie in den Einstellungen ein.</p>
         <div className="flex justify-end">
           <Button
             variant="primary"

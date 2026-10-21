@@ -1,0 +1,15 @@
+[package]
+name = "slopclient-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "slopclient"
+path = "src/main.rs"
+
+[dependencies]
+slopclient-core.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+clap.workspace = true
+indicatif.workspace = true

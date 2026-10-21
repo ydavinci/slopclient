@@ -1,14 +1,20 @@
-import { ExternalLink, FolderOpen } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { api, openUrl } from "../lib/ipc";
+import { api } from "../lib/ipc";
 import { useStore } from "../lib/store";
 import type { Settings } from "../lib/types";
-import { Button, Field, Spinner, inputClass, rise, stagger } from "../ui/kit";
+import { Button, Segmented, Spinner, Toggle, rise } from "../ui/kit";
 import { Slider } from "./InstanceDetail";
+import { HueRing } from "../ui/HueRing";
+import { DEFAULT_HUE, applyAccent } from "../lib/accent";
 
 export function SettingsPage() {
-  const { overview, refresh, toast } = useStore();
+  const { overview, refresh, toast, centered, setCentered, homeLayout, setArranging, navigate } = useStore();
+  const openArrange = () => {
+    setArranging(true);
+    navigate({ page: "home" });
+  };
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -36,76 +42,87 @@ export function SettingsPage() {
       {!settings ? (
         <Spinner className="mt-8 size-5" />
       ) : (
-        <motion.div variants={stagger} initial="hidden" animate="show" className="mt-6 grid max-w-2xl gap-4">
-          <motion.section variants={rise} className="glass grid gap-4 rounded-[18px] p-5">
-            <h2 className="text-[15px] font-bold">Microsoft-Login</h2>
-            <Field
-              label="Azure-Client-ID"
-              hint={
+        // Each section animates on its own: the list mounts after the settings load, and a
+        // stagger parent mounted that late does not reliably start its children.
+        <div className="mt-6 grid max-w-2xl gap-4">
+          <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.00 }} className="glass grid gap-4 rounded-[18px] p-5">
+            <h2 className="text-[15px] font-bold">Design</h2>
+            <HueRing
+              hue={Math.round(settings.accentHue ?? DEFAULT_HUE)}
+              onPreview={(h) => {
+                applyAccent(h);
+                setSettings({ ...settings, accentHue: h });
+              }}
+              onCommit={(h) => {
+                const value = h === DEFAULT_HUE ? null : h;
+                applyAccent(value);
+                setSettings({ ...settings, accentHue: value });
+                api.setAccentHue(value).catch((e) => toast(String(e), "error"));
+              }}
+            />
+            <div className="flex items-center gap-4 border-t border-line pt-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-semibold">Startseite</div>
+                <div className="text-[12px] text-muted">Links oder mittig gilt auch für den Titelbildschirm im Spiel. Mit „Anordnen“ ziehst du die Blöcke im Launcher frei an ihren Platz.</div>
+              </div>
+              <Segmented
+                className="w-60"
+                value={homeLayout ? "custom" : centered ? "center" : "left"}
+                onChange={(v) => (v === "custom" ? openArrange() : setCentered(v === "center"))}
+                options={[
+                  { value: "left", label: "Links" },
+                  { value: "center", label: "Mittig" },
+                  { value: "custom", label: "Eigenes" },
+                ]}
+              />
+              <Button size="sm" onClick={openArrange}>
+                Anordnen
+              </Button>
+            </div>
+          </motion.section>
+
+          <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.05 }} className="glass grid gap-4 rounded-[18px] p-5">
+            <h2 className="text-[15px] font-bold">Discord</h2>
+            {(() => {
+              const enabled = settings.discordPresence ?? true;
+              const hide = settings.discordHideServer ?? false;
+              const apply = (e: boolean, h: boolean) => {
+                setSettings({ ...settings, discordPresence: e, discordHideServer: h });
+                api.setDiscord(e, h).catch((err) => toast(String(err), "error"));
+              };
+              return (
                 <>
-                  Eigene App-Registrierung im Azure-Portal, von Mojang für die Minecraft-API freigeschaltet. Ohne Freigabe endet der Login mit Fehler 403.{" "}
-                  <button className="inline-flex items-center gap-1 font-semibold text-accent-2 hover:underline" onClick={() => openUrl("https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade")}>
-                    Azure-Portal öffnen <ExternalLink className="size-3" />
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-semibold">Status in Discord zeigen</div>
+                      <div className="text-[12px] text-muted">Zeigt in deinem Profil, welche Instanz du spielst, auf welchem Server und seit wann. Discord muss dafür laufen.</div>
+                    </div>
+                    <Toggle label="Status in Discord zeigen" checked={enabled} onChange={(v) => apply(v, hide)} />
+                  </div>
+                  <div className={`flex items-center gap-4 transition-opacity duration-200 ${enabled ? "" : "pointer-events-none opacity-40"}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-semibold">Serveradresse ausblenden</div>
+                      <div className="text-[12px] text-muted">Statt „Auf mc.hypixel.net“ steht dann nur „Auf einem Server“.</div>
+                    </div>
+                    <Toggle label="Serveradresse ausblenden" checked={hide} onChange={(v) => apply(enabled, v)} />
+                  </div>
                 </>
-              }
-            >
-              <input className={`${inputClass} font-mono`} placeholder="00000000-0000-0000-0000-000000000000" value={settings.msaClientId ?? ""} onChange={(e) => setSettings({ ...settings, msaClientId: e.target.value })} />
-            </Field>
-            {overview?.devBuild && (
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-accent/20 bg-accent/5 p-3">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4 accent-accent-2"
-                  checked={settings.devOffline ?? false}
-                  onChange={(e) => setSettings({ ...settings, devOffline: e.target.checked })}
-                />
-                <span>
-                  <span className="block text-sm font-semibold">Offline-Testmodus (Dev)</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-muted">
-                    Startet Minecraft ohne Microsoft-Login mit der lokalen Testidentität „DevPlayer“. Nur in Entwickler-Builds verfügbar und nur für Einzelspieler/LAN geeignet.
-                  </span>
-                </span>
-              </label>
-            )}
+              );
+            })()}
           </motion.section>
 
-          <motion.section variants={rise} className="glass grid gap-4 rounded-[18px] p-5">
-            <h2 className="text-[15px] font-bold">CurseForge</h2>
-            <Field
-              label="API-Schlüssel"
-              hint={
-                <>
-                  Für Suche, Installation und Modpacks von CurseForge. Den Schlüssel gibt es nach Freigabe in der CurseForge-Konsole.{" "}
-                  <button className="inline-flex items-center gap-1 font-semibold text-accent-2 hover:underline" onClick={() => openUrl("https://console.curseforge.com/")}>
-                    Konsole öffnen <ExternalLink className="size-3" />
-                  </button>
-                </>
-              }
-            >
-              <input type="password" autoComplete="off" spellCheck={false} className={`${inputClass} font-mono`} placeholder="$2a$10$…" value={settings.curseforgeApiKey ?? ""} onChange={(e) => setSettings({ ...settings, curseforgeApiKey: e.target.value })} />
-            </Field>
-          </motion.section>
-
-          <motion.section variants={rise} className="glass grid gap-4 rounded-[18px] p-5">
-            <h2 className="text-[15px] font-bold">Kosmetik</h2>
-            <Field label="Cosmetics-Server" hint="Adresse des DaClient-Cosmetics-Dienstes. Darüber sehen andere DaClient-Spieler deine Cape und du ihre.">
-              <input className={`${inputClass} font-mono`} placeholder="https://cosmetics.example.com" value={settings.cosmeticsUrl ?? ""} onChange={(e) => setSettings({ ...settings, cosmeticsUrl: e.target.value })} />
-            </Field>
-          </motion.section>
-
-          <motion.section variants={rise} className="glass grid gap-4 rounded-[18px] p-5">
+          <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.10 }} className="glass grid gap-4 rounded-[18px] p-5">
             <h2 className="text-[15px] font-bold">Downloads</h2>
             <Slider label="Parallele Downloads" value={settings.downloadConcurrency ?? 16} min={1} max={64} step={1} unit="" onChange={(v) => setSettings({ ...settings, downloadConcurrency: v })} hint="Mehr ist bei schneller Leitung flotter. Bei Abbrüchen verringern." />
           </motion.section>
 
-          <motion.div variants={rise}>
+          <div>
             <Button variant="primary" loading={saving} onClick={save}>
               Speichern
             </Button>
-          </motion.div>
+          </div>
 
-          <motion.section variants={rise} className="glass grid gap-3 rounded-[18px] p-5">
+          <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.15 }} className="glass grid gap-3 rounded-[18px] p-5">
             <h2 className="text-[15px] font-bold">Speicherort</h2>
             <div className="flex items-center gap-3">
               <code className="flex-1 truncate rounded-[10px] border border-line bg-black/30 px-3 py-2.5 font-mono text-xs text-muted select-text">{overview?.dataDir}</code>
@@ -116,10 +133,10 @@ export function SettingsPage() {
             <p className="text-xs text-muted">Libraries, Assets und Java teilen sich alle Instanzen.</p>
           </motion.section>
 
-          <motion.p variants={rise} className="text-xs leading-relaxed text-muted">
-            DaClient {overview?.version}. Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.
-          </motion.p>
-        </motion.div>
+          <p className="text-xs leading-relaxed text-muted">
+            SlopClient {overview?.version}. Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.
+          </p>
+        </div>
       )}
     </div>
   );

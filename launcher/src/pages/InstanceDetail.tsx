@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowLeft, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, Plus, Puzzle, RefreshCw, Search, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, MonitorUp, Plus, Puzzle, RefreshCw, Search, Server as ServerIcon, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, openUrl } from "../lib/ipc";
@@ -8,7 +8,8 @@ import { useLaunch, useStore, type InstanceTab } from "../lib/store";
 import { supportsClientMod, CLIENT_MOD_MC, type BlockedFile, type ContentEntry, type ContentType, type Instance, type Source, type UpdateInfo } from "../lib/types";
 import { Button, Chip, EASE, EmptyState, Field, IconButton, InstanceIcon, PlayButton, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "../ui/kit";
 import { ShareLogButton, presetSummary } from "../ui/Modals";
-import { DropZone, FilePicker, ScreenshotsTab, WorldsTab } from "./InstanceTabs";
+import { UpdateReview } from "../ui/UpdateReview";
+import { DropZone, FilePicker, ScreenshotsTab, ServersTab, WorldsTab } from "./InstanceTabs";
 
 export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: InstanceTab }) {
   const { overview, navigate, openModal, launching, toast } = useStore();
@@ -69,6 +70,17 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
           <Button icon={<Upload className="size-4" />} onClick={() => openModal({ kind: "export", instanceId: id })}>
             Exportieren
           </Button>
+          <IconButton
+            label="Verknüpfung auf dem Desktop"
+            onClick={() =>
+              api
+                .createShortcut(id)
+                .then(() => toast("Verknüpfung liegt auf dem Desktop. Ein Doppelklick startet die Instanz direkt.", "success"))
+                .catch((e) => toast(String(e), "error"))
+            }
+          >
+            <MonitorUp className="size-4" />
+          </IconButton>
           <div className="scale-[0.82] origin-right">
             <PlayButton
               state={running ? "running" : preparing ? "preparing" : "idle"}
@@ -81,11 +93,12 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
 
       <div className="mt-5 px-8">
         <Segmented
-          className="w-[640px]"
+          className="w-[740px]"
           value={tab}
           onChange={setTab}
           options={[
             { value: "mods", label: <><Puzzle className="size-3.5" />Inhalte</> },
+            { value: "servers", label: <><ServerIcon className="size-3.5" />Server</> },
             { value: "worlds", label: <><Globe2 className="size-3.5" />Welten</> },
             { value: "screenshots", label: <><Camera className="size-3.5" />Screenshots</> },
             { value: "log", label: <><Terminal className="size-3.5" />Log{running && <span className="size-1.5 animate-pulse rounded-full bg-accent-2" />}</> },
@@ -95,22 +108,15 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
       </div>
 
       <div className="relative min-h-0 flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            className="absolute inset-0"
-            initial={{ opacity: 0, y: 8, filter: "blur(6px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
-            transition={{ duration: 0.35, ease: EASE }}
-          >
+        {/* CSS enter animation, like the pages: motion's exit handoff can leave tabs invisible in release builds. */}
+        <div key={tab} className="page-enter absolute inset-0">
             {tab === "mods" && <ContentTab instance={instance} />}
+            {tab === "servers" && <ServersTab instance={instance} />}
             {tab === "worlds" && <WorldsTab instance={instance} />}
             {tab === "screenshots" && <ScreenshotsTab instance={instance} />}
             {tab === "log" && <LogTab instanceId={id} />}
             {tab === "settings" && <SettingsTab instance={instance} />}
-          </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
     </div>
   );
@@ -135,12 +141,13 @@ function sourceLabel(source: Source): string {
 
 /** Content as ClickGUI modules: toggle to enable, click to expand details. */
 function ContentTab({ instance }: { instance: Instance }) {
-  const { navigate, runTask, toast } = useStore();
+  const { navigate, runTask, toast, openProject } = useStore();
   const [entries, setEntries] = useState<ContentEntry[] | null>(null);
   const [kind, setKind] = useState<ContentType>(instance.loader.type === "vanilla" ? "resourcepack" : "mod");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [updates, setUpdates] = useState<UpdateInfo[] | null>(null);
+  const [reviewing, setReviewing] = useState(false);
   const [checking, setChecking] = useState(false);
   const [missing, setMissing] = useState<BlockedFile[]>([]);
   const [showMissing, setShowMissing] = useState(false);
@@ -202,6 +209,15 @@ function ContentTab({ instance }: { instance: Instance }) {
     } catch (e) {
       toast(String(e), "error");
     }
+  }
+
+  const remote = (e: ContentEntry) => e.source.type === "modrinth" || e.source.type === "curseforge";
+
+  /** Projects from Modrinth or CurseForge open their page; local files just toggle. */
+  function openEntry(e: ContentEntry) {
+    if (e.source.type === "modrinth") openProject({ source: "modrinth", id: e.source.slug ?? e.source.projectId, target: instance.id });
+    else if (e.source.type === "curseforge") openProject({ source: "curseforge", id: String(e.source.projectId), target: instance.id });
+    else toggle(e, !e.enabled);
   }
 
   async function toggle(e: ContentEntry, enabled: boolean) {
@@ -315,7 +331,7 @@ function ContentTab({ instance }: { instance: Instance }) {
                     <b className="text-warn">
                       {missing.length} {missing.length === 1 ? "Datei fehlt" : "Dateien fehlen"}
                     </b>
-                    : Die Autoren erlauben den Download nur auf curseforge.com. Lade sie dort herunter, DaClient holt sie aus deinem Download-Ordner.
+                    : Die Autoren erlauben den Download nur auf curseforge.com. Lade sie dort herunter, SlopClient holt sie aus deinem Download-Ordner.
                   </span>
                   <div className="ml-auto flex shrink-0 gap-2">
                     <Button size="sm" onClick={() => setShowMissing((v) => !v)}>
@@ -356,10 +372,14 @@ function ContentTab({ instance }: { instance: Instance }) {
                   verfügbar: {updates.slice(0, 3).map((u) => u.entry.name).join(", ")}
                   {updates.length > 3 && ` und ${updates.length - 3} weitere`}
                 </span>
-                <Button variant="primary" size="sm" className="ml-auto" onClick={applyUpdates}>
+                <Button size="sm" className="ml-auto" onClick={() => setReviewing((r) => !r)} aria-expanded={reviewing}>
+                  {reviewing ? "Änderungen ausblenden" : "Änderungen ansehen"}
+                </Button>
+                <Button variant="primary" size="sm" onClick={applyUpdates}>
                   Alle aktualisieren
                 </Button>
               </div>
+              {reviewing && <UpdateReview updates={updates} />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -389,18 +409,18 @@ function ContentTab({ instance }: { instance: Instance }) {
                 const expanded = open === key;
                 const update = updateFor.get(e.fileName);
                 return (
-                  <motion.div key={key} variants={rise} layout="position" className={`overflow-hidden rounded-xl transition-colors duration-300 ${e.enabled ? "bg-accent/[0.18] shadow-[inset_0_0_0_1px_rgb(192_132_252/0.18)]" : "bg-white/[0.02]"}`}>
+                  <motion.div key={key} variants={rise} layout="position" className={`overflow-hidden rounded-xl transition-colors duration-300 ${e.enabled ? "bg-accent/[0.18] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent-2)_18%,transparent)]" : "bg-white/[0.02]"}`}>
                     <div
                       role="button"
                       tabIndex={0}
-                      aria-pressed={e.enabled}
-                      aria-label={`${e.name} ${e.enabled ? "deaktivieren" : "aktivieren"}`}
-                      onClick={() => toggle(e, !e.enabled)}
+                      aria-pressed={remote(e) ? undefined : e.enabled}
+                      aria-label={remote(e) ? `${e.name} ansehen` : `${e.name} ${e.enabled ? "deaktivieren" : "aktivieren"}`}
+                      onClick={() => openEntry(e)}
                       onContextMenu={(ev) => {
                         ev.preventDefault();
                         setOpen(expanded ? null : key);
                       }}
-                      onKeyDown={(ev) => ev.key === "Enter" && toggle(e, !e.enabled)}
+                      onKeyDown={(ev) => ev.key === "Enter" && openEntry(e)}
                       className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-opacity duration-300 ${e.enabled ? "" : "opacity-55 hover:opacity-80"}`}
                     >
                       {e.iconUrl ? <img src={e.iconUrl} alt="" className="size-9 rounded-lg bg-white/5 object-cover" /> : <InstanceIcon id={e.fileName} name={e.name} size={36} />}
@@ -411,7 +431,9 @@ function ContentTab({ instance }: { instance: Instance }) {
                       {update && <Chip tone="accent">Update {update.new_version.version_number}</Chip>}
                       {e.dependency && <Chip>Abhängigkeit</Chip>}
                       {e.source.type === "local" && <Chip>Lokal</Chip>}
-                      <Toggle checked={e.enabled} onChange={(v) => toggle(e, v)} label={`${e.name} aktivieren`} />
+                      <span onClick={(ev) => ev.stopPropagation()}>
+                        <Toggle checked={e.enabled} onChange={(v) => toggle(e, v)} label={`${e.name} aktivieren`} />
+                      </span>
                       <button
                         aria-label={`Details zu ${e.name}`}
                         aria-expanded={expanded}
@@ -565,7 +587,7 @@ function SettingsTab({ instance }: { instance: Instance }) {
           <Slider label="Max. Arbeitsspeicher" value={java.maxMemoryMb} min={1024} max={16384} onChange={(v) => setJava({ maxMemoryMb: Math.max(v, java.minMemoryMb) })} hint="4 bis 8 GB reichen für die meisten Modpacks." />
         </motion.div>
         <motion.div variants={rise}>
-          <Field label="Java-Pfad" hint="Leer lassen, dann lädt DaClient automatisch die passende Java-Version.">
+          <Field label="Java-Pfad" hint="Leer lassen, dann lädt SlopClient automatisch die passende Java-Version.">
             <input className={`${inputClass} font-mono`} placeholder="automatisch" value={java.path ?? ""} onChange={(e) => setJava({ path: e.target.value })} />
           </Field>
         </motion.div>
@@ -590,14 +612,14 @@ function SettingsTab({ instance }: { instance: Instance }) {
         </motion.div>
         <motion.div variants={rise} className="glass flex items-center gap-4 rounded-[18px] p-4">
           <div className="min-w-0 flex-1">
-            <h3 className="text-[13px] font-semibold">DaClient-Mod</h3>
+            <h3 className="text-[13px] font-semibold">SlopClient-Mod</h3>
             <p className="mt-0.5 text-[13px] text-muted">
               {supportsClientMod(draft)
                 ? "Titelbildschirm, ClickGUI (Rechts-Shift) und HUD im Spiel. Wird beim Start automatisch installiert, zusammen mit Fabric API."
                 : `Läuft mit Fabric oder Quilt auf Minecraft ${CLIENT_MOD_MC.join(", ")}. Diese Instanz startet ohne.`}
             </p>
           </div>
-          <Toggle label="DaClient-Mod" checked={draft.clientMod && supportsClientMod(draft)} onChange={(v) => supportsClientMod(draft) && setDraft({ ...draft, clientMod: v })} />
+          <Toggle label="SlopClient-Mod" checked={draft.clientMod && supportsClientMod(draft)} onChange={(v) => supportsClientMod(draft) && setDraft({ ...draft, clientMod: v })} />
         </motion.div>
         <motion.div variants={rise}>
           <Button variant="primary" loading={saving} onClick={save}>
@@ -644,7 +666,7 @@ export function Slider({ label, value, min, max, step = 256, onChange, hint, uni
         <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.08]">
           <div className="chroma h-full rounded-full" style={{ width: `${pct}%` }} />
         </div>
-        <div className="pointer-events-none absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_2px_10px_rgb(168_85_247/0.7)]" style={{ left: `${pct}%` }} />
+        <div className="pointer-events-none absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_2px_10px_color-mix(in_oklab,var(--color-accent)_70%,transparent)]" style={{ left: `${pct}%` }} />
         <input type="range" aria-label={label} min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)} className="absolute inset-0 w-full cursor-pointer opacity-0" />
       </div>
       {hint && <p className="mt-1.5 text-xs text-muted">{hint}</p>}

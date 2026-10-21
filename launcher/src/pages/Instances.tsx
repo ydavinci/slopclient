@@ -7,7 +7,7 @@ import { loaderName, playTime, relativeTime } from "../lib/format";
 import { useLaunch, useStore } from "../lib/store";
 import { Button, Chip, EASE, EmptyState, InstanceIcon, inputClass, rise, stagger } from "../ui/kit";
 
-const COLLAPSED_KEY = "daclient.collapsedGroups";
+const COLLAPSED_KEY = "slopclient.collapsedGroups";
 
 function loadCollapsed(): Set<string> {
   try {
@@ -68,7 +68,7 @@ export function Instances() {
         }}
         onKeyDown={(e) => e.key === "Enter" && navigate({ page: "instance", id: i.id })}
         className={`group grid ${COLS} cursor-pointer items-center gap-4 rounded-xl px-2.5 py-2 transition-colors duration-200 ${
-          selected ? "bg-accent/[0.16] shadow-[inset_0_0_0_1px_rgb(192_132_252/0.18)]" : "hover:bg-white/[0.04]"
+          selected ? "bg-accent/[0.16] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent-2)_18%,transparent)]" : "hover:bg-white/[0.04]"
         }`}
       >
         <div className="flex min-w-0 items-center gap-3">

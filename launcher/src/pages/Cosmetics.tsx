@@ -6,11 +6,30 @@ import { api } from "../lib/ipc";
 import { useStore } from "../lib/store";
 import type { CapeInfo, OnlineStatus } from "../lib/types";
 import { CapeEditor, type EditTarget } from "../ui/CapeEditor";
-import { Button, EmptyState, Spinner, rise, stagger } from "../ui/kit";
+import { Button, EmptyState, Segmented, Spinner, rise, stagger } from "../ui/kit";
+import { ExtrasView } from "./Extras";
+import { SkinsView } from "./Skins";
+
+type View = "capes" | "skins" | "extras";
+
+function ViewSwitch({ view, onChange }: { view: View; onChange: (v: View) => void }) {
+  return (
+    <Segmented
+      className="w-[22rem]"
+      value={view}
+      onChange={onChange}
+      options={[
+        { value: "capes", label: "Capes" },
+        { value: "skins", label: "Skins" },
+        { value: "extras", label: "Hüte & Begleiter" },
+      ]}
+    />
+  );
+}
 
 /** Cape Studio: library of own capes, and the editor for new or existing ones. */
 export function Cosmetics() {
-  const { toast, overview, navigate } = useStore();
+  const { toast } = useStore();
   const [online, setOnline] = useState<OnlineStatus | null>(null);
   const [signingIn, setSigningIn] = useState(false);
   const [capes, setCapes] = useState<CapeInfo[] | null>(null);
@@ -18,6 +37,7 @@ export function Cosmetics() {
   const [editing, setEditing] = useState<EditTarget | null>(null);
   const [opening, setOpening] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [view, setView] = useState<View>("capes");
   const input = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
@@ -37,11 +57,9 @@ export function Cosmetics() {
   async function signIn() {
     setSigningIn(true);
     try {
-      // Without a Microsoft account, dev builds sign in with the offline test identity.
-      const offline = overview?.accounts.length ? null : overview?.devBuild ? "DevPlayer" : null;
-      const status = await api.cosmeticsSignIn(offline);
+      const status = await api.cosmeticsSignIn();
       setOnline(status);
-      toast(`Online als ${status.name}. Andere DaClient-Spieler sehen jetzt deine Cape.`, "success");
+      toast(`Online als ${status.name}. Andere SlopClient-Spieler sehen jetzt deine Cape.`, "success");
     } catch (e) {
       toast(String(e), "error");
     } finally {
@@ -133,6 +151,40 @@ export function Cosmetics() {
     );
   }
 
+  if (view === "extras") {
+    return (
+      <div className="flex h-full flex-col">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="flex items-end gap-3 px-8 pt-3 pb-5">
+          <motion.div variants={rise} className="mr-auto">
+            <h1 className="text-[30px] font-extrabold tracking-[-0.03em]">Kosmetik</h1>
+            <p className="mt-0.5 text-[13px] text-muted">Ein Hut und ein Begleiter, die mit dir durchs Spiel gehen.</p>
+          </motion.div>
+          <motion.div variants={rise}>
+            <ViewSwitch view={view} onChange={setView} />
+          </motion.div>
+        </motion.div>
+        <ExtrasView />
+      </div>
+    );
+  }
+
+  if (view === "skins") {
+    return (
+      <div className="flex h-full flex-col">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="flex items-end gap-3 px-8 pt-3 pb-5">
+          <motion.div variants={rise} className="mr-auto">
+            <h1 className="text-[30px] font-extrabold tracking-[-0.03em]">Kosmetik</h1>
+            <p className="mt-0.5 text-[13px] text-muted">Deine Skins an einem Ort. Ein Klick setzt den Skin auf deinem Minecraft-Account.</p>
+          </motion.div>
+          <motion.div variants={rise}>
+            <ViewSwitch view={view} onChange={setView} />
+          </motion.div>
+        </motion.div>
+        <SkinsView />
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex h-full flex-col"
@@ -165,15 +217,18 @@ export function Cosmetics() {
           <p className="mt-0.5 text-[13px] text-muted">Eigene Capes aus Bildern und GIFs. Im Spiel siehst du die aktive Cape an deinem Spieler.</p>
         </motion.div>
         <motion.div variants={rise}>
+          <ViewSwitch view={view} onChange={setView} />
+        </motion.div>
+        <motion.div variants={rise}>
           <Button variant="primary" icon={<ImagePlus className="size-4" />} loading={opening} onClick={() => input.current?.click()}>
             Neue Cape
           </Button>
         </motion.div>
       </motion.div>
 
-      <OnlineCard online={online} busy={signingIn} onSignIn={signIn} onSignOut={signOut} onSettings={() => navigate({ page: "settings" })} />
+      <OnlineCard online={online} busy={signingIn} onSignIn={signIn} onSignOut={signOut} />
 
-      <div className={`mx-8 mb-6 min-h-0 flex-1 overflow-auto rounded-[18px] transition-colors duration-200 ${dragOver ? "bg-accent/[0.08] shadow-[inset_0_0_0_1.5px_rgb(192_132_252/0.5)]" : ""}`}>
+      <div className={`mx-8 mb-6 min-h-0 flex-1 overflow-auto rounded-[18px] transition-colors duration-200 ${dragOver ? "bg-accent/[0.08] shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--color-accent-2)_50%,transparent)]" : ""}`}>
         {capes === null ? (
           <div className="grid place-items-center py-20">
             <Spinner className="size-5" />
@@ -231,7 +286,7 @@ export function Cosmetics() {
 }
 
 /** Whether other players can see the cape: the cosmetics server sign-in. */
-function OnlineCard({ online, busy, onSignIn, onSignOut, onSettings }: { online: OnlineStatus | null; busy: boolean; onSignIn: () => void; onSignOut: (deleteAccount: boolean) => void; onSettings: () => void }) {
+function OnlineCard({ online, busy, onSignIn, onSignOut }: { online: OnlineStatus | null; busy: boolean; onSignIn: () => void; onSignOut: (deleteAccount: boolean) => void }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   if (!online) return null;
   const signedIn = online.name != null;
@@ -244,17 +299,13 @@ function OnlineCard({ online, busy, onSignIn, onSignOut, onSettings }: { online:
         <p className="text-[13px] font-semibold">{!online.server ? "Nur für dich sichtbar" : signedIn ? `Online sichtbar als ${online.name}` : "Für andere unsichtbar"}</p>
         <p className="truncate text-[11.5px] text-muted">
           {!online.server
-            ? "Ohne Cosmetics-Server siehst nur du deine Cape. Die Adresse trägst du in den Einstellungen ein."
+            ? "Ohne Cosmetics-Server siehst nur du deine Cape."
             : signedIn
-              ? `Andere DaClient-Spieler sehen deine aktive Cape. Server: ${online.server}`
-              : "Melde dich mit deinem Minecraft-Konto an, dann sehen andere DaClient-Spieler deine Cape."}
+              ? `Andere SlopClient-Spieler sehen deine aktive Cape. Server: ${online.server}`
+              : "Melde dich mit deinem Minecraft-Konto an, dann sehen andere SlopClient-Spieler deine Cape."}
         </p>
       </div>
-      {!online.server ? (
-        <Button size="sm" onClick={onSettings}>
-          Einstellungen
-        </Button>
-      ) : signedIn ? (
+      {!online.server ? null : signedIn ? (
         confirmDelete ? (
           <div className="flex gap-1.5">
             <Button size="sm" variant="danger" onClick={() => onSignOut(true)}>

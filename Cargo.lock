@@ -834,72 +834,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d"
 
 [[package]]
-name = "daclient-cli"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "clap",
- "daclient-core",
- "indicatif",
- "tokio",
-]
-
-[[package]]
-name = "daclient-core"
-version = "0.2.0"
-dependencies = [
- "base64 0.22.1",
- "dirs 6.0.0",
- "dunce",
- "flate2",
- "futures",
- "hex",
- "image",
- "md5",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "sha1",
- "thiserror 2.0.21",
- "tokio",
- "windows-sys 0.59.0",
- "zip",
-]
-
-[[package]]
-name = "daclient-cosmetics"
-version = "0.2.0"
-dependencies = [
- "axum",
- "base64 0.22.1",
- "daclient-core",
- "getrandom 0.2.17",
- "hex",
- "image",
- "reqwest 0.12.28",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
-]
-
-[[package]]
-name = "daclient-launcher"
-version = "0.2.0"
-dependencies = [
- "base64 0.22.1",
- "daclient-core",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tokio",
-]
-
-[[package]]
 name = "darling"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2496,6 +2430,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
+name = "mime_guess"
+version = "2.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
+dependencies = [
+ "mime",
+ "unicase",
+]
+
+[[package]]
 name = "miniz_oxide"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3375,6 +3319,7 @@ dependencies = [
  "hyper-util",
  "js-sys",
  "log",
+ "mime_guess",
  "percent-encoding",
  "pin-project-lite",
  "quinn",
@@ -3893,6 +3838,74 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
+name = "slopclient-cli"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "indicatif",
+ "slopclient-core",
+ "tokio",
+]
+
+[[package]]
+name = "slopclient-core"
+version = "0.2.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs 6.0.0",
+ "dunce",
+ "flate2",
+ "futures",
+ "hex",
+ "image",
+ "md5",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha1",
+ "thiserror 2.0.21",
+ "tokio",
+ "windows-sys 0.59.0",
+ "zip",
+]
+
+[[package]]
+name = "slopclient-cosmetics"
+version = "0.2.0"
+dependencies = [
+ "axum",
+ "base64 0.22.1",
+ "getrandom 0.2.17",
+ "hex",
+ "image",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "slopclient-core",
+ "tokio",
+]
+
+[[package]]
+name = "slopclient-launcher"
+version = "0.2.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs 6.0.0",
+ "serde",
+ "serde_json",
+ "slopclient-core",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tauri-plugin-single-instance",
+ "tokio",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4329,6 +4342,22 @@ dependencies = [
  "thiserror 2.0.21",
  "url",
  "windows",
+ "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-single-instance"
+version = "2.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "561cd99484561bc39c954768e7b41a66cebbe1ac3d9d081c34361f740c489e2c"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "windows-sys 0.61.2",
  "zbus",
 ]
 
@@ -4815,6 +4844,12 @@ dependencies = [
  "tempfile",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "unicase"
+version = "2.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357cc3acc6a036009fd6c973ed009037c732d60d0b4f6c673e9041497482a28f"
 
 [[package]]
 name = "unicode-ident"

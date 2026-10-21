@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { accentShiftRad } from "../lib/accent";
 
 // Flowing violet "main menu" shader, the backdrop every modern client ships.
 // Rendered at half resolution, paused while hidden or while a game runs.
@@ -6,6 +7,9 @@ const FRAG = `
 precision mediump float;
 uniform vec2 r;
 uniform float t;
+uniform float hs;
+// Turns a colour around the grey axis: the user's accent hue.
+vec3 hue(vec3 c,float a){vec3 k=vec3(.57735);float ca=cos(a);return c*ca+cross(k,c)*sin(a)+k*dot(k,c)*(1.-ca);}
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}
@@ -24,7 +28,7 @@ void main(){
   float band2=abs(p.y-.18*sin(p.x*1.6-tt*5.)-.1*q.x-.32);
   col+=vec3(.9,.4,.95)*.08*exp(-band2*22.);
   col*=1.-.6*length(uv-vec2(.5,.45));
-  gl_FragColor=vec4(col,1.);
+  gl_FragColor=vec4(max(hue(col,hs),0.),1.);
 }`;
 
 const VERT = `attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
@@ -59,6 +63,7 @@ export function Shader({ paused = false }: { paused?: boolean }) {
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const uRes = gl.getUniformLocation(prog, "r");
     const uTime = gl.getUniformLocation(prog, "t");
+    const uHue = gl.getUniformLocation(prog, "hs");
 
     const resize = () => {
       const scale = 0.5;
@@ -76,6 +81,7 @@ export function Shader({ paused = false }: { paused?: boolean }) {
     let frame = 0;
     const draw = (now: number) => {
       gl.uniform1f(uTime, (now - start) / 1000);
+      gl.uniform1f(uHue, accentShiftRad);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
     const loop = (now: number) => {

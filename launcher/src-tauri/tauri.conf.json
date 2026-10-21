@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "DaClient",
+  "productName": "SlopClient",
   "version": "0.2.0",
-  "identifier": "dev.daclient.launcher",
+  "identifier": "dev.slopclient.launcher",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "DaClient",
+        "title": "SlopClient",
         "width": 1240,
         "height": 780,
         "minWidth": 980,
@@ -38,9 +38,9 @@
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ],
-    "publisher": "DaClient",
+    "publisher": "SlopClient",
     "shortDescription": "Minecraft-Launcher mit eigenem Client-Interface",
-    "longDescription": "DaClient: Instanzen, Mods von Modrinth und CurseForge, Fabric/NeoForge und ein legitimer In-Game-Client. Kein offizielles Minecraft-Produkt.",
+    "longDescription": "SlopClient: Instanzen, Mods von Modrinth und CurseForge, Fabric/NeoForge und ein legitimer In-Game-Client. Kein offizielles Minecraft-Produkt.",
     "copyright": "Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt.",
     "category": "Game",
     "windows": {

@@ -1,7 +1,7 @@
-import { Check, Compass, Download, ExternalLink, Heart, KeyRound, Search } from "lucide-react";
+import { Check, Compass, Download, Heart, KeyRound, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { api, openUrl } from "../lib/ipc";
+import { api } from "../lib/ipc";
 import { compactNumber, loaderName } from "../lib/format";
 import { useStore } from "../lib/store";
 import { projectKey, type Instance, type Platform, type SearchHit } from "../lib/types";
@@ -36,7 +36,7 @@ function modLoaders(instance: Instance | undefined): string[] {
 }
 
 export function Browse({ target }: { target?: string }) {
-  const { overview, runTask, toast, refresh, navigate, select } = useStore();
+  const { overview, runTask, toast, refresh, navigate, select, openProject } = useStore();
   const instances = overview?.instances ?? [];
   const [targetId, setTargetId] = useState(target ?? instances[0]?.id ?? "");
   const instance = instances.find((i) => i.id === targetId);
@@ -242,18 +242,8 @@ export function Browse({ target }: { target?: string }) {
           ) : needsKey ? (
             <EmptyState
               icon={<KeyRound className="size-5" />}
-              title="CurseForge ist noch nicht eingerichtet"
-              text="Die CurseForge-API gibt Inhalte nur mit eigenem API-Schlüssel heraus. Trag ihn in den Einstellungen ein, Modrinth funktioniert auch ohne."
-              action={
-                <div className="flex gap-2">
-                  <Button variant="primary" onClick={() => navigate({ page: "settings" })}>
-                    Zu den Einstellungen
-                  </Button>
-                  <Button icon={<ExternalLink className="size-4" />} onClick={() => openUrl("https://console.curseforge.com/")}>
-                    CurseForge-Konsole
-                  </Button>
-                </div>
-              }
+              title="CurseForge ist in diesem Build nicht verfügbar"
+              text="Dieser Launcher wurde ohne CurseForge-Schlüssel gebaut. Modrinth funktioniert wie gewohnt."
             />
           ) : hits === null ? (
             <div className="grid place-items-center py-20">
@@ -269,7 +259,18 @@ export function Browse({ target }: { target?: string }) {
                   const done = installed.has(key) && type !== "modpack";
                   const loading = busy.has(key);
                   return (
-                    <motion.div key={key} variants={rise} whileHover={{ y: -2 }} transition={SPRING} className="group glass relative flex gap-3.5 overflow-hidden rounded-[18px] p-3.5 transition-colors duration-200 hover:border-line-2">
+                    <motion.div
+                      key={key}
+                      variants={rise}
+                      whileHover={{ y: -2 }}
+                      transition={SPRING}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${hit.title} ansehen`}
+                      onClick={() => openProject({ source: hit.source, id: hit.source === "curseforge" ? hit.project_id : hit.slug, target: instance?.id, type })}
+                      onKeyDown={(e) => e.key === "Enter" && openProject({ source: hit.source, id: hit.source === "curseforge" ? hit.project_id : hit.slug, target: instance?.id, type })}
+                      className="group glass relative flex cursor-pointer gap-3.5 overflow-hidden rounded-[18px] p-3.5 transition-colors duration-200 hover:border-line-2"
+                    >
                       {hit.icon_url ? <img src={hit.icon_url} alt="" loading="lazy" className="size-14 shrink-0 rounded-xl bg-white/5 object-cover" /> : <InstanceIcon id={hit.slug} name={hit.title} size={56} />}
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate text-[14px] font-bold">
@@ -296,7 +297,7 @@ export function Browse({ target }: { target?: string }) {
                             Installiert
                           </motion.span>
                         ) : (
-                          <motion.div key="btn" exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.15, ease: EASE } }} className="self-start">
+                          <motion.div key="btn" exit={{ scale: 0.8, opacity: 0, transition: { duration: 0.15, ease: EASE } }} className="self-start" onClick={(e) => e.stopPropagation()}>
                             <Button size="sm" variant="primary" loading={loading} disabled={type !== "modpack" && !instance} onClick={() => install(hit)}>
                               {type === "modpack" ? "Als Instanz" : "Installieren"}
                             </Button>

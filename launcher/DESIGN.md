@@ -1,5 +1,5 @@
 ---
-name: DaClient Launcher
+name: SlopClient Launcher
 description: A Minecraft launcher and in-game client that looks and moves like a modern client (watermark, ArrayList, ClickGUI, notifications), with legit modules only.
 colors:
   accent: "#8b5cf6"
@@ -130,7 +130,7 @@ components:
     width: "60px"
 ---
 
-# Design System: DaClient Launcher
+# Design System: SlopClient Launcher
 
 ## Overview
 
@@ -270,7 +270,7 @@ A 30% black track with 11px radius; the active option is a 10% white pill with a
 A 60px floating glass column, 16px radius. Rail buttons are 44px squares with 18px icons; the active one carries a sliding 9% white pill (shared spring) plus a 3px chroma bar on the rail's left edge. Labels appear as a glass tooltip to the right on hover. Settings and the account avatar sit at the bottom; the account menu opens to the right as an `panel-solid` popover.
 
 ### Watermark (signature)
-A glass capsule in the draggable title bar: logo, "DaClient" in chroma text at 800, then hairline-separated meta (version, account, instance count, clock) in muted 12px, numbers in mono. Slides in from the left on launch.
+A glass capsule in the draggable title bar: logo, "SlopClient" in chroma text at 800, then hairline-separated meta (version, account, instance count, clock) in muted 12px, numbers in mono. Slides in from the left on launch.
 
 ### ArrayList (signature)
 Right-aligned rows of active mods sorted by rendered width (longest on top), each on a 45% black, lightly blurred strip with the name in chroma text, an optional mono version suffix, and a 2px chroma bar on the right. Only the top-left and bottom-left corners round (6px). Rows slide in from the right with a 45ms stagger and phase-shifted chroma.

@@ -1,6 +1,6 @@
 ---
-name: DaClient
-description: The project website as DaClient's own title screen; purple stone, pixel dusk, bevelled GUI.
+name: SlopClient
+description: The project website as SlopClient's own title screen; purple stone, pixel dusk, bevelled GUI.
 colors:
   ink: "#0b0912"
   stone: "#17121f"
@@ -119,13 +119,13 @@ components:
     padding: "22px 16px"
 ---
 
-# Design System: DaClient
+# Design System: SlopClient
 
 ## Overview
 
 **Creative North Star: "The Title Screen"**
 
-The website is the game screen DaClient's in-game client replaces: a pixel dusk panorama behind a giant extruded wordmark, a stack of bevelled GUI buttons, a splash line in yellow, and a status bar along the bottom. Everything below the fold works like a sub-screen of that menu: a dark tile header band with a small centred title, a working panel, and a "Done" button back to the title. The game's GUI supplies the material: purple-tinted stone tile ground, buttons with black edges and light/dark inner bevels, inset wells for lists and reading, and the in-game tooltip for transient messages.
+The website is the game screen SlopClient's in-game client replaces: a pixel dusk panorama behind a giant extruded wordmark, a stack of bevelled GUI buttons, a splash line in yellow, and a status bar along the bottom. Everything below the fold works like a sub-screen of that menu: a dark tile header band with a small centred title, a working panel, and a "Done" button back to the title. The game's GUI supplies the material: purple-tinted stone tile ground, buttons with black edges and light/dark inner bevels, inset wells for lists and reading, and the in-game tooltip for transient messages.
 
 Density is game-menu density: controls are full-height (44px) and stacked tight (6 to 8px), and reading text sits in narrow centred columns inside wells. Every corner is square; depth comes from inner bevels and 2px black edges, not from radius or blur. Colour is a purple stone field with one violet accent for interaction. The game's own chat colours (yellow, green) are kept for meaning: the splash, ON states and counts.
 

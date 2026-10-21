@@ -1,7 +1,9 @@
 {
   "detector": {
     "ignoreRules": [],
-    "ignoreFiles": [],
+    "ignoreFiles": [
+      "design/ingame.html"
+    ],
     "ignoreValues": [
       {
         "rule": "gradient-text",
@@ -11,6 +13,66 @@
         ],
         "createdAt": "2026-10-18T20:53:51.133Z",
         "reason": "Brief: user asked for a modern look similar to cheat clients, whose chroma (animated gradient) watermark is genre-native; limited to the chroma-text utility"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "56px",
+        "createdAt": "2026-10-19T18:49:26.724Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13.5px",
+        "createdAt": "2026-10-19T18:49:26.832Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "12.5px",
+        "createdAt": "2026-10-19T18:49:26.939Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13px",
+        "createdAt": "2026-10-19T18:49:27.047Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "14px",
+        "createdAt": "2026-10-19T18:49:27.162Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "11.5px",
+        "createdAt": "2026-10-19T18:49:27.300Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "11px",
+        "createdAt": "2026-10-19T19:51:11.151Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "12px",
+        "createdAt": "2026-10-19T19:51:11.272Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "18px",
+        "createdAt": "2026-10-20T21:58:09.982Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "10px",
+        "createdAt": "2026-10-20T21:58:10.060Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "6px",
+        "createdAt": "2026-10-20T21:58:10.138Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.07)",
+        "createdAt": "2026-10-20T21:58:10.218Z"
       }
     ]
   }

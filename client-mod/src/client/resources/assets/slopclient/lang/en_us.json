@@ -1,0 +1,9 @@
+{
+	"key.category.slopclient.main": "SlopClient",
+	"key.slopclient.clickgui": "Open SlopClient menu",
+	"key.slopclient.zoom": "Zoom",
+	"key.slopclient.freelook": "Freelook",
+	"key.slopclient.inspect": "Inspect Karambit",
+	"key.slopclient.screenshot": "Show latest screenshot",
+	"key.slopclient.stopwatch": "Start/stop stopwatch"
+}

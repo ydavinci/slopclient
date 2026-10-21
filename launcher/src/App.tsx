@@ -1,13 +1,14 @@
-import { AnimatePresence, motion } from "motion/react";
-import { StoreProvider, useStore } from "./lib/store";
+import { useEffect, useRef } from "react";
+import { api, onEvent } from "./lib/ipc";
+import { StoreProvider, useLaunch, useStore } from "./lib/store";
 import { Browse } from "./pages/Browse";
 import { Cosmetics } from "./pages/Cosmetics";
 import { Home } from "./pages/Home";
 import { InstanceDetail } from "./pages/InstanceDetail";
 import { Instances } from "./pages/Instances";
 import { SettingsPage } from "./pages/SettingsPage";
-import { EASE } from "./ui/kit";
 import { Modals } from "./ui/Modals";
+import { ProjectView } from "./ui/ProjectView";
 import { Shader } from "./ui/Shader";
 import { NavRail, Notifications, TitleBar } from "./ui/Shell";
 
@@ -29,8 +30,34 @@ function Page() {
   }
 }
 
+/** Starts the instance a desktop shortcut asked for, at startup or from a second start. */
+function useShortcutLaunch() {
+  const { overview, navigate } = useStore();
+  const launch = useLaunch();
+  const latest = useRef({ overview, launch, navigate });
+  latest.current = { overview, launch, navigate };
+  const ready = overview !== null;
+
+  useEffect(() => {
+    if (!ready) return;
+    const start = (id: string | null) => {
+      const { overview, launch, navigate } = latest.current;
+      const instance = id && overview?.instances.find((i) => i.id === id);
+      if (!instance) return;
+      navigate({ page: "instance", id: instance.id });
+      if (!overview?.running.includes(instance.id)) launch(instance.id, instance.name);
+    };
+    api.takeLaunchRequest().then(start).catch(() => {});
+    const sub = onEvent<string>("launch-request", start);
+    return () => {
+      sub.then((un) => un());
+    };
+  }, [ready]);
+}
+
 function Shell() {
   const { route, overview } = useStore();
+  useShortcutLaunch();
   const key = route.page + ("id" in route ? route.id : "") + ("target" in route ? (route.target ?? "") : "");
   // The shader stops while a game runs: the launcher should cost nothing in the background.
   const gameRunning = (overview?.running.length ?? 0) > 0;
@@ -41,18 +68,11 @@ function Shell() {
       <div className="relative flex min-h-0 flex-1 gap-2 pb-4">
         <NavRail />
         <main className="relative min-w-0 flex-1">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={key}
-              className="absolute inset-0"
-              initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -6, filter: "blur(4px)", transition: { duration: 0.14 } }}
-              transition={{ duration: 0.34, ease: EASE }}
-            >
-              <Page />
-            </motion.div>
-          </AnimatePresence>
+          {/* A CSS enter animation: motion's exit/enter handoff left pages invisible in release builds. */}
+          <div key={key} className="page-enter absolute inset-0">
+            <Page />
+          </div>
+          <ProjectView />
         </main>
       </div>
       <Notifications />

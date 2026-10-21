@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-18T00:00:00Z",
-  "title": "Design System: DaClient",
+  "title": "Design System: SlopClient",
   "extensions": {
     "colorMeta": {
       "ink": { "role": "neutral", "displayName": "Night Ink", "canonical": "#0b0912", "tonalRamp": ["#0b0912", "#17121f", "#211a2e", "#2d2440", "#4a3d63", "#7a7392", "#aaa3c2", "#ece9f5"] },
@@ -128,7 +128,7 @@
   ],
   "narrative": {
     "northStar": "The Title Screen",
-    "overview": "The website is the game screen DaClient's in-game client replaces: a pixel dusk panorama behind a giant extruded wordmark, a stack of bevelled GUI buttons, a splash line in yellow, and a status bar along the bottom. Everything below the fold works like a sub-screen of that menu: a dark tile header band with a small centred title, a working panel, and a \"Done\" button back to the title. The game's GUI supplies the material: purple-tinted stone tile ground, buttons with black edges and light/dark inner bevels, inset wells for lists and reading, and the in-game tooltip for transient messages.\n\nDensity is game-menu density: controls are full-height (44px) and stacked tight (6 to 8px), and reading text sits in narrow centred columns inside wells. Every corner is square; depth comes from inner bevels and 2px black edges, not from radius or blur. Colour is a purple stone field with one violet accent for interaction. The game's own chat colours (yellow, green) are kept for meaning: the splash, ON states and counts.\n\nThe launcher mockup (`design/mockup.html`) shares only the brand commitments (purple accent, Sora). It is a different world and is not governed by this file.",
+    "overview": "The website is the game screen SlopClient's in-game client replaces: a pixel dusk panorama behind a giant extruded wordmark, a stack of bevelled GUI buttons, a splash line in yellow, and a status bar along the bottom. Everything below the fold works like a sub-screen of that menu: a dark tile header band with a small centred title, a working panel, and a \"Done\" button back to the title. The game's GUI supplies the material: purple-tinted stone tile ground, buttons with black edges and light/dark inner bevels, inset wells for lists and reading, and the in-game tooltip for transient messages.\n\nDensity is game-menu density: controls are full-height (44px) and stacked tight (6 to 8px), and reading text sits in narrow centred columns inside wells. Every corner is square; depth comes from inner bevels and 2px black edges, not from radius or blur. Colour is a purple stone field with one violet accent for interaction. The game's own chat colours (yellow, green) are kept for meaning: the splash, ON states and counts.\n\nThe launcher mockup (`design/mockup.html`) shares only the brand commitments (purple accent, Sora). It is a different world and is not governed by this file.",
     "keyCharacteristics": [
       "Square everything (0px radius); 2px pure-black edges on every control and panel.",
       "Bevel depth: light inner edge top-left, dark inner edge bottom-right; it inverts when pressed.",

@@ -4,12 +4,19 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl as openerOpenUrl } from "@tauri-apps/plugin-opener";
 import { open as dialogOpen, save as dialogSave } from "@tauri-apps/plugin-dialog";
 import { mockCall, mockEmitter } from "./mock";
+import type { ExtrasCatalogue, ExtrasChoice } from "./extras";
 import type {
   Account,
   BlockedFile,
   CapeInfo,
   ContentEntry,
   ContentType,
+  Join,
+  Server,
+  ServerStatus,
+  Skin,
+  SkinVariant,
+  CopyPart,
   Datapack,
   DeviceCode,
   ForeignInstance,
@@ -19,7 +26,9 @@ import type {
   LoaderVersion,
   OnlineStatus,
   Overview,
+  HomeLayout,
   Platform,
+  ProjectDetails,
   Screenshot,
   SearchArgs,
   SearchResult,
@@ -52,6 +61,10 @@ export const api = {
   overview: () => call<Overview>("get_overview"),
   settings: () => call<Settings>("get_settings"),
   saveSettings: (settings: Settings) => call<void>("save_settings", { settings }),
+  setAccentHue: (hue: number | null) => call<void>("set_accent_hue", { hue }),
+  setCenteredLayout: (centered: boolean) => call<void>("set_centered_layout", { centered }),
+  setDiscord: (enabled: boolean, hideServer: boolean) => call<void>("set_discord", { enabled, hideServer }),
+  setHomeLayout: (layout: HomeLayout | null) => call<void>("set_home_layout", { layout }),
   openPath: (path: string) => call<void>("open_path", { path }),
 
   versions: () => call<VersionList>("list_versions"),
@@ -63,6 +76,8 @@ export const api = {
   saveInstance: (instance: Instance) => call<void>("save_instance", { instance }),
   deleteInstance: (id: string) => call<void>("delete_instance", { id }),
   duplicateInstance: (id: string, name: string) => call<Instance>("duplicate_instance", { id, name }),
+  /** Copies settings (options, servers, configs, packs) from another instance; resolves to how many were found. */
+  copyInstanceSettings: (id: string, from: string, parts: CopyPart[]) => call<number>("copy_instance_settings", { id, from, parts }),
   /** Shares text on mclo.gs; resolves to the public link. */
   uploadLog: (text: string) => call<string>("upload_log", { text }),
   readLogFile: (path: string) => call<string>("read_log_file", { path }),
@@ -84,8 +99,11 @@ export const api = {
   setInstanceIcon: (id: string, bytes: number[]) => call<Instance>("set_instance_icon", { id, bytes }),
   clearInstanceIcon: (id: string) => call<Instance>("clear_instance_icon", { id }),
 
-  launch: (id: string, taskId: string, offlineName: string | null) =>
-    call<void>("launch_instance", { id, taskId, offlineName }),
+  launch: (id: string, taskId: string, join?: Join) => call<void>("launch_instance", { id, taskId, join: join ?? null }),
+  takeLaunchRequest: () => call<string | null>("take_launch_request"),
+  createShortcut: (id: string) => call<string>("create_shortcut", { id }),
+  servers: (id: string) => call<Server[]>("servers_list", { id }),
+  serverPing: (address: string) => call<ServerStatus>("server_ping", { address }),
   stop: (id: string) => call<void>("stop_instance", { id }),
 
   loginStart: () => call<DeviceCode>("login_start"),
@@ -104,13 +122,24 @@ export const api = {
   contentRemove: (id: string, fileName: string) => call<void>("content_remove", { id, fileName }),
   contentSetEnabled: (id: string, fileName: string, enabled: boolean) =>
     call<void>("content_set_enabled", { id, fileName, enabled }),
+  versionChangelog: (source: string, projectId: string, versionId: string) => call<string>("version_changelog", { source, projectId, versionId }),
   contentUpdates: (id: string) => call<UpdateInfo[]>("content_updates", { id }),
   contentApplyUpdates: (id: string, taskId: string) => call<number>("content_apply_updates", { id, taskId }),
 
   search: (args: SearchArgs) => call<SearchResult>("search", { args }),
+  projectDetails: (source: Platform, id: string) => call<ProjectDetails>("project_details", { source, id }),
 
   modpackImport: (source: string, isFile: boolean, platform: Platform, name: string | null, taskId: string) =>
     call<Instance>("modpack_import", { source, isFile, platform, name, taskId }),
+  extrasCatalogue: () => call<ExtrasCatalogue>("extras_catalogue"),
+  extrasCurrent: () => call<ExtrasChoice>("extras_current"),
+  extrasSet: (hat: string | null, pet: string | null) => call<string | null>("extras_set", { hat, pet }),
+  skins: () => call<Skin[]>("skins_list"),
+  skinAdd: (file: File) => upload<Omit<Skin, "texture">>("skin_add", file, {}),
+  skinRemove: (id: string) => call<void>("skin_remove", { id }),
+  skinSetVariant: (id: string, variant: SkinVariant) => call<void>("skin_set_variant", { id, variant }),
+  skinApply: (id: string) => call<string>("skin_apply", { id }),
+  skinImportCurrent: () => call<Omit<Skin, "texture">>("skin_import_current"),
   capesList: () => call<{ capes: CapeInfo[]; activeId: string | null }>("capes_list"),
   capeImage: (id: string) => call<string>("cape_image", { id }),
   capeSave: (cape: { id: string | null; name: string; png: string; meta: CapeInfo["meta"]; sourceExt: string; source: string; editor: unknown }) =>
@@ -119,7 +148,7 @@ export const api = {
   /** Resolves to an error text when only publishing online failed. */
   capeSetActive: (id: string | null) => call<string | null>("cape_set_active", { id }),
   cosmeticsStatus: () => call<OnlineStatus>("cosmetics_status"),
-  cosmeticsSignIn: (offlineName: string | null) => call<OnlineStatus>("cosmetics_sign_in", { offlineName }),
+  cosmeticsSignIn: () => call<OnlineStatus>("cosmetics_sign_in"),
   cosmeticsSignOut: () => call<void>("cosmetics_sign_out"),
   cosmeticsDeleteAccount: () => call<void>("cosmetics_delete_account"),
   capeSource: (id: string) => call<{ ext: string; dataUrl: string; editor: unknown } | null>("cape_source", { id }),

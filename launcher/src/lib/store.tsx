@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, newTaskId, onEvent } from "./ipc";
-import type { CrashReport, Overview, Progress } from "./types";
+import type { CrashReport, HomeLayout, Join, Overview, Platform, Progress } from "./types";
+import { applyAccent } from "./accent";
 
 export type Route =
   | { page: "home" }
@@ -10,7 +11,15 @@ export type Route =
   | { page: "cosmetics" }
   | { page: "settings" };
 
-export type InstanceTab = "mods" | "worlds" | "screenshots" | "log" | "settings";
+/** Which project page to show; `target` preselects the instance to install into. */
+export interface ProjectRef {
+  source: Platform;
+  id: string;
+  target?: string;
+  type?: string;
+}
+
+export type InstanceTab = "mods" | "servers" | "worlds" | "screenshots" | "log" | "settings";
 
 export type ModalState =
   | null
@@ -54,6 +63,19 @@ interface Store {
   selectedId: string | null;
   select: (id: string) => void;
   modal: ModalState;
+  /** Start page centred (Einstellungen → Design). */
+  centered: boolean;
+  setCentered: (centered: boolean) => void;
+  /** Custom start page layout; null uses the left or centred preset. */
+  homeLayout: HomeLayout | null;
+  setHomeLayout: (layout: HomeLayout | null) => void;
+  /** Start page in arrange mode. */
+  arranging: boolean;
+  setArranging: (on: boolean) => void;
+  /** Project page shown over the current page (Modrinth or CurseForge). */
+  project: ProjectRef | null;
+  openProject: (project: ProjectRef) => void;
+  closeProject: () => void;
   openModal: (modal: ModalState) => void;
   closeModal: () => void;
   tasks: Task[];
@@ -71,7 +93,7 @@ interface Store {
 
 function storedSelection(): string | null {
   try {
-    return localStorage.getItem("daclient.selected");
+    return localStorage.getItem("slopclient.selected");
   } catch {
     return null;
   }
@@ -85,6 +107,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [route, setRoute] = useState<Route>({ page: "home" });
   const [modal, setModal] = useState<ModalState>(null);
+  const [centered, setCenteredState] = useState(false);
+  const [homeLayout, setHomeLayoutState] = useState<HomeLayout | null>(null);
+  const [arranging, setArranging] = useState(false);
+  const [project, setProject] = useState<ProjectRef | null>(null);
+  useEffect(() => setProject(null), [route]);
+  const closeProject = useCallback(() => setProject(null), []);
   const closeModal = useCallback(() => setModal(null), []);
   const [selectedId, setSelectedId] = useState<string | null>(storedSelection);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -122,6 +150,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refresh().catch((e) => toast(String(e), "error"));
+    // The chosen accent colour applies from the first frame on.
+    api
+      .settings()
+      .then((s) => {
+        applyAccent(s.accentHue);
+        setCenteredState(!!s.centeredLayout);
+        setHomeLayoutState(s.homeLayout ?? null);
+      })
+      .catch(() => {});
     const subs = [
       onEvent<{ taskId: string; event: Progress }>("task-progress", ({ taskId, event }) => {
         setTasks((t) =>
@@ -159,7 +196,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setLogs((l) => {
             const tail = (l[instanceId] ?? []).slice(-8);
             try {
-              if (tail.length) localStorage.setItem(`daclient.log.${instanceId}`, JSON.stringify(tail));
+              if (tail.length) localStorage.setItem(`slopclient.log.${instanceId}`, JSON.stringify(tail));
             } catch {
               /* storage unavailable: the corner just stays empty next time */
             }
@@ -185,7 +222,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       select: (id) => {
         setSelectedId(id);
         try {
-          localStorage.setItem("daclient.selected", id);
+          localStorage.setItem("slopclient.selected", id);
         } catch {
           /* private mode: selection just isn't remembered */
         }
@@ -206,10 +243,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toast,
       dismissToast: (id) => setToasts((t) => t.filter((x) => x.id !== id)),
       modal,
+      centered,
+      setCentered: (on: boolean) => {
+        // A preset replaces the custom layout.
+        setCenteredState(on);
+        setHomeLayoutState(null);
+        api.setCenteredLayout(on).catch((e) => toast(String(e), "error"));
+        api.setHomeLayout(null).catch(() => {});
+      },
+      homeLayout,
+      setHomeLayout: (layout: HomeLayout | null) => {
+        setHomeLayoutState(layout);
+        api.setHomeLayout(layout).catch((e) => toast(String(e), "error"));
+      },
+      arranging,
+      setArranging,
+      project,
+      openProject: setProject,
+      closeProject,
       openModal: setModal,
       closeModal,
     }),
-    [overview, refresh, route, selectedId, tasks, runTask, launching, logs, toasts, toast, modal, closeModal],
+    [overview, refresh, route, selectedId, tasks, runTask, launching, logs, toasts, toast, modal, closeModal, centered, homeLayout, arranging, project, closeProject],
   );
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
@@ -218,7 +273,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 /** The last lines of the previous session, saved when the game exited. */
 export function lastSessionLog(id: string): LogLine[] {
   try {
-    return JSON.parse(localStorage.getItem(`daclient.log.${id}`) ?? "[]");
+    return JSON.parse(localStorage.getItem(`slopclient.log.${id}`) ?? "[]");
   } catch {
     return [];
   }
@@ -232,25 +287,25 @@ export function useStore(): Store {
 
 /** Starts an instance (installing whatever is missing) and tracks the preparation. */
 export function useLaunch() {
-  const { runTask, toast, overview, clearLogs, markLaunching } = useStore();
+  const { runTask, toast, overview, clearLogs, markLaunching, openModal } = useStore();
   return useCallback(
-    async (id: string, name: string, offlineName: string | null = null) => {
+    async (id: string, name: string, join?: Join) => {
       if (!overview) return;
-      const effectiveOfflineName = offlineName ?? (overview.devOffline ? "DevPlayer" : null);
-      if (!effectiveOfflineName && overview.accounts.length === 0) {
-        toast("Melde dich zuerst mit deinem Microsoft-Account an.", "error");
+      if (overview.accounts.length === 0) {
+        // Starting needs an account: go straight to the sign-in.
+        openModal({ kind: "login" });
         return;
       }
       clearLogs(id);
       markLaunching(id, true);
       try {
-        await runTask(`${name} starten`, (taskId) => api.launch(id, taskId, effectiveOfflineName));
+        await runTask(join ? `${name}: ${join.target} beitreten` : `${name} starten`, (taskId) => api.launch(id, taskId, join));
       } catch (e) {
         markLaunching(id, false);
         toast(String(e), "error");
       }
     },
-    [overview, runTask, toast, clearLogs, markLaunching],
+    [overview, runTask, toast, clearLogs, markLaunching, openModal],
   );
 }
 

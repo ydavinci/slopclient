@@ -65,7 +65,7 @@
     outline-offset: 2px;
   }
   ::selection {
-    background: rgb(139 92 246 / 0.55);
+    background: color-mix(in oklab, var(--color-accent) 55%, transparent);
     color: #fff;
   }
   ::-webkit-scrollbar {
@@ -79,7 +79,7 @@
     border-radius: 999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(192 132 252 / 0.45);
+    background-color: color-mix(in oklab, var(--color-accent-2) 45%, transparent);
   }
   ::-webkit-scrollbar-track {
     background: transparent;
@@ -129,6 +129,22 @@
   app-region: no-drag;
 }
 
+/* Page change: rises in. Ends at the element's normal style, so it can never stay hidden. */
+.page-enter {
+  animation: page-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
 @keyframes chroma {
   to {
     background-position: 300% 0;
@@ -158,4 +174,108 @@
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* Project descriptions from Modrinth (Markdown) and CurseForge (HTML), sanitised. */
+.md-body {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--color-text);
+  user-select: text;
+  overflow-wrap: anywhere;
+}
+.md-body > :first-child {
+  margin-top: 0;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  margin: 1.4em 0 0.5em;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.md-body h1 {
+  font-size: 22px;
+}
+.md-body h2 {
+  font-size: 18px;
+}
+.md-body h3,
+.md-body h4 {
+  font-size: 15px;
+}
+.md-body p,
+.md-body ul,
+.md-body ol,
+.md-body blockquote,
+.md-body pre,
+.md-body table {
+  margin: 0.7em 0;
+}
+.md-body ul,
+.md-body ol {
+  padding-left: 1.4em;
+}
+.md-body ul {
+  list-style: disc;
+}
+.md-body ol {
+  list-style: decimal;
+}
+.md-body li::marker {
+  color: var(--color-accent-2);
+}
+.md-body a {
+  color: var(--color-accent-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.md-body a:hover {
+  text-decoration: underline;
+}
+.md-body img,
+.md-body video,
+.md-body iframe {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+.md-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.07);
+}
+.md-body pre {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel-solid);
+  overflow-x: auto;
+}
+.md-body pre code {
+  padding: 0;
+  background: none;
+}
+.md-body blockquote {
+  padding: 0.6em 1em;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.04);
+  color: var(--color-muted);
+}
+.md-body hr {
+  margin: 1.4em 0;
+  border: 0;
+  border-top: 1px solid var(--color-line-2);
+}
+.md-body table {
+  border-collapse: collapse;
+}
+.md-body th,
+.md-body td {
+  padding: 6px 10px;
+  border: 1px solid var(--color-line-2);
 }

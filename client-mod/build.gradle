@@ -3,14 +3,14 @@ plugins {
 }
 
 base {
-	archivesName = "daclient"
+	archivesName = "slopclient"
 }
 
 loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"daclient" {
+		"slopclient" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -40,4 +40,11 @@ tasks.withType(JavaCompile).configureEach {
 java {
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
+}
+
+// Hats and pets: the catalogue lives at the repository root, shared with launcher and server.
+processClientResources {
+	from("../cosmetics/extras.json") {
+		into "assets/slopclient/cosmetics"
+	}
 }

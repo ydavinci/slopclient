@@ -1,17 +1,17 @@
 {
 	"schemaVersion": 1,
-	"id": "daclient",
+	"id": "slopclient",
 	"version": "${version}",
-	"name": "DaClient",
-	"description": "Title screen, ClickGUI and HUD of the DaClient launcher. Legit features only.",
-	"authors": ["DaClient"],
+	"name": "SlopClient",
+	"description": "Title screen, ClickGUI and HUD of the SlopClient launcher. Legit features only.",
+	"authors": ["SlopClient"],
 	"license": "All-Rights-Reserved",
 	"environment": "client",
 	"entrypoints": {
-		"client": ["dev.daclient.DaClient"]
+		"client": ["dev.slopclient.SlopClient"]
 	},
 	"mixins": [
-		{ "config": "daclient.mixins.json", "environment": "client" }
+		{ "config": "slopclient.mixins.json", "environment": "client" }
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",

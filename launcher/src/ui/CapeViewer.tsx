@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
+import { PET_OFFSET, PET_SCALE, animateChroma, buildExtra, disposeExtra, type ExtraModel } from "../lib/extras";
 
 /** Plain stand-in skin when no account skin is available (dark outfit, light face). */
 function fallbackSkin(): HTMLCanvasElement {
@@ -27,7 +28,7 @@ export type Pose = "walk" | "fly" | "idle";
  * 3D player with the cape (skinview3d, MIT). `frames` are rendered cape textures;
  * they cycle every `frameTimeMs` by redrawing the viewer's cape canvas in place.
  */
-export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, pose, width = 260, height = 340 }: { frames: HTMLCanvasElement[]; frameTimeMs: number; elytra: boolean; skinUrl?: string | null; pose: Pose; width?: number; height?: number }) {
+export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, slim, pose, hat, pet, width = 260, height = 340 }: { frames: HTMLCanvasElement[]; frameTimeMs: number; elytra: boolean; skinUrl?: string | null; slim?: boolean; pose: Pose; hat?: ExtraModel | null; pet?: ExtraModel | null; width?: number; height?: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const viewer = useRef<SkinViewer | null>(null);
 
@@ -49,10 +50,11 @@ export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, pose, width =
 
   useEffect(() => {
     if (!skinUrl || !viewer.current) return;
-    viewer.current.loadSkin(skinUrl).catch(() => {
+    // Without an explicit model skinview3d guesses it from the arms.
+    viewer.current.loadSkin(skinUrl, slim === undefined ? undefined : { model: slim ? "slim" : "default" }).catch(() => {
       // Skin servers can be unreachable offline; the stand-in stays.
     });
-  }, [skinUrl]);
+  }, [skinUrl, slim]);
 
   useEffect(() => {
     const v = viewer.current;
@@ -79,5 +81,43 @@ export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, pose, width =
     return () => clearInterval(timer);
   }, [frames, frameTimeMs, elytra]);
 
-  return <canvas ref={canvas} className="cursor-grab active:cursor-grabbing" aria-label="3D-Vorschau der Cape" />;
+  // Hat on the head, pet floating beside the shoulder (bobbing, the cube spinning).
+  useEffect(() => {
+    const v = viewer.current;
+    if (!v || (!hat && !pet)) return;
+    const hatGroup = hat ? buildExtra(hat) : null;
+    const petGroup = pet ? buildExtra(pet) : null;
+    if (hatGroup) v.playerObject.skin.head.add(hatGroup);
+    if (petGroup) {
+      petGroup.scale.setScalar(PET_SCALE);
+      v.playerObject.skin.add(petGroup);
+    }
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = now / 50; // game ticks, like the mod
+      if (petGroup) {
+        petGroup.position.copy(PET_OFFSET);
+        petGroup.position.y -= Math.sin(t * 0.08) * 0.07 * 16;
+        if (pet?.spin) petGroup.rotation.set((-t * 1.3 * Math.PI) / 180, (-t * 2.4 * Math.PI) / 180, 0);
+        else petGroup.rotation.set(0, (-Math.sin(t * 0.035) * 12 * Math.PI) / 180, (-Math.sin(t * 0.05) * 4 * Math.PI) / 180);
+        animateChroma(petGroup, now);
+      }
+      if (hatGroup) animateChroma(hatGroup, now);
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(frame);
+      if (hatGroup) {
+        hatGroup.removeFromParent();
+        disposeExtra(hatGroup);
+      }
+      if (petGroup) {
+        petGroup.removeFromParent();
+        disposeExtra(petGroup);
+      }
+    };
+  }, [hat, pet, width, height]);
+
+  return <canvas ref={canvas} className="cursor-grab active:cursor-grabbing" aria-label="3D-Vorschau" />;
 }

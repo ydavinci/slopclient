@@ -9,4 +9,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'daclient-core-mod'
+rootProject.name = 'slopclient-core-mod'

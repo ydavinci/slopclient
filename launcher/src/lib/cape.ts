@@ -1,5 +1,5 @@
 // Cape Studio: frame decoding, Minecraft's cape texture layout and spritesheet export.
-// The output format is shared with the client mod and the backend (daclient-core cosmetics.rs).
+// The output format is shared with the client mod and the backend (slopclient-core cosmetics.rs).
 
 export interface CapeMeta {
   version: 1;

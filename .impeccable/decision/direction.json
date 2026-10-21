@@ -1,5 +1,5 @@
 {
-  "title": "DaClient website: choose the visual world",
+  "title": "SlopClient website: choose the visual world",
   "question": "The roll assigned the Multiplayer Server List. Keep it, take an alternate, or re-roll. Purple + Sora stay in every option.",
   "options": [
     {
@@ -7,7 +7,7 @@
       "label": "Server List",
       "kicker": "THE ROLL",
       "lineage": "Minecraft's Multiplayer screen: server icons, MOTD lines, ping bars",
-      "thesis": "The website is the Multiplayer screen every player knows by heart, and DaClient is the server you join.",
+      "thesis": "The website is the Multiplayer screen every player knows by heart, and SlopClient is the server you join.",
       "palette": ["#0B0912", "#1A1526", "#8B5CF6", "#C084FC", "#55FF55", "#FFFF55"],
       "materials": ["dark block-tile backdrop tinted purple", "bevelled GUI buttons", "pixel server icons", "colour-coded MOTD text"],
       "viewport": "Centered Multiplayer frame: server entries (Launcher, Client, Microsoft sign-in) with icon, two-line MOTD and ping bars; selected one outlined; Join / Privacy buttons pinned below like the real screen.",
@@ -24,10 +24,10 @@
       "label": "Title Screen",
       "kicker": "IMPECCABLE’S PICK",
       "lineage": "Minecraft title screen: rotating panorama, yellow splash text, stacked buttons",
-      "thesis": "The landing page is DaClient's own custom title screen, the very thing the client mod replaces in-game.",
+      "thesis": "The landing page is SlopClient's own custom title screen, the very thing the client mod replaces in-game.",
       "palette": ["#0B0912", "#8B5CF6", "#C084FC", "#FFFF55", "#E8EAF0"],
       "materials": ["slow-rotating panorama", "wobbling splash text", "stacked menu buttons"],
-      "viewport": "Full-bleed panorama, DaClient wordmark with a pulsing yellow splash, stacked buttons Features / Sign-in / Privacy.",
+      "viewport": "Full-bleed panorama, SlopClient wordmark with a pulsing yellow splash, stacked buttons Features / Sign-in / Privacy.",
       "risk": "The most familiar move for anything Minecraft; many launcher sites already open on a panorama."
     },
     {
@@ -35,10 +35,10 @@
       "label": "Live Launch Log",
       "verdict": "competitive",
       "lineage": "algorave: projected live code driving the room",
-      "thesis": "The page is a running terminal: daclient commands install and launch a version in real time.",
+      "thesis": "The page is a running terminal: slopclient commands install and launch a version in real time.",
       "palette": ["#07060B", "#8B5CF6", "#3DDC97", "#FFB547"],
       "materials": ["monospace buffer at stage scale", "cursor line as downbeat"],
-      "viewport": "A full-screen log buffer typing 'daclient launch survival', progress bars filling, the game window popping at the end.",
+      "viewport": "A full-screen log buffer typing 'slopclient launch survival', progress bars filling, the game window popping at the end.",
       "case": "Holds product clarity (shows the real mechanism) but players identify with the game, not a CLI.",
       "risk": "Developer-flavoured; hides the client interface players actually want.",
       "hero": "https://impeccable.style/worlds/cards/medium-native-algorave-source-floor-hero.webp"
@@ -65,7 +65,7 @@
       "thesis": "Features as lacquered, outlined figures crowding one board.",
       "palette": ["#111111", "#C084FC", "#FF4D6D", "#FFD23F"],
       "materials": ["black outline", "candy lacquer"],
-      "viewport": "A crowded airbrushed tableau with a hand-lettered DaClient panel.",
+      "viewport": "A crowded airbrushed tableau with a hand-lettered SlopClient panel.",
       "case": "Loud and hard to scan for reviewers; off-tone for a fair-play launcher.",
       "kept": "Total outline discipline on every element.",
       "risk": "Reads as a cheat-client hype page.",
@@ -107,7 +107,7 @@
       "thesis": "Ornament borders grow in around each section like a clearing.",
       "palette": ["#F1E9D8", "#5E7D4A", "#C98C8C", "#34404A"],
       "materials": ["flat ornament", "hand-drawn lettering"],
-      "viewport": "A symmetrical floral frame around the DaClient title.",
+      "viewport": "A symmetrical floral frame around the SlopClient title.",
       "case": "Conflicts with the dark purple brand; no audience link.",
       "kept": "Sections arrive by growth along a path, not by fading.",
       "risk": "Ivory-and-serif territory the brand rules out.",

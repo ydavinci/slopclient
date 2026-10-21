@@ -1,15 +1,15 @@
 [workspace]
 resolver = "3"
-members = ["crates/daclient-core", "crates/daclient-cli", "crates/daclient-cosmetics", "launcher/src-tauri"]
+members = ["crates/slopclient-core", "crates/slopclient-cli", "crates/slopclient-cosmetics", "launcher/src-tauri"]
 
 [workspace.package]
 version = "0.2.0"
 edition = "2024"
 
 [workspace.dependencies]
-daclient-core = { path = "crates/daclient-core" }
+slopclient-core = { path = "crates/slopclient-core" }
 tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "multipart"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 futures = "0.3"
@@ -20,9 +20,9 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 dirs = "6"
 md5 = "0.7"
 dunce = "1"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "ico"] }
 anyhow = "1"
 flate2 = "1"
 clap = { version = "4", features = ["derive"] }
 indicatif = "0.17"
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_Security_Cryptography", "Win32_NetworkManagement_Dns"] }

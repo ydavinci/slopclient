@@ -1,4 +1,5 @@
 // Fake backend for previewing the UI in a normal browser (no Tauri).
+import extrasJson from "../../../cosmetics/extras.json";
 import type { CapeInfo, ContentEntry, Instance, Overview, SearchHit } from "./types";
 
 type Handler = (payload: unknown) => void;
@@ -59,11 +60,10 @@ const overview: Overview = {
   accounts: [{ uuid: "069a79f444e94726a5befca90e38aaf5", username: "Notch" }],
   activeAccount: "069a79f444e94726a5befca90e38aaf5",
   hasClientId: true,
-  dataDir: "C:\\Users\\you\\AppData\\Roaming\\DaClient",
+  dataDir: "C:\\Users\\you\\AppData\\Roaming\\SlopClient",
   running: [],
   devBuild: true,
   version: "0.2.0",
-  devOffline: false,
 };
 
 const mr = (slug: string, name: string, version: string, kind: ContentEntry["kind"], extra: Partial<ContentEntry> = {}): ContentEntry => ({
@@ -114,7 +114,32 @@ const hits: SearchHit[] = [
 const mockIcons = new Map<string, string>();
 let mockCapes: { info: CapeInfo; png: string; source: string; ext: string; editor: unknown }[] = [];
 let mockActiveCape: string | null = null;
-let mockOnline: { server: string | null; uuid: string | null; name: string | null } = { server: "https://cosmetics.daclient.example", uuid: null, name: null };
+let mockOnline: { server: string | null; uuid: string | null; name: string | null } = { server: "https://cosmetics.slopclient.example", uuid: null, name: null };
+
+let mockExtras: { hat: string | null; pet: string | null } = { hat: "zylinder", pet: "drache" };
+
+/** 64×64 stand-in skin: a dark outfit with a light face, drawn once. */
+function mockSkinTexture(): string {
+  if (typeof document === "undefined") return "";
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d")!;
+  const fill = (color: string, x: number, y: number, w: number, h: number) => {
+    g.fillStyle = color;
+    g.fillRect(x, y, w, h);
+  };
+  fill("#e0b48f", 8, 8, 8, 8);
+  fill("#3b2a20", 8, 8, 8, 2);
+  fill("#26213a", 20, 20, 8, 12);
+  fill("#7c5cf0", 44, 20, 4, 12);
+  fill("#7c5cf0", 36, 52, 4, 12);
+  fill("#1b1828", 4, 20, 4, 12);
+  fill("#1b1828", 20, 52, 4, 12);
+  return c.toDataURL();
+}
+let mockSkins: { id: string; name: string; variant: "classic" | "slim"; addedAt: number; texture: string }[] = [
+  { id: "a1", name: "Nachtviolett", variant: "classic", addedAt: 1760900000, texture: mockSkinTexture() },
+];
 
 const delay = <T,>(value: T, ms = 250) => new Promise<T>((r) => setTimeout(() => r(value), ms));
 
@@ -133,7 +158,7 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
     case "get_overview":
       return delay(structuredClone(overview), 120);
     case "get_settings":
-      return delay({ msaClientId: "00000000-0000-0000-0000-000000000000", devOffline: false, curseforgeApiKey: "preview", cosmeticsUrl: "https://cosmetics.daclient.example", downloadConcurrency: 16 });
+      return delay({ msaClientId: "00000000-0000-0000-0000-000000000000", curseforgeApiKey: "preview", cosmeticsUrl: "https://cosmetics.slopclient.example", downloadConcurrency: 16 });
     case "list_versions":
       return delay({
         latestRelease: "26.3",
@@ -161,6 +186,32 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
         { launcher: "Prism Launcher", name: "1.21.1", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\1.21.1", mcVersion: "1.21.1", loader: { type: "neoforge", version: "21.1.262" }, mods: 3 },
         { launcher: "Prism Launcher", name: "Skyblock", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\Skyblock", mcVersion: "1.21.10", loader: { type: "fabric", version: "0.19.5" }, mods: 41 },
       ]);
+    case "version_changelog":
+      return delay("### Neu\n- Schnellere Chunk-Updates\n- Fix für den Absturz beim Beitreten\n\n[Alle Änderungen](https://modrinth.com)", 500);
+    case "extras_catalogue":
+      return delay(extrasJson);
+    case "extras_current":
+      return delay(mockExtras);
+    case "extras_set":
+      mockExtras = { hat: (args.hat as string) ?? null, pet: (args.pet as string) ?? null };
+      return delay(null);
+    case "skins_list":
+      return delay(mockSkins);
+    case "skin_add": {
+      const entry = { id: Math.random().toString(36).slice(2, 8), name: String(args.fileName).replace(/\.png$/i, ""), variant: "classic" as const, addedAt: Date.now() / 1000, texture: mockSkins[0]?.texture ?? "" };
+      mockSkins = [entry, ...mockSkins];
+      return delay(entry, 300);
+    }
+    case "skin_remove":
+      mockSkins = mockSkins.filter((s) => s.id !== args.id);
+      return delay(null);
+    case "skin_set_variant":
+      mockSkins = mockSkins.map((s) => (s.id === args.id ? { ...s, variant: args.variant as "classic" | "slim" } : s));
+      return delay(null);
+    case "skin_apply":
+      return delay("https://textures.minecraft.net/texture/x", 900);
+    case "skin_import_current":
+      return delay(mockSkins[0], 600);
     case "capes_list":
       return delay({ capes: mockCapes.map((c) => c.info), activeId: mockActiveCape });
     case "cape_image":
@@ -250,7 +301,7 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
               details: ["java.lang.NoSuchMethodError: 'void com.simibubi.create.content.Foo.bar()'"],
               suggestions: ["Deaktiviere die Mod und starte erneut.", "Suche nach einem Update der Mod oder prüfe, ob sie zu dieser Minecraft-Version passt."],
               culprit: { modId: "create_sa", fileName: "create-stuff-additions-2.1.0.jar", name: "Create Stuff & Additions" },
-              reportFile: "C:\\Users\\you\\AppData\\Roaming\\DaClient\\instances\\create-above\\minecraft\\crash-reports\\crash-2026-10-19_11.02.11-client.txt",
+              reportFile: "C:\\Users\\you\\AppData\\Roaming\\SlopClient\\instances\\create-above\\minecraft\\crash-reports\\crash-2026-10-19_11.02.11-client.txt",
               exitCode: 1,
             },
           });
@@ -278,6 +329,13 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
     }
     case "content_install_preset":
       return delay({ installed: [mr("lithium", "Lithium", "mc26.3-0.18.0", "mod"), mr("ferrite-core", "FerriteCore", "8.0.2", "mod")], skipped: ["sodium", "iris"], warnings: [], blocked: [] }, 1500);
+    case "project_details":
+      return delay({
+        source: args.source, id: "AANobbMI", slug: "sodium", title: "Sodium", summary: "The fastest and most compatible rendering optimization mod for Minecraft.",
+        body: "# Sodium\n\nSodium is a powerful **rendering engine** for Minecraft which improves frame rates and reduces lag spikes.\n\n## Features\n\n- Much faster chunk rendering\n- Fewer stutters\n- Works with [Iris](https://modrinth.com/mod/iris)\n\n> Sodium is free software.\n\n```\nmods/sodium.jar\n```",
+        bodyFormat: "markdown", iconUrl: null, author: "jellysquid3", downloads: 248_000_000, followers: 41_991, categories: ["optimization"], license: "Polyform Shield", updated: "2026-10-01T00:00:00Z",
+        pageUrl: "https://modrinth.com/mod/sodium", links: [["Quellcode", "https://github.com/CaffeineMC/sodium"], ["Discord", "https://discord.gg/x"]], gallery: [],
+      }, 400);
     case "upload_log":
       return delay("https://mclo.gs/x7Qp2Ka", 800);
     case "read_log_file":
@@ -290,8 +348,21 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
     }
     case "worlds_list":
       return delay(mockWorlds);
+    case "take_launch_request":
+      return delay(null);
+    case "create_shortcut":
+      return delay("C:\\Users\\you\\Desktop\\Survival – SlopClient.lnk", 400);
+    case "servers_list":
+      return delay([
+        { name: "Hypixel", address: "mc.hypixel.net", icon: null },
+        { name: "GommeHD", address: "gommehd.net", icon: null },
+        { name: "Lokaler Test", address: "localhost:25566", icon: null },
+      ]);
+    case "server_ping":
+      if (String(args.address).startsWith("localhost")) return new Promise((_, reject) => setTimeout(() => reject("Server antwortet nicht"), 900));
+      return delay({ motd: "Hypixel Network [1.8/26.3]\nHALLOWEEN EVENT", version: "Requires MC 1.8 / 26.3", online: 24830, max: 200000, latencyMs: 42, icon: null }, 500);
     case "world_backup":
-      return delay("C:\\Users\\you\\AppData\\Roaming\\DaClient\\instances\\survival\\backups\\Neue Welt-1760880000.zip", 1200);
+      return delay("C:\\Users\\you\\AppData\\Roaming\\SlopClient\\instances\\survival\\backups\\Neue Welt-1760880000.zip", 1200);
     case "world_delete":
       mockWorlds = mockWorlds.filter((w) => w.id !== args.world);
       return delay(null);

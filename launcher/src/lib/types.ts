@@ -1,4 +1,4 @@
-// Mirrors the serde types of daclient-core / the Tauri commands.
+// Mirrors the serde types of slopclient-core / the Tauri commands.
 
 export type LoaderKind = "fabric" | "quilt" | "neoforge" | "forge";
 
@@ -31,13 +31,36 @@ export interface Instance {
   lastPlayed?: number | null;
   playTimeSecs: number;
   modpack?: ModpackInfo | null;
-  /** Install the DaClient client mod (title screen, ClickGUI, HUD) on start. */
+  /** Install the SlopClient client mod (title screen, ClickGUI, HUD) on start. */
   clientMod: boolean;
   /** Custom icon; without one the colour tile shows. */
   icon?: { updated: number } | null;
   /** Shell commands before the start and after the game exited. */
   hooks?: { preLaunch: string; postExit: string };
 }
+
+/** What a new instance can take over from an existing one. */
+export type CopyPart = "options" | "servers" | "modConfigs" | "slopclient" | "resourcePacks" | "shaderPacks";
+
+/** A saved multiplayer server (servers.dat). */
+export interface Server {
+  name: string;
+  address: string;
+  icon: string | null;
+}
+
+/** Answer of the server list ping. */
+export interface ServerStatus {
+  motd: string;
+  version: string;
+  online: number;
+  max: number;
+  latencyMs: number;
+  icon: string | null;
+}
+
+/** Where the game goes right after starting (Quick Play). */
+export type Join = { kind: "server"; target: string } | { kind: "world"; target: string };
 
 /** A world in the instance's saves folder. */
 export interface World {
@@ -66,7 +89,7 @@ export interface Screenshot {
   sizeBytes: number;
 }
 
-/** Minecraft versions the bundled client mod supports (mirrors daclient-core client_mod::SUPPORTED_MC). */
+/** Minecraft versions the bundled client mod supports (mirrors slopclient-core client_mod::SUPPORTED_MC). */
 export const CLIENT_MOD_MC = ["26.3"];
 
 export function supportsClientMod(instance: Pick<Instance, "loader" | "mcVersion">): boolean {
@@ -80,6 +103,18 @@ export interface Account {
   skinUrl?: string | null;
 }
 
+export type SkinVariant = "classic" | "slim";
+
+/** A skin in the launcher's skin library. */
+export interface Skin {
+  id: string;
+  name: string;
+  variant: SkinVariant;
+  addedAt: number;
+  /** PNG as data URL. */
+  texture: string;
+}
+
 export interface Overview {
   instances: Instance[];
   accounts: Account[];
@@ -90,15 +125,25 @@ export interface Overview {
   devBuild: boolean;
   /** Launcher version, e.g. "0.2.0". */
   version: string;
-  devOffline: boolean;
 }
 
+export type HomeBlock = "hero" | "actions" | "strip";
+/** Start page block positions as fractions of the free space (x, y). */
+export type HomeLayout = Record<HomeBlock, [number, number]>;
+
 export interface Settings {
+  homeLayout?: HomeLayout | null;
+  /** Accent hue in OKLCH degrees; null keeps the violet. */
+  accentHue?: number | null;
+  /** Start page and in-game title screen centred. */
+  centeredLayout?: boolean;
   msaClientId?: string | null;
-  devOffline?: boolean;
   curseforgeApiKey?: string | null;
   cosmeticsUrl?: string | null;
   downloadConcurrency?: number | null;
+  /** Discord status; null means on. */
+  discordPresence?: boolean | null;
+  discordHideServer?: boolean;
 }
 
 export interface ManifestEntry {
@@ -157,6 +202,27 @@ export interface SearchHit {
   icon_url?: string | null;
   categories: string[];
   source: Platform;
+}
+
+/** A project as the launcher's project page shows it. */
+export interface ProjectDetails {
+  source: Platform;
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  body: string;
+  bodyFormat: "markdown" | "html";
+  iconUrl?: string | null;
+  author?: string | null;
+  downloads: number;
+  followers?: number | null;
+  categories: string[];
+  license?: string | null;
+  updated?: string | null;
+  pageUrl: string;
+  links: [string, string][];
+  gallery: { url: string; title?: string | null }[];
 }
 
 export interface SearchResult {
@@ -220,7 +286,7 @@ export interface DeviceCode {
   message: string;
 }
 
-/** A cape from the Cape Studio (daclient-core cosmetics.rs). */
+/** A cape from the Cape Studio (slopclient-core cosmetics.rs). */
 export interface CapeInfo {
   id: string;
   name: string;
@@ -247,7 +313,7 @@ export interface ForeignInstance {
   mods: number;
 }
 
-/** Analysis of a game that ended abnormally (daclient-core crash.rs). */
+/** Analysis of a game that ended abnormally (slopclient-core crash.rs). */
 export interface CrashReport {
   title: string;
   summary: string;

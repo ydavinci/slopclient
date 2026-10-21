@@ -17,7 +17,7 @@ Website: Astro (static build, deployable to GitHub Pages). Chosen by the user.
 
 ## Product Purpose
 
-DaClient combines a Prism-style launcher (instances, versions, mod loaders, managed Java, Microsoft accounts) with a Lunar/Badlion-style in-game client interface (custom title screen, mod menu/ClickGUI, HUD editor). Success: players get both in one free tool, and the AppID is approved.
+SlopClient combines a Prism-style launcher (instances, versions, mod loaders, managed Java, Microsoft accounts) with a Lunar/Badlion-style in-game client interface (custom title screen, mod menu/ClickGUI, HUD editor). Success: players get both in one free tool, and the AppID is approved.
 
 ## Positioning
 
@@ -26,7 +26,7 @@ A launcher and a client in one, built on a Rust core: the launcher installs and 
 ## Operating Context
 
 - Players launch it on Windows before a session, pick an instance, hit play; it stays in the background while the game runs (small footprint).
-- Sign-in: Microsoft device code flow (`XboxLive.signin offline_access`) → Xbox Live → XSTS → `login_with_xbox` → profile. Tokens encrypted with DPAPI in `%APPDATA%\DaClient`. No own servers, no telemetry.
+- Sign-in: Microsoft device code flow (`XboxLive.signin offline_access`) → Xbox Live → XSTS → `login_with_xbox` → profile. Tokens encrypted with DPAPI in `%APPDATA%\SlopClient`. No own servers, no telemetry.
 - External services: Microsoft identity, Xbox Live, Minecraft services, Mojang downloads (piston-meta, libraries, resources), Fabric/Quilt/Forge/NeoForge metadata, Modrinth.
 
 ## Capabilities and Constraints
@@ -38,7 +38,7 @@ A launcher and a client in one, built on a Rust core: the launcher installs and 
 
 ## Brand Commitments
 
-- Name: **DaClient**, logo mark "D".
+- Name: **SlopClient**, logo mark "D".
 - Accent purple (`#8B5CF6` → `#C084FC`) and the Sora typeface, shared with the launcher mockup (`design/mockup.html`).
 
 ## Evidence on Hand

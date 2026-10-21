@@ -7,6 +7,15 @@ import { useInstanceIconUrl } from "../lib/icons";
 import type { Instance } from "../lib/types";
 
 export const EASE = [0.16, 1, 0.3, 1] as const;
+
+/**
+ * Keeps an animation on motion's JS engine. Motion 14 hands opacity, filter and
+ * transforms to the browser (WAAPI), whose clock WebView2 does not always advance:
+ * entry animations then stayed at their start (an empty settings page) until a
+ * resize woke it. The frame loop keeps running, so JS animations always play.
+ * A repeatDelay (inert without repeat) rules WAAPI out.
+ */
+export const JS_ENGINE = { repeatDelay: 0.001 } as const;
 export const SPRING = { type: "spring", stiffness: 520, damping: 34, mass: 0.7 } as const;
 
 /** Children fade, rise and unblur in sequence. */
@@ -15,12 +24,12 @@ export const stagger: Variants = {
   show: { transition: { staggerChildren: 0.028, delayChildren: 0.02 } },
 };
 export const rise: Variants = {
-  hidden: { opacity: 0, y: 10, filter: "blur(6px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.42, ease: EASE } },
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.42, ease: EASE, ...JS_ENGINE } },
 };
 export const slideIn: Variants = {
   hidden: { opacity: 0, x: 24 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.45, ease: EASE } },
+  show: { opacity: 1, x: 0, transition: { duration: 0.45, ease: EASE, ...JS_ENGINE } },
 };
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -96,7 +105,7 @@ export function PlayButton({
       {state !== "running" && (
         <>
           <span className="chroma absolute inset-[3px] -z-10 rounded-[13px] opacity-90" />
-          <span className="absolute inset-0 -z-20 rounded-2xl shadow-[0_14px_40px_-10px_rgb(168_85_247/0.75)]" />
+          <span className="absolute inset-0 -z-20 rounded-2xl shadow-[0_14px_40px_-10px_color-mix(in_oklab,var(--color-accent)_75%,transparent)]" />
           <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-white/30 blur-lg [animation:shine_2.8s_var(--ease-out-expo)_infinite]" />
         </>
       )}
@@ -137,7 +146,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
         onChange(!checked);
       }}
       className={`relative h-[22px] w-10 shrink-0 rounded-full p-[3px] transition-colors duration-300 ${
-        checked ? "chroma shadow-[0_4px_14px_-4px_rgb(168_85_247/0.8)]" : "bg-white/10"
+        checked ? "chroma shadow-[0_4px_14px_-4px_color-mix(in_oklab,var(--color-accent)_80%,transparent)]" : "bg-white/10"
       }`}
     >
       <motion.span layout transition={SPRING} className={`block size-4 rounded-full bg-white shadow ${checked ? "ml-auto" : ""}`} />
@@ -269,7 +278,7 @@ export function InstanceIcon({ id, name, size = 40, icon }: { id: string; name: 
   return (
     <div
       className="relative grid shrink-0 place-items-center overflow-hidden font-bold text-white"
-      style={{ width: size, height: size, borderRadius: size * 0.28, background: `linear-gradient(135deg, ${a}, ${b})`, fontSize: size * 0.36 }}
+      style={{ width: size, height: size, borderRadius: size * 0.28, background: `linear-gradient(135deg, ${a}, ${b})`, fontSize: size * 0.36, filter: "hue-rotate(var(--accent-shift, 0deg))" }}
     >
       <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgb(255_255_255/0.35),transparent_60%)]" />
       <span className="relative drop-shadow">{initials(name)}</span>

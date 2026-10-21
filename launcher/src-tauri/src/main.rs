@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    daclient_launcher_lib::run()
+    slopclient_launcher_lib::run()
 }

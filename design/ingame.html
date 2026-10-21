@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DaClient In-Game</title>
+<title>SlopClient In-Game</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -211,13 +211,13 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     <div class="title-wrap">
       <div>
         <div class="logo">
-          <h1 aria-label="DaClient" id="logo">DaClient</h1>
+          <h1 aria-label="SlopClient" id="logo">SlopClient</h1>
           <p>Minecraft 26.3 · Fabric</p>
         </div>
         <div class="menu">
           <button class="mbtn primary spin" style="--i:0"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Einzelspieler</span><span class="key">1</span></button>
           <button class="mbtn glass" style="--i:1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span>Mehrspieler</span><span class="key">2</span></button>
-          <button class="mbtn glass" style="--i:2" data-go="gui"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>DaClient-Menü</span><span class="key">R-SHIFT</span></button>
+          <button class="mbtn glass" style="--i:2" data-go="gui"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>SlopClient-Menü</span><span class="key">R-SHIFT</span></button>
           <button class="mbtn glass" style="--i:3"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Optionen</span><span class="key">O</span></button>
           <button class="mbtn glass" style="--i:4"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg><span>Beenden</span><span class="key">ESC</span></button>
         </div>
@@ -299,7 +299,7 @@ requestAnimationFrame(() => document.body.classList.add("anim"));
 
 /* ---------- Title logo letters ---------- */
 // Each letter carries its own phase-shifted chroma, so the colour rolls through the wordmark.
-document.getElementById("logo").innerHTML = [..."DaClient"].map((ch, i) => `<span aria-hidden="true" class="chroma-text" style="--i:${i}; animation-delay: ${-i * .25}s">${ch}</span>`).join("");
+document.getElementById("logo").innerHTML = [..."SlopClient"].map((ch, i) => `<span aria-hidden="true" class="chroma-text" style="--i:${i}; animation-delay: ${-i * .25}s">${ch}</span>`).join("");
 
 /* ---------- Module state (drives ClickGUI, ArrayList and notifications) ---------- */
 const ICONS = {
@@ -423,7 +423,7 @@ function hudHtml(edit) {
   const sorted = allModules().filter((m) => m.on).sort((a, b) => measure.measureText(b.n + (SUFFIX[b.n] ?? "")).width - measure.measureText(a.n + (SUFFIX[a.n] ?? "")).width);
   const cls = edit ? "el" : "";
   return `
-    <div class="watermark glass ${cls}" data-name="Watermark"><img class="logo-mark" src="${LOGO}" alt=""><b class="chroma-text">DaClient</b><i></i><span class="mono" data-fps>142 FPS</span><i></i><span>hypixel.net</span><i></i><span class="mono">18 ms</span></div>
+    <div class="watermark glass ${cls}" data-name="Watermark"><img class="logo-mark" src="${LOGO}" alt=""><b class="chroma-text">SlopClient</b><i></i><span class="mono" data-fps>142 FPS</span><i></i><span>hypixel.net</span><i></i><span class="mono">18 ms</span></div>
     <div class="arraylist ${cls}" data-name="ArrayList">${sorted.map((m, i) => `<div class="row ${edit ? "" : "enter"}" style="animation-delay:${i * 35}ms"><span class="t"><span class="chroma-text" style="animation-delay:${-i * .35}s">${m.n}</span>${SUFFIX[m.n] ? `<small>${SUFFIX[m.n]}</small>` : ""}</span><span class="bar chroma" style="animation-delay:${-i * .35}s"></span></div>`).join("")}</div>
     ${on("Keystrokes") ? `<div class="keys ${cls}" data-name="Keystrokes">
       <span></span><span class="key glass" data-k="w">W</span><span></span>
@@ -514,7 +514,7 @@ function show(v) {
     renderHud();
     const queued = pending.splice(0);
     if (queued.length) queued.slice(-3).forEach((q, i) => setTimeout(() => toast(...q), 300 + i * 160));
-    else setTimeout(() => toast("Willkommen zurück", "R-Shift öffnet das DaClient-Menü", true), 600);
+    else setTimeout(() => toast("Willkommen zurück", "R-Shift öffnet das SlopClient-Menü", true), 600);
   }
 }
 document.querySelectorAll(".switch button").forEach((b) => b.addEventListener("click", () => show(b.dataset.v)));

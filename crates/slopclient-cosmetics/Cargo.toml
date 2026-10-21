@@ -1,0 +1,21 @@
+[package]
+name = "slopclient-cosmetics"
+version.workspace = true
+edition.workspace = true
+description = "Cosmetics backend for SlopClient: capes per Minecraft account"
+
+[dependencies]
+slopclient-core.workspace = true
+axum = "0.8"
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+reqwest.workspace = true
+rusqlite = { version = "0.32", features = ["bundled"] }
+sha2 = "0.10"
+hex.workspace = true
+base64 = "0.22"
+getrandom = "0.2"
+
+[dev-dependencies]
+image.workspace = true

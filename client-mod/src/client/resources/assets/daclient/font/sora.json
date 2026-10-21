@@ -1,6 +1,0 @@
-{
-	"providers": [
-		{ "type": "ttf", "file": "daclient:sora-semibold.ttf", "size": 8.5, "oversample": 4.0, "shift": [0, 0.5] },
-		{ "type": "reference", "id": "minecraft:default" }
-	]
-}

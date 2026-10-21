@@ -1,0 +1,25 @@
+[Unit]
+Description=SlopClient cosmetics backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=slopclient
+Group=slopclient
+WorkingDirectory=/var/lib/slopclient-cosmetics
+ExecStart=/usr/local/bin/slopclient-cosmetics
+Environment=SLOPCLIENT_COSMETICS_BIND=127.0.0.1:8787
+Environment=SLOPCLIENT_COSMETICS_DATA=/var/lib/slopclient-cosmetics
+Environment=SLOPCLIENT_COSMETICS_PUBLIC_URL=https://cosmetics.example.com
+# Admin token for /v1/admin/* (reports, hiding capes); keep it out of the unit file:
+EnvironmentFile=-/etc/slopclient-cosmetics.env
+Restart=on-failure
+# Hardening: the service only needs its data directory.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/slopclient-cosmetics
+
+[Install]
+WantedBy=multi-user.target

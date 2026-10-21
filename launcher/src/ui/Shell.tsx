@@ -6,39 +6,10 @@ import { megabytes } from "../lib/format";
 import { useStore, type Route } from "../lib/store";
 import { Avatar, EASE, SPRING } from "./kit";
 
-function useClock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 15_000);
-    return () => clearInterval(t);
-  }, []);
-  return now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-}
-
-/** Client watermark plus window controls; the whole bar drags the window. */
+/** Window controls; the whole bar drags the window. */
 export function TitleBar() {
-  const { overview } = useStore();
-  const time = useClock();
-  const account = overview?.accounts.find((a) => a.uuid === overview.activeAccount) ?? overview?.accounts[0];
-  const parts = [`v${overview?.version ?? ""}`, account?.username ?? "nicht angemeldet", `${overview?.instances.length ?? 0} Instanzen`, time];
   return (
-    <header data-tauri-drag-region className="relative z-20 flex h-12 shrink-0 items-center justify-between pr-2 pl-4">
-      <motion.div
-        data-tauri-drag-region
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: EASE }}
-        className="glass flex items-center gap-2.5 rounded-[11px] py-1.5 pr-3.5 pl-2"
-      >
-        <img src="/logo.svg" alt="" className="size-6" />
-        <span className="chroma-text text-[15px] font-extrabold tracking-tight">DaClient</span>
-        {parts.map((p) => (
-          <span key={p} className="flex items-center gap-2.5 text-xs text-muted">
-            <span className="h-3 w-px bg-line-2" />
-            <span className={/^\d/.test(p) || p.startsWith("v") ? "font-mono" : ""}>{p}</span>
-          </span>
-        ))}
-      </motion.div>
+    <header data-tauri-drag-region className="relative z-20 flex h-12 shrink-0 items-center justify-end pr-2 pl-4">
       <div className="no-drag flex gap-1">
         <WindowButton label="Minimieren" onClick={appWindow.minimize}>
           <Minus className="size-4" />
@@ -144,7 +115,7 @@ function AccountMenu() {
 
   return (
     <div ref={ref} className="relative mt-1">
-      <button aria-label="Accounts" title={active?.username ?? "Anmelden"} onClick={() => setOpen(!open)} className="grid size-11 place-items-center rounded-xl transition hover:bg-white/[0.07]">
+      <button aria-label={active ? "Accounts" : "Anmelden"} title={active?.username ?? "Mit Microsoft anmelden"} onClick={() => (active ? setOpen(!open) : openModal({ kind: "login" }))} className="grid size-11 place-items-center rounded-xl transition hover:bg-white/[0.07]">
         {active ? <Avatar skinUrl={active.skinUrl} name={active.username} size={30} /> : <LogIn className="size-[18px] text-muted" />}
       </button>
       <AnimatePresence>

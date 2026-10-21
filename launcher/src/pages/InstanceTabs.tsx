@@ -1,10 +1,10 @@
-import { Archive, Camera, ChevronDown, FolderOpen, Globe2, Package, Plus, Trash2 } from "lucide-react";
+import { Archive, Camera, ChevronDown, FolderOpen, Globe2, Package, Play, Plus, RefreshCw, Server as ServerIcon, Trash2, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../lib/ipc";
 import { relativeTime } from "../lib/format";
-import { useStore } from "../lib/store";
-import type { Datapack, Instance, Screenshot, World } from "../lib/types";
+import { useLaunch, useStore } from "../lib/store";
+import type { Datapack, Instance, Screenshot, Server, ServerStatus, World } from "../lib/types";
 import { Button, Chip, EASE, EmptyState, IconButton, Spinner, Toggle, rise, stagger } from "../ui/kit";
 
 const MODES: Record<string, string> = { survival: "Überleben", creative: "Kreativ", adventure: "Abenteuer", spectator: "Zuschauer" };
@@ -57,7 +57,7 @@ export function DropZone({ label, onFiles, children, className = "" }: { label: 
             className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-[18px] border-2 border-dashed border-accent-2/70 bg-accent/[0.14] backdrop-blur-[3px]"
           >
             <div className="flex flex-col items-center gap-2 text-center">
-              <motion.span animate={{ y: [0, -5, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }} className="chroma grid size-11 place-items-center rounded-2xl text-white shadow-[0_10px_30px_-8px_rgb(168_85_247/0.8)]">
+              <motion.span animate={{ y: [0, -5, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }} className="chroma grid size-11 place-items-center rounded-2xl text-white shadow-[0_10px_30px_-8px_color-mix(in_oklab,var(--color-accent)_80%,transparent)]">
                 <Plus className="size-5" />
               </motion.span>
               <span className="text-[14px] font-semibold">{label}</span>
@@ -92,6 +92,117 @@ export function FilePicker({ accept, onFiles, children }: { accept: string; onFi
 }
 
 // ---------- worlds ----------
+
+type Ping = { state: "loading" } | { state: "ok"; status: ServerStatus } | { state: "offline"; error: string };
+
+export function ServersTab({ instance }: { instance: Instance }) {
+  const { toast } = useStore();
+  const [servers, setServers] = useState<Server[] | null>(null);
+  const [pings, setPings] = useState<Record<string, Ping>>({});
+
+  const pingAll = useCallback((list: Server[]) => {
+    setPings(Object.fromEntries(list.map((s) => [s.address, { state: "loading" } as Ping])));
+    for (const s of list) {
+      api
+        .serverPing(s.address)
+        .then((status) => setPings((p) => ({ ...p, [s.address]: { state: "ok", status } })))
+        .catch((e) => setPings((p) => ({ ...p, [s.address]: { state: "offline", error: String(e) } })));
+    }
+  }, []);
+
+  const load = useCallback(() => {
+    api
+      .servers(instance.id)
+      .then((list) => {
+        setServers(list);
+        pingAll(list);
+      })
+      .catch((e) => toast(String(e), "error"));
+  }, [instance.id, toast, pingAll]);
+  useEffect(load, [load]);
+
+  return (
+    <div className="h-full overflow-auto px-8 pt-5 pb-6">
+      <div className="mb-3 flex items-center gap-3">
+        <p className="mr-auto text-[13px] text-muted">{servers ? `${servers.length} ${servers.length === 1 ? "Server" : "Server"} aus der Mehrspieler-Liste. „Beitreten“ startet das Spiel direkt auf dem Server.` : " "}</p>
+        <Button size="sm" icon={<RefreshCw className="size-3.5" />} disabled={!servers?.length} onClick={() => servers && pingAll(servers)}>
+          Neu laden
+        </Button>
+      </div>
+      {servers === null ? (
+        <div className="grid place-items-center py-16">
+          <Spinner className="size-5" />
+        </div>
+      ) : servers.length === 0 ? (
+        <EmptyState icon={<ServerIcon className="size-5" />} title="Noch keine Server" text="Füge im Spiel unter Mehrspieler Server hinzu. Sie erscheinen dann hier, mit Ping und direktem Beitreten." />
+      ) : (
+        <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-2">
+          {servers.map((s, i) => (
+            <ServerRow key={`${s.address}-${i}`} instance={instance} server={s} ping={pings[s.address] ?? { state: "loading" }} />
+          ))}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+/** Four bars like the multiplayer screen: green to red by latency. */
+function Signal({ ping }: { ping: Ping }) {
+  const ms = ping.state === "ok" ? ping.status.latencyMs : null;
+  const level = ping.state !== "ok" ? 0 : ms === 0 || ms! < 80 ? 4 : ms! < 150 ? 3 : ms! < 300 ? 2 : 1;
+  const tone = level >= 3 ? "bg-on" : level === 2 ? "bg-warn" : "bg-err";
+  return (
+    <span className="flex h-3.5 items-end gap-[2px]" aria-hidden>
+      {[1, 2, 3, 4].map((b) => (
+        <span key={b} className={`w-[3px] rounded-[1px] transition-colors duration-300 ${ping.state === "loading" ? "animate-pulse bg-white/15" : b <= level ? tone : "bg-white/12"}`} style={{ height: `${b * 25}%` }} />
+      ))}
+    </span>
+  );
+}
+
+function ServerRow({ instance, server, ping }: { instance: Instance; server: Server; ping: Ping }) {
+  const { overview, launching } = useStore();
+  const launch = useLaunch();
+  const busy = (overview?.running.includes(instance.id) ?? false) || launching.has(instance.id);
+  const status = ping.state === "ok" ? ping.status : null;
+  const icon = status?.icon ?? server.icon;
+
+  return (
+    <motion.div variants={rise} className="glass flex items-center gap-3.5 rounded-[16px] px-3.5 py-3">
+      {icon ? (
+        <img src={icon} alt="" className="size-12 rounded-[10px] bg-white/5 [image-rendering:pixelated]" />
+      ) : (
+        <span className="grid size-12 place-items-center rounded-[10px] bg-white/[0.05] text-muted">
+          <ServerIcon className="size-5" />
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-[14px] font-semibold">{server.name}</span>
+          {server.name !== server.address && <span className="truncate font-mono text-[11.5px] text-dim">{server.address}</span>}
+        </div>
+        <p className="mt-0.5 line-clamp-2 whitespace-pre-line text-[12px] leading-[1.45] text-muted">
+          {ping.state === "loading" ? "Ping läuft …" : ping.state === "offline" ? ping.error : status!.motd || status!.version}
+        </p>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1 text-[12px] text-muted">
+        <span className="flex items-center gap-2">
+          {status && <span className="font-mono tabular-nums">{status.latencyMs > 0 ? `${status.latencyMs} ms` : ""}</span>}
+          <Signal ping={ping} />
+        </span>
+        {status && (
+          <span className="flex items-center gap-1 tabular-nums">
+            <Users className="size-3" />
+            {status.online.toLocaleString("de-DE")} / {status.max.toLocaleString("de-DE")}
+          </span>
+        )}
+      </div>
+      <Button size="sm" variant="primary" icon={<Play className="size-3.5" />} disabled={busy} onClick={() => launch(instance.id, instance.name, { kind: "server", target: server.address })}>
+        Beitreten
+      </Button>
+    </motion.div>
+  );
+}
 
 export function WorldsTab({ instance }: { instance: Instance }) {
   const { toast } = useStore();
@@ -138,7 +249,8 @@ export function WorldsTab({ instance }: { instance: Instance }) {
 }
 
 function WorldRow({ instance, world, expanded, onToggle, onChanged }: { instance: Instance; world: World; expanded: boolean; onToggle: () => void; onChanged: () => void }) {
-  const { toast, overview } = useStore();
+  const { toast, overview, launching } = useStore();
+  const launch = useLaunch();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
   const running = overview?.running.includes(instance.id) ?? false;
@@ -166,7 +278,7 @@ function WorldRow({ instance, world, expanded, onToggle, onChanged }: { instance
   }
 
   return (
-    <motion.div variants={rise} layout="position" className={`glass overflow-hidden rounded-[16px] transition-shadow duration-300 ${expanded ? "shadow-[inset_0_0_0_1px_rgb(192_132_252/0.22)]" : ""}`}>
+    <motion.div variants={rise} layout="position" className={`glass overflow-hidden rounded-[16px] transition-shadow duration-300 ${expanded ? "shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent-2)_22%,transparent)]" : ""}`}>
       <button onClick={onToggle} aria-expanded={expanded} className="flex w-full items-center gap-3.5 px-3.5 py-3 text-left transition-colors duration-200 hover:bg-white/[0.03]">
         {world.icon ? (
           <img src={world.icon} alt="" className="size-12 rounded-[10px] bg-white/5 object-cover [image-rendering:pixelated]" />
@@ -203,6 +315,9 @@ function WorldRow({ instance, world, expanded, onToggle, onChanged }: { instance
                   Backup als ZIP
                 </Button>
                 <span className="text-[12px] text-muted">landet im Instanzordner unter backups</span>
+                <Button size="sm" variant="primary" icon={<Play className="size-3.5" />} disabled={running || launching.has(instance.id)} onClick={() => launch(instance.id, instance.name, { kind: "world", target: world.id })}>
+                  Direkt spielen
+                </Button>
                 <div className="ml-auto flex gap-1.5">
                   {confirmDelete ? (
                     <>
