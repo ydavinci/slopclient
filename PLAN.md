@@ -209,7 +209,7 @@ Verglichen mit Lunar, Badlion, Feather (inzwischen „Dawn“), LabyMod und Esse
 
 Schon vorhanden und daher nicht aufgeführt: FPS, CPS, Ping, Koordinaten, Uhrzeit, Rüstung, Trankeffekte, Keystrokes, Server-IP, Geschwindigkeit, Zoom, Freelook, Toggle Sprint, Helligkeit, Fadenkreuz, Block-Umriss, Hit-Color, Low Fire, Nametags, Chat, Scoreboard, Capes, Karambit, Schriften, Screenshot-Vorschau.
 
-### M13 · Schnelle Gewinne · umgesetzt (Discord wartet auf die App-ID, Skin-Upload und Spieltest mit echtem Account offen)
+### M13 · Schnelle Gewinne · umgesetzt (Skin-Upload und Spieltest mit echtem Account offen)
 Kleiner Aufwand, aber jeder große Client hat es.
 
 **Launcher**

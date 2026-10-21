@@ -17,8 +17,8 @@ pub const SLOPCLIENT_MSA_CLIENT_ID: &str = "3741ed40-b503-47b7-aa63-d5e9258db81e
 pub const SLOPCLIENT_COSMETICS_URL: &str = "https://cosmetics.ydavinci.me";
 
 /// Discord application of SlopClient (name and logo of the Rich Presence).
-/// Empty until the app exists in the Discord developer portal.
-pub const SLOPCLIENT_DISCORD_APP_ID: &str = "";
+/// Its "logo" art asset is the large image of the status.
+pub const SLOPCLIENT_DISCORD_APP_ID: &str = "1562576081704325221";
 
 /// Positions of the start page blocks as fractions of the free space (x, y).
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
