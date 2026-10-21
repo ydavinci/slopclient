@@ -46,6 +46,33 @@ impl Paths {
         Ok(Self::new(dunce::canonicalize(&root).unwrap_or(root)))
     }
 
+    /// Still running from `%APPDATA%\DaClient` because the folder could not be moved
+    /// (usually the old DaClient launcher was open).
+    pub fn is_legacy(&self) -> bool {
+        self.root.file_name().is_some_and(|n| n == LEGACY_DIR)
+    }
+
+    /// Moves `%APPDATA%\DaClient` to `%APPDATA%\SlopClient`; the launcher has to
+    /// restart afterwards to use the new folder.
+    pub fn finish_migration(&self) -> Result<()> {
+        if !self.is_legacy() {
+            return Ok(());
+        }
+        let target = self.root.with_file_name("SlopClient");
+        if target.exists() {
+            return Err(Error::Other(format!("{} gibt es schon", target.display())));
+        }
+        std::fs::rename(&self.root, &target).map_err(|e| {
+            Error::Other(format!("Der Ordner wird noch benutzt ({e}). Schließe alles, was darauf zugreift (alter Launcher, Spiel, Explorer-Fenster), und versuch es noch mal."))
+        })
+    }
+
+    /// The uninstaller of the old DaClient launcher, if it is still installed.
+    pub fn legacy_uninstaller() -> Option<PathBuf> {
+        let exe = dirs::data_local_dir()?.join(LEGACY_DIR).join("uninstall.exe");
+        exe.is_file().then_some(exe)
+    }
+
     pub fn ensure(&self) -> Result<()> {
         for dir in [
             self.libraries(),
@@ -104,4 +131,24 @@ impl Paths {
 /// mixed `\` and `/` would break its library detection.
 pub fn join_rel(base: &std::path::Path, rel: &str) -> PathBuf {
     rel.split('/').filter(|c| !c.is_empty()).fold(base.to_path_buf(), |p, c| p.join(c))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn moves_the_legacy_folder() {
+        let base = std::env::temp_dir().join(format!("slopclient-mig-{}", std::process::id()));
+        let legacy = base.join("DaClient");
+        std::fs::create_dir_all(legacy.join("instances")).unwrap();
+        std::fs::write(legacy.join("settings.json"), "{}").unwrap();
+        let paths = Paths::new(&legacy);
+        assert!(paths.is_legacy());
+        paths.finish_migration().unwrap();
+        assert!(base.join("SlopClient").join("settings.json").is_file());
+        assert!(!legacy.exists());
+        assert!(!Paths::new(base.join("SlopClient")).is_legacy());
+        std::fs::remove_dir_all(&base).unwrap();
+    }
 }

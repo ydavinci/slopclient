@@ -17,6 +17,18 @@ export function SettingsPage() {
   };
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+
+  async function migrate() {
+    setMigrating(true);
+    try {
+      // Restarts the launcher when it works.
+      await api.finishMigration();
+    } catch (e) {
+      toast(String(e), "error");
+      setMigrating(false);
+    }
+  }
 
   useEffect(() => {
     api.settings().then(setSettings).catch((e) => toast(String(e), "error"));
@@ -124,6 +136,27 @@ export function SettingsPage() {
 
           <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.15 }} className="glass grid gap-3 rounded-[18px] p-5">
             <h2 className="text-[15px] font-bold">Speicherort</h2>
+            {overview?.legacyDataDir && (
+              <div className="grid gap-2.5 rounded-[12px] border border-warn/30 bg-warn/[0.08] p-3.5">
+                <div className="text-[13px] font-semibold text-warn">Deine Daten liegen noch im alten DaClient-Ordner</div>
+                <p className="text-[12.5px] text-muted">
+                  Beim Start lief noch der alte DaClient-Launcher, deshalb konnte SlopClient den Ordner nicht umbenennen. Alles funktioniert trotzdem. Zum Umziehen schließt SlopClient den alten Launcher, benennt den Ordner um und startet neu.
+                </p>
+                <div>
+                  <Button size="sm" variant="primary" loading={migrating} onClick={migrate}>
+                    Alten Launcher schließen und umziehen
+                  </Button>
+                </div>
+              </div>
+            )}
+            {overview?.legacyInstall && !overview.legacyDataDir && (
+              <div className="flex items-center gap-3 rounded-[12px] border border-line bg-white/[0.03] p-3.5">
+                <p className="flex-1 text-[12.5px] text-muted">Der alte DaClient-Launcher ist noch installiert. Deine Daten nutzt jetzt SlopClient, den alten brauchst du nicht mehr.</p>
+                <Button size="sm" onClick={() => api.uninstallLegacy().catch((e) => toast(String(e), "error"))}>
+                  Deinstallieren
+                </Button>
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <code className="flex-1 truncate rounded-[10px] border border-line bg-black/30 px-3 py-2.5 font-mono text-xs text-muted select-text">{overview?.dataDir}</code>
               <Button icon={<FolderOpen className="size-4" />} onClick={() => overview && api.openPath(overview.dataDir)}>

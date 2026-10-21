@@ -16,6 +16,9 @@ final class Chrome {
 	private Chrome() {
 	}
 
+	/** The SlopClient "S" mark (design/logo/glyph-512.png). */
+	private static final net.minecraft.resources.Identifier LOGO = net.minecraft.resources.Identifier.fromNamespaceAndPath(SlopClient.ID, "textures/gui/logo.png");
+
 	/** Glass watermark pill like the launcher's title bar: logo, name, version, player, Minecraft, clock. */
 	static void titleBar(GuiGraphicsExtractor g, Minecraft mc, double k, String... extra) {
 		int x = PAD - (int) Math.round((1 - k) * 12), y = 10, h = 20;
@@ -33,8 +36,7 @@ final class Chrome {
 		for (String p : parts) w += 13 + Draw.width(p);
 		Draw.round(g, x, y, w, h, 6, Theme.alpha(Theme.PANEL_SOLID, 0.72 * k));
 		Draw.roundOutline(g, x, y, w, h, 6, Theme.alpha(0xFFFFFF, 0.07 * k));
-		Draw.round(g, x + 5, y + 4, 12, 12, 3, Theme.alpha(Theme.chroma(0), k));
-		Draw.scaledText(g, "D", x + 8.5f, y + 6.5f, 0.85f, Theme.alpha(0xFFFFFF, k), false);
+		g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, LOGO, x + 4, y + 3, 0, 0, 14, 14, 14, 14, Theme.alpha(0xFFFFFF, k));
 		int cx = x + 22;
 		cx += Draw.chromaText(g, "SlopClient", cx, y + 6, 0, false);
 		for (String p : parts) {

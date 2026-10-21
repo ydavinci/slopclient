@@ -246,6 +246,38 @@ struct Overview {
     dev_build: bool,
     /// Launcher version, e.g. "0.2.0".
     version: &'static str,
+    /// Data still lives in the old DaClient folder.
+    legacy_data_dir: bool,
+    /// The old DaClient launcher is still installed.
+    legacy_install: bool,
+}
+
+/// Closes the old DaClient launcher, moves its data folder to SlopClient and restarts.
+#[tauri::command]
+async fn finish_migration(app: AppHandle, state: State<'_, AppState>) -> CmdResult<()> {
+    if !state.games.lock().await.is_empty() {
+        return Err("Beende zuerst das laufende Spiel.".into());
+    }
+    let mut kill = std::process::Command::new("taskkill");
+    kill.args(["/F", "/IM", "daclient-launcher.exe"]);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        kill.creation_flags(0x0800_0000);
+    }
+    let _ = kill.output();
+    // Give Windows a moment to release the files of the closed process.
+    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+    state.paths.finish_migration().map_err(err)?;
+    app.restart();
+}
+
+/// Starts the uninstaller of the old DaClient launcher (its own window asks first).
+#[tauri::command]
+async fn uninstall_legacy() -> CmdResult<()> {
+    let exe = Paths::legacy_uninstaller().ok_or("Der alte DaClient-Launcher ist nicht mehr installiert.")?;
+    std::process::Command::new(exe).spawn().map_err(err)?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -262,6 +294,8 @@ async fn get_overview(state: State<'_, AppState>) -> CmdResult<Overview> {
         running: state.games.lock().await.keys().cloned().collect(),
         dev_build: cfg!(debug_assertions),
         version: env!("CARGO_PKG_VERSION"),
+        legacy_data_dir: paths.is_legacy(),
+        legacy_install: Paths::legacy_uninstaller().is_some(),
     })
 }
 
@@ -1237,6 +1271,8 @@ pub fn run() {
             set_centered_layout,
             set_discord,
             take_launch_request,
+            finish_migration,
+            uninstall_legacy,
             create_shortcut,
             set_home_layout,
             open_path,

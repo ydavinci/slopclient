@@ -4,6 +4,7 @@
 	"version": "${version}",
 	"name": "SlopClient",
 	"description": "Title screen, ClickGUI and HUD of the SlopClient launcher. Legit features only.",
+	"icon": "assets/slopclient/icon.png",
 	"authors": ["SlopClient"],
 	"license": "All-Rights-Reserved",
 	"environment": "client",

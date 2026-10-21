@@ -125,6 +125,10 @@ export interface Overview {
   devBuild: boolean;
   /** Launcher version, e.g. "0.2.0". */
   version: string;
+  /** Data still lives in %APPDATA%\DaClient (the move did not work yet). */
+  legacyDataDir?: boolean;
+  /** The old DaClient launcher is still installed. */
+  legacyInstall?: boolean;
 }
 
 export type HomeBlock = "hero" | "actions" | "strip";

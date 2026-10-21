@@ -100,6 +100,8 @@ export const api = {
   clearInstanceIcon: (id: string) => call<Instance>("clear_instance_icon", { id }),
 
   launch: (id: string, taskId: string, join?: Join) => call<void>("launch_instance", { id, taskId, join: join ?? null }),
+  finishMigration: () => call<void>("finish_migration"),
+  uninstallLegacy: () => call<void>("uninstall_legacy"),
   takeLaunchRequest: () => call<string | null>("take_launch_request"),
   createShortcut: (id: string) => call<string>("create_shortcut", { id }),
   servers: (id: string) => call<Server[]>("servers_list", { id }),
