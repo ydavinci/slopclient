@@ -6,6 +6,7 @@ import { useStore } from "../lib/store";
 import type { Settings } from "../lib/types";
 import { Button, Segmented, Spinner, Toggle, rise } from "../ui/kit";
 import { Slider } from "./InstanceDetail";
+import { CosmeticsOnline } from "./Cosmetics";
 import { HueRing } from "../ui/HueRing";
 import { DEFAULT_HUE, applyAccent } from "../lib/accent";
 
@@ -121,6 +122,11 @@ export function SettingsPage() {
                 </>
               );
             })()}
+          </motion.section>
+
+          <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.08 }} className="glass grid gap-4 rounded-[18px] p-5">
+            <h2 className="text-[15px] font-bold">Kosmetik online</h2>
+            <CosmeticsOnline />
           </motion.section>
 
           <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.10 }} className="glass grid gap-4 rounded-[18px] p-5">

@@ -50,7 +50,8 @@
           "German",
           "English"
         ],
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico"
       }
     }
   }

@@ -30,8 +30,6 @@ function ViewSwitch({ view, onChange }: { view: View; onChange: (v: View) => voi
 /** Cape Studio: library of own capes, and the editor for new or existing ones. */
 export function Cosmetics() {
   const { toast } = useStore();
-  const [online, setOnline] = useState<OnlineStatus | null>(null);
-  const [signingIn, setSigningIn] = useState(false);
   const [capes, setCapes] = useState<CapeInfo[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditTarget | null>(null);
@@ -50,33 +48,6 @@ export function Cosmetics() {
       .catch((e) => toast(String(e), "error"));
   }, [toast]);
   useEffect(load, [load]);
-  useEffect(() => {
-    api.cosmeticsStatus().then(setOnline).catch(() => setOnline(null));
-  }, []);
-
-  async function signIn() {
-    setSigningIn(true);
-    try {
-      const status = await api.cosmeticsSignIn();
-      setOnline(status);
-      toast(`Online als ${status.name}. Andere SlopClient-Spieler sehen jetzt deine Cape.`, "success");
-    } catch (e) {
-      toast(String(e), "error");
-    } finally {
-      setSigningIn(false);
-    }
-  }
-
-  async function signOut(deleteAccount: boolean) {
-    try {
-      if (deleteAccount) await api.cosmeticsDeleteAccount();
-      else await api.cosmeticsSignOut();
-      setOnline(await api.cosmeticsStatus());
-      toast(deleteAccount ? "Konto und Capes auf dem Server gelöscht" : "Abgemeldet. Deine Cape bleibt lokal.");
-    } catch (e) {
-      toast(String(e), "error");
-    }
-  }
 
   async function openFile(file: File) {
     if (!/^image\/(gif|png|webp|jpeg|apng)$/.test(file.type)) {
@@ -219,16 +190,15 @@ export function Cosmetics() {
         <motion.div variants={rise}>
           <ViewSwitch view={view} onChange={setView} />
         </motion.div>
-        <motion.div variants={rise}>
-          <Button variant="primary" icon={<ImagePlus className="size-4" />} loading={opening} onClick={() => input.current?.click()}>
-            Neue Cape
-          </Button>
-        </motion.div>
       </motion.div>
 
-      <OnlineCard online={online} busy={signingIn} onSignIn={signIn} onSignOut={signOut} />
-
       <div className={`mx-8 mb-6 min-h-0 flex-1 overflow-auto rounded-[18px] transition-colors duration-200 ${dragOver ? "bg-accent/[0.08] shadow-[inset_0_0_0_1.5px_color-mix(in_oklab,var(--color-accent-2)_50%,transparent)]" : ""}`}>
+        <div className="mb-3 flex items-center gap-3">
+          <p className="mr-auto text-[13px] text-muted">GIF, PNG, APNG, WebP oder JPG. Zieh ein Bild hierher oder wähle eins aus.</p>
+          <Button size="sm" variant="primary" icon={<ImagePlus className="size-3.5" />} loading={opening} onClick={() => input.current?.click()}>
+            Neue Cape
+          </Button>
+        </div>
         {capes === null ? (
           <div className="grid place-items-center py-20">
             <Spinner className="size-5" />
@@ -285,24 +255,59 @@ export function Cosmetics() {
   );
 }
 
-/** Whether other players can see the cape: the cosmetics server sign-in. */
+/** Sign-in to the cosmetics server, so other players see your cape, hat and pet (in Settings). */
+export function CosmeticsOnline() {
+  const { toast } = useStore();
+  const [online, setOnline] = useState<OnlineStatus | null>(null);
+  const [signingIn, setSigningIn] = useState(false);
+  useEffect(() => {
+    api.cosmeticsStatus().then(setOnline).catch(() => setOnline(null));
+  }, []);
+
+  async function signIn() {
+    setSigningIn(true);
+    try {
+      const status = await api.cosmeticsSignIn();
+      setOnline(status);
+      toast(`Online als ${status.name}. Andere SlopClient-Spieler sehen jetzt deine Kosmetik.`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setSigningIn(false);
+    }
+  }
+
+  async function signOut(deleteAccount: boolean) {
+    try {
+      if (deleteAccount) await api.cosmeticsDeleteAccount();
+      else await api.cosmeticsSignOut();
+      setOnline(await api.cosmeticsStatus());
+      toast(deleteAccount ? "Konto und Capes auf dem Server gelöscht" : "Abgemeldet. Deine Kosmetik bleibt lokal.");
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }
+
+  return <OnlineCard online={online} busy={signingIn} onSignIn={signIn} onSignOut={signOut} />;
+}
+
 function OnlineCard({ online, busy, onSignIn, onSignOut }: { online: OnlineStatus | null; busy: boolean; onSignIn: () => void; onSignOut: (deleteAccount: boolean) => void }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   if (!online) return null;
   const signedIn = online.name != null;
   return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="glass mx-8 mb-4 flex items-center gap-4 rounded-[18px] px-4 py-3">
+    <div className="flex items-center gap-4">
       <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${signedIn ? "chroma text-white" : "bg-white/[0.06] text-muted"}`}>
         <Globe className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-semibold">{!online.server ? "Nur für dich sichtbar" : signedIn ? `Online sichtbar als ${online.name}` : "Für andere unsichtbar"}</p>
-        <p className="truncate text-[11.5px] text-muted">
+        <p className="text-[12px] text-muted">
           {!online.server
             ? "Ohne Cosmetics-Server siehst nur du deine Cape."
             : signedIn
-              ? `Andere SlopClient-Spieler sehen deine aktive Cape. Server: ${online.server}`
-              : "Melde dich mit deinem Minecraft-Konto an, dann sehen andere SlopClient-Spieler deine Cape."}
+              ? `Andere SlopClient-Spieler sehen deine Cape, deinen Hut und Begleiter. Server: ${online.server}`
+              : "Melde dich mit deinem Minecraft-Konto an, dann sehen andere SlopClient-Spieler deine Kosmetik."}
         </p>
       </div>
       {!online.server ? null : signedIn ? (
@@ -330,7 +335,7 @@ function OnlineCard({ online, busy, onSignIn, onSignOut }: { online: OnlineStatu
           Online sichtbar machen
         </Button>
       )}
-    </motion.div>
+    </div>
   );
 }
 

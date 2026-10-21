@@ -73,6 +73,11 @@
         "rule": "design-system-color",
         "value": "rgb(255 255 255 / 0.07)",
         "createdAt": "2026-10-20T21:58:10.218Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "30px",
+        "createdAt": "2026-10-21T21:35:10.222Z"
       }
     ]
   }
