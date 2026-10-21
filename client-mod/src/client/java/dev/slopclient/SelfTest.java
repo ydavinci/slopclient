@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -36,6 +36,11 @@ final class SelfTest {
 	};
 	private static int grip;
 	private static boolean infoShot;
+	/** Pets photographed in the PETS step: id and camera (front or back). */
+	private static final String[][] PET_SHOTS = {
+		{"igel", "front"}, {"minime", "front"}, {"katze", "back"}, {"drache", "front"}, {"biene", "back"}, {"fuchs", "back"}, {"panda", "front"},
+	};
+	private static int petShot = -1;
 
 	private SelfTest() {
 	}
@@ -187,7 +192,21 @@ final class SelfTest {
 					return;
 				}
 				shot(mc, "11-info-hud");
-				next(Step.DONE, 10);
+				next(Step.PETS, 5);
+			}
+			case PETS -> {
+				// One shot per pet after it had time to settle (walking pets follow first).
+				if (petShot >= 0) shot(mc, "12-pet-" + PET_SHOTS[petShot][0]);
+				petShot++;
+				if (petShot >= PET_SHOTS.length) {
+					next(Step.DONE, 10);
+					return;
+				}
+				System.setProperty("slopclient.pet", PET_SHOTS[petShot][0]);
+				System.setProperty("slopclient.hat", "");
+				mc.options.setCameraType(PET_SHOTS[petShot][1].equals("front") ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
+				mc.player.setXRot(15);
+				next(Step.PETS, 40);
 			}
 			case DONE -> {
 				SlopClient.LOG.info("Self-test finished");

@@ -11,7 +11,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - Der Installer installiert SlopClient neben dem alten DaClient; den alten Eintrag kannst du danach in Windows deinstallieren.
 
 ### Launcher
-- **Hüte & Begleiter** unter Kosmetik: sechs Hüte (Zylinder, Krone, Heiligenschein, Katzenohren, Partyhut, Teufelshörner) und fünf Begleiter (Mini-Slime, Geist, Mini-Drache, Biene, Chroma-Würfel) mit 3D-Vorschau. Mit Cosmetics-Konto sehen andere Spieler sie auch.
+- **Hüte & Begleiter** unter Kosmetik: sechs Hüte und 16 Begleiter mit 3D-Vorschau, in drei Arten: auf der Schulter (Mini-Me mit deinem eigenen Skin, Igel, Katze, Frosch, Pinguin, Küken, Mini-Slime), fliegend (Mini-Drache, Geist, Biene, Fledermaus, Chroma-Würfel) und laufend (Fuchs, Shiba, Panda, Schildkröte). Mit Cosmetics-Konto sehen andere Spieler sie auch.
 - **Server-Tab** pro Instanz: die Mehrspieler-Liste mit Icon, MOTD, Spielerzahl und Ping (auch über SRV-Einträge). „Beitreten“ startet das Spiel direkt auf dem Server (Quick Play), Welten lassen sich mit „Direkt spielen“ ebenso öffnen.
 - **Discord-Status**: welche Instanz du spielst, auf welchem Server oder im Einzelspieler und seit wann. Abschaltbar, die Serveradresse lässt sich ausblenden.
 - **Skins** unter Kosmetik: Bibliothek mit 3D-Vorschau, breite oder schmale Arme (wird erkannt), mit einem Klick auf den Minecraft-Account hochladen, aktuellen Skin sichern.
@@ -20,7 +20,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - Seiten und Instanz-Tabs blieben im installierten Launcher manchmal unsichtbar, bis man das Fenster vergrößerte. Behoben.
 
 ### Client-Mod
-- **Hüte und Begleiter** im Spiel, auch bei anderen Spielern; der Hut sitzt auf Wunsch über dem Helm.
+- **Hüte und Begleiter** im Spiel, auch bei anderen Spielern: texturierte Modelle mit Animationen (Flügel, Schwanz, Beine). Laufende Begleiter folgen dir rechts hinter dir, stehen auf dem Boden und laufen mit; das Mini-Me sitzt mit deinem Skin auf der Schulter. Der Hut sitzt auf Wunsch über dem Helm.
 - **Glow**: Spieler, die du gerade siehst, leuchten mit einem weichen Umriss (Chroma, Akzent, Teamfarbe …). Hinter Wänden leuchtet niemand. Server können das Modul abschalten.
 - **Schrift überall**: Die gewählte Schrift gilt jetzt für das ganze Spiel (Chat, Menüs, Tooltips, Schilder, Nametags), abschaltbar mit „Überall im Spiel“.
 - Item-Zähler im HUD-Editor des Titelbildschirms ließ das Spiel abstürzen. Behoben.

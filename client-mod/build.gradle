@@ -47,4 +47,7 @@ processClientResources {
 	from("../cosmetics/extras.json") {
 		into "assets/slopclient/cosmetics"
 	}
+	from("../cosmetics/pets") {
+		into "assets/slopclient/textures/pets"
+	}
 }

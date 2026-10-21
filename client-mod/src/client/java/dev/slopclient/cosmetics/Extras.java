@@ -33,7 +33,8 @@ public final class Extras {
 	public record Model(String id, String name, boolean spin, List<Box> boxes) {
 	}
 
-	private static Map<String, Model> hats, pets;
+	private static Map<String, Model> hats;
+	private static Map<String, Pets.Pet> pets;
 
 	private Extras() {
 	}
@@ -46,7 +47,10 @@ public final class Extras {
 		try (var in = new InputStreamReader(Minecraft.getInstance().getResourceManager().open(id), StandardCharsets.UTF_8)) {
 			JsonObject root = JsonParser.parseReader(in).getAsJsonObject();
 			read(root.getAsJsonArray("hats"), hats);
-			read(root.getAsJsonArray("pets"), pets);
+			for (JsonElement el : root.getAsJsonArray("pets")) {
+				Pets.Pet pet = Pets.read(el.getAsJsonObject());
+				pets.put(pet.id(), pet);
+			}
 		} catch (Exception e) {
 			SlopClient.LOG.warn("Could not load hats and pets", e);
 		}
@@ -72,7 +76,7 @@ public final class Extras {
 		return hats.get(id);
 	}
 
-	public static Model pet(String id) {
+	public static Pets.Pet pet(String id) {
 		if (id == null || id.isEmpty()) return null;
 		load();
 		return pets.get(id);

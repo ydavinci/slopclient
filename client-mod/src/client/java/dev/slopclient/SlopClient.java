@@ -106,6 +106,7 @@ public final class SlopClient implements ClientModInitializer {
 			RemoteCapes.tick(mc);
 			Presence.tick(mc);
 			dev.slopclient.hud.InfoHud.Hits.tick(mc);
+			dev.slopclient.cosmetics.PetMotion.tick(mc);
 			if (SelfTest.enabled()) SelfTest.tick(mc);
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {
