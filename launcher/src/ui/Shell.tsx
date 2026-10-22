@@ -5,6 +5,10 @@ import { api, appWindow } from "../lib/ipc";
 import { megabytes } from "../lib/format";
 import { useStore, type Route } from "../lib/store";
 import { Avatar, EASE, SPRING } from "./kit";
+import { LiquidGlass } from "./LiquidGlass";
+
+/** The active drop moves like a bead of liquid: quick, with a little overshoot. */
+const DROP_SPRING = { type: "spring", stiffness: 380, damping: 24, mass: 0.75 } as const;
 
 /** Window controls; the whole bar drags the window. */
 export function TitleBar() {
@@ -54,8 +58,9 @@ export function NavRail() {
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, ease: EASE, delay: 0.05 }}
-      className="glass relative z-20 my-1 ml-4 flex w-[60px] shrink-0 flex-col items-center gap-1 rounded-2xl py-2.5"
+      className="relative z-20 my-1 ml-4 flex w-[64px] shrink-0"
     >
+      <LiquidGlass radius={22} bezel={14} strength={24} className="flex w-full flex-col items-center gap-1 py-2.5">
       {NAV.map((item) => (
         <RailButton key={item.page} label={item.label} active={active === item.page} onClick={() => navigate({ page: item.page } as Route)}>
           {item.icon}
@@ -66,6 +71,7 @@ export function NavRail() {
         <Settings className="size-[18px]" />
       </RailButton>
       <AccountMenu />
+      </LiquidGlass>
     </motion.nav>
   );
 }
@@ -76,14 +82,10 @@ function RailButton({ label, active, onClick, children }: { label: string; activ
       aria-label={label}
       aria-current={active ? "page" : undefined}
       onClick={onClick}
-      className={`group relative grid size-11 place-items-center rounded-xl transition-colors duration-200 ${active ? "text-white" : "text-muted hover:text-text"}`}
+      className={`group relative grid size-11 place-items-center rounded-[14px] transition-colors duration-200 ${active ? "text-white" : "text-muted hover:bg-white/[0.06] hover:text-text"}`}
     >
-      {active && (
-        <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-xl bg-white/[0.09] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.07)]">
-          <span className="chroma absolute top-2.5 bottom-2.5 -left-[9px] w-[3px] rounded-full" />
-        </motion.span>
-      )}
-      <span className="relative">{children}</span>
+      {active && <motion.span layoutId="nav-active" transition={DROP_SPRING} className="liquid-drop absolute inset-0 rounded-[14px]" />}
+      <span className={`relative transition-transform duration-300 ${active ? "scale-110 drop-shadow-[0_1px_6px_rgb(255_255_255/0.35)]" : "group-active:scale-90"}`}>{children}</span>
       <span className="glass pointer-events-none absolute left-[calc(100%+12px)] z-30 rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-text opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-100">
         {label}
       </span>
