@@ -1,22 +1,121 @@
-# SlopClient
+<p align="center">
+  <img src="design/logo/glyph-512.png" width="96" alt="SlopClient-Logo">
+</p>
 
-Minecraft-Launcher mit eigenem Client-Interface. Plan & Design: [PLAN.md](PLAN.md), [design/mockup.html](design/mockup.html).
+<h1 align="center">SlopClient</h1>
 
-## Stand
+<p align="center">
+  Minecraft-Launcher und In-Game-Client in einem: Instanzen, Mods und Modpacks verwalten,<br>
+  dazu ein eigenes Client-Interface mit HUD, ClickGUI und Kosmetik. Fair Play, keine Cheats.
+</p>
 
-Backend (`crates/slopclient-core`), Test-CLI (`crates/slopclient-cli`), Launcher-UI (`launcher/`, Tauri 2 + React) und Client-Mod (`client-mod/`, Fabric 26.3).
+<p align="center">
+  <a href="https://github.com/ydavinci/slopclient/releases/latest"><img src="https://img.shields.io/github/v/release/ydavinci/slopclient?label=Download&color=8B5CF6" alt="Neueste Version"></a>
+  <a href="https://github.com/ydavinci/slopclient/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/ydavinci/slopclient/release.yml?label=Build" alt="Build-Status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ydavinci/slopclient?color=555" alt="Lizenz"></a>
+</p>
 
-Funktioniert:
-- Versionsliste (Mojang-Manifest, offline aus Cache)
-- Installation beliebiger Versionen: Client, Libraries, Natives (alt & neu), Assets, Log-Config
-- Java-Runtimes automatisch von Mojang (Java 8 / 17 / 21 / 25 je nach Version)
-- Mod-Loader: Fabric, Quilt, NeoForge, Forge (1.13+) mit Versionsauswahl
-- Instanzen anlegen/listen/löschen, Spielzeit-Erfassung, eigene Icons (Zuschnitt-Dialog; Modpacks und Prism-Instanzen bringen ihr Icon mit)
-- Modpacks: `.mrpack` und CurseForge-ZIP importieren (Datei oder Projekt-Slug), Instanzen als `.mrpack` exportieren
-- Modrinth: Suche (gefiltert nach Instanz), Installation von Mods/Resourcepacks/Shadern mit Abhängigkeiten, Liste pro Instanz, (De)aktivieren, Entfernen, Updates, Erkennung manuell kopierter Dateien
-- CurseForge (mit API-Schlüssel): Suche, Installation mit Abhängigkeiten, Updates, Erkennung per Fingerprint. Dateien, deren Autoren Downloads außerhalb der Website sperren, landen in `blocked.json` und werden aus dem Download-Ordner übernommen
-- Start mit Live-Log und Crash-Analyse (erkennt u. a. zu wenig RAM, falsches Java, inkompatible/doppelte Mods, fehlerhafte Mixins, Grafiktreiber und nennt die verursachende Mod, die sich direkt deaktivieren lässt)
-- Cape-Studio (Seite „Kosmetik“): eigene Capes aus Bildern und GIFs mit Editor (Ausschnitt, Rückseite, Ränder, Elytra, Bildauswahl, Tempo, Auflösung bis 512×256) und 3D-Vorschau (skinview3d); Bibliothek mit aktiver Cape. Die aktive Cape trägt dein Spieler im Spiel (animiert, auch als Elytra; Modul „Capes“, serverseitig abschaltbar über `capes`). Mit Cosmetics-Server (`crates/slopclient-cosmetics`, Anleitung in [deploy/cosmetics](deploy/cosmetics/README.md)) sehen andere SlopClient-Spieler deine Cape und du ihre
-- Import von Instanzen aus Prism Launcher, PolyMC und MultiMC (Kopie inkl. Welten und Configs, Mods werden mit Modrinth/CurseForge verknüpft)
-- SlopClient-Mod (Fabric/Quilt, Minecraft 26.3): eigener Titelbildschirm, ClickGUI (Rechts-Shift) mit Suche, HUD-Editor mit Snapping, HUD-Module (Watermark, ArrayList, FPS, CPS, Keystrokes, Koordinaten, Rüstung, Trankeffekte, Ping, Uhrzeit), Zoom (C), Freelook (Alt), Helligkeit, Fadenkreuz, Toggle Sprint, Sora-Schrift, Config-Profile. Der Launcher legt die Mod beim Start in passende Instanzen und installiert Fabric API mit; abschaltbar pro Instanz
-- Microsoft-Login (Device Code → Xbox → XSTS → Minecraft), Tokens per DPAPI verschlüsselt
+---
+
+## Download
+
+| Was | Datei | Für |
+|---|---|---|
+| **Launcher** | [`SlopClient_<version>_x64-setup.exe`](https://github.com/ydavinci/slopclient/releases/latest) | Windows 10/11, enthält den Client-Mod |
+| Client-Mod einzeln | `slopclient-<version>.jar` | Fabric/Quilt, Minecraft 26.3, für andere Launcher |
+| Cosmetics-Server | `ghcr.io/ydavinci/slopclient-cosmetics` | eigener Server für Capes, Hüte und Begleiter ([Anleitung](deploy/cosmetics/README.md)) |
+
+Installer starten, mit dem Microsoft-Konto anmelden, Instanz anlegen, spielen. Der Launcher legt den Client-Mod
+automatisch in passende Instanzen (pro Instanz abschaltbar).
+
+> Der Installer ist noch nicht signiert; Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
+
+## Funktionen
+
+### Launcher
+
+- **Instanzen** für jede Minecraft-Version mit Fabric, Quilt, NeoForge oder Forge (1.13+), Gruppen, Kopieren, eigene Icons, Spielzeit, Desktop-Verknüpfung
+- **Java automatisch**: die passende Runtime (8 / 17 / 21 / 25) kommt direkt von Mojang
+- **Mods, Resourcepacks und Shader** von Modrinth und CurseForge: Suche passend zur Instanz, Abhängigkeiten, Updates mit Changelog, Drag & Drop eigener Dateien
+- **Modpacks**: `.mrpack` und CurseForge-ZIP importieren, Instanzen als `.mrpack` exportieren
+- **Umzug aus Prism Launcher, PolyMC und MultiMC** inklusive Welten und Configs
+- **Welten, Screenshots und Server** pro Instanz; „Beitreten“ startet direkt auf dem Server
+- **Crash-Analyse**: erkennt u. a. zu wenig RAM, falsches Java, kaputte oder doppelte Mods und nennt die Ursache; Logs mit einem Klick über mclo.gs teilen (ohne Zugangsdaten)
+- **Discord-Status** mit Instanz und Server (abschaltbar)
+- **Microsoft-Login** per Device Code; Tokens werden mit Windows DPAPI verschlüsselt gespeichert
+
+### Client-Mod (Fabric/Quilt, Minecraft 26.3)
+
+- eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche
+- **HUD-Editor** mit Snapping und vielen Modulen: FPS, CPS, Keystrokes, Koordinaten, Rüstung, Tränke, Ping, Kompass, Item-Zähler, Combo, Reichweite, Cooldowns, Bossleiste …
+- **Zoom** (C), **Freelook** (Alt), Helligkeit, Fadenkreuz, Toggle Sprint, Glow, eigene Schriften, Config-Profile
+- **Server-Regeln**: Server können einzelne Module abschalten
+
+### Kosmetik
+
+- **Cape-Studio**: eigene, auch animierte Capes aus Bildern und GIFs, mit 3D-Vorschau
+- **Hüte und Begleiter**: sechs Hüte, 16 Begleiter (auf der Schulter, fliegend oder laufend)
+- **Skins**: Bibliothek mit 3D-Vorschau, direkt auf den Minecraft-Account hochladen
+- **Online sichtbar**: über den Cosmetics-Server sehen andere SlopClient-Spieler deine Kosmetik. Standard ist der SlopClient-Server; einen eigenen trägst du unter *Einstellungen → Kosmetik online* ein.
+
+**Fair Play:** SlopClient bietet HUD, Komfort, Performance und Kosmetik, aber keine Vorteile im Kampf.
+
+## Eigener Cosmetics-Server
+
+Der Server (`crates/slopclient-cosmetics`) speichert Capes, Hüte und Begleiter pro Minecraft-Account.
+Anmeldung ohne Passwort über Mojangs Session-Server, Daten in SQLite. Schnellstart mit Docker:
+
+```sh
+docker run -d -p 127.0.0.1:8787:8787 -v slopclient-cosmetics:/data \
+  -e SLOPCLIENT_COSMETICS_PUBLIC_URL=https://cosmetics.example.com \
+  ghcr.io/ydavinci/slopclient-cosmetics:latest
+```
+
+HTTPS, Compose, Konfiguration, Moderation und Backups: [deploy/cosmetics/README.md](deploy/cosmetics/README.md).
+
+## Selbst bauen
+
+Voraussetzungen: [Rust](https://rustup.rs) (stable), Node.js 22, JDK 25.
+
+```sh
+# 1. Client-Mod (wird beim nächsten Schritt in den Launcher eingebettet)
+cd client-mod && ./gradlew build && cd ..
+
+# 2. Launcher: Entwicklungsmodus bzw. Installer
+cd launcher && npm ci
+npx tauri dev
+npx tauri build          # → target/release/bundle/nsis/
+
+# CLI und Cosmetics-Server
+cargo build --release -p slopclient-cli
+cargo build --release -p slopclient-cosmetics
+```
+
+Tests: `cargo test --workspace`.
+
+### Projektstruktur
+
+| Ordner | Inhalt |
+|---|---|
+| `crates/slopclient-core` | Kern in Rust: Versionen, Installation, Mod-Loader, Inhalte, Login, Start |
+| `crates/slopclient-cli` | Test-CLI auf dem Kern |
+| `crates/slopclient-cosmetics` | Cosmetics-Server (axum + SQLite) |
+| `launcher/` | Launcher-Oberfläche (Tauri 2 + React) |
+| `client-mod/` | In-Game-Client (Fabric) |
+| `cosmetics/` | Katalog der Hüte und Begleiter, geteilt von Launcher, Mod und Server |
+| `deploy/cosmetics/` | Docker, Compose, systemd und Caddy für den Server |
+| `web/` | Projekt-Website (Astro) |
+
+Plan und Design: [PLAN.md](PLAN.md), [DESIGN.md](DESIGN.md). Änderungen: [CHANGELOG.md](CHANGELOG.md).
+
+### Release
+
+Versionsnummer in `Cargo.toml`, `client-mod/gradle.properties`, `launcher/package.json` und
+`launcher/src-tauri/tauri.conf.json` anheben (dazu `Cargo.lock` und `launcher/package-lock.json`), Abschnitt im `CHANGELOG.md` ergänzen, dann einen Tag `v<version>` pushen.
+Der Workflow baut alles, veröffentlicht das GitHub-Release und das Docker-Image.
+
+## Lizenz
+
+[Eclipse Public License 2.0](LICENSE).
+
+**Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.**
