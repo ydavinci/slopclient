@@ -1,0 +1,10 @@
+# Only the Rust workspace is needed; keep the build context small.
+.git
+target
+launcher/node_modules
+launcher/dist
+web
+design
+client-mod/build
+client-mod/.gradle
+**/*.env

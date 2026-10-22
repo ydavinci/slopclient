@@ -52,8 +52,25 @@ sudo systemctl reload caddy
 curl https://cosmetics.example.com/health     # → ok
 ```
 
-Point the launcher at it: in SlopClient → Einstellungen → Kosmetik → Cosmetics-Server, or build
-the launcher with `SLOPCLIENT_COSMETICS_URL=https://cosmetics.example.com` as default.
+Point the launcher at it: in SlopClient → Einstellungen → Kosmetik online → Cosmetics-Server
+(empty means SlopClient's own server), or build the launcher with
+`SLOPCLIENT_COSMETICS_URL=https://cosmetics.example.com` as default.
+
+## Docker
+
+Each release publishes `ghcr.io/ydavinci/slopclient-cosmetics` (tags `<version>` and `latest`).
+The container listens on `0.0.0.0:8787` and keeps its data in the volume `/data`. With
+[compose.yaml](compose.yaml), after setting your domain in it and in the `Caddyfile`:
+
+```
+echo "SLOPCLIENT_COSMETICS_ADMIN_TOKEN=$(openssl rand -hex 32)" > .env
+docker compose up -d
+curl http://127.0.0.1:8787/health     # → ok
+```
+
+Caddy then runs on the host as above. To build the image yourself, from the repository root:
+`docker build -f deploy/cosmetics/Dockerfile -t slopclient-cosmetics .`. The container runs as
+uid 10001; a bind mount instead of the named volume must be writable for that uid.
 
 ## Configuration
 

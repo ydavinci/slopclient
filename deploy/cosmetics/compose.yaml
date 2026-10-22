@@ -1,0 +1,16 @@
+# docker compose up -d   (next to a .env with SLOPCLIENT_COSMETICS_ADMIN_TOKEN=...)
+services:
+  cosmetics:
+    image: ghcr.io/ydavinci/slopclient-cosmetics:latest
+    restart: unless-stopped
+    environment:
+      SLOPCLIENT_COSMETICS_PUBLIC_URL: https://cosmetics.example.com
+      SLOPCLIENT_COSMETICS_ADMIN_TOKEN: ${SLOPCLIENT_COSMETICS_ADMIN_TOKEN:-}
+    volumes:
+      - cosmetics-data:/data
+    # Only on localhost: Caddy (Caddyfile next to this file) terminates HTTPS in front of it.
+    ports:
+      - 127.0.0.1:8787:8787
+
+volumes:
+  cosmetics-data:

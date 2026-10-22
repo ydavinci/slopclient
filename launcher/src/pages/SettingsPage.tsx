@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/ipc";
 import { useStore } from "../lib/store";
 import type { Settings } from "../lib/types";
-import { Button, Segmented, Spinner, Toggle, rise } from "../ui/kit";
+import { Button, Field, Segmented, Spinner, Toggle, inputClass, rise } from "../ui/kit";
 import { Slider } from "./InstanceDetail";
 import { CosmeticsOnline } from "./Cosmetics";
 import { HueRing } from "../ui/HueRing";
@@ -19,6 +19,8 @@ export function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [migrating, setMigrating] = useState(false);
+  // Remounts the online card after saving, so it shows the status for the new server.
+  const [onlineKey, setOnlineKey] = useState(0);
 
   async function migrate() {
     setMigrating(true);
@@ -37,9 +39,15 @@ export function SettingsPage() {
 
   async function save() {
     if (!settings) return;
+    const cosmeticsUrl = settings.cosmeticsUrl?.trim() || null;
+    if (cosmeticsUrl && !/^https?:\/\/[^\s/]+/.test(cosmeticsUrl)) {
+      toast("Cosmetics-Server: Adresse muss mit http:// oder https:// beginnen", "error");
+      return;
+    }
     setSaving(true);
     try {
-      await api.saveSettings({ ...settings, msaClientId: settings.msaClientId?.trim() || null, curseforgeApiKey: settings.curseforgeApiKey?.trim() || null, cosmeticsUrl: settings.cosmeticsUrl?.trim() || null });
+      await api.saveSettings({ ...settings, msaClientId: settings.msaClientId?.trim() || null, curseforgeApiKey: settings.curseforgeApiKey?.trim() || null, cosmeticsUrl });
+      setOnlineKey((k) => k + 1);
       await refresh();
       toast("Einstellungen gespeichert", "success");
     } catch (e) {
@@ -126,7 +134,21 @@ export function SettingsPage() {
 
           <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.08 }} className="glass grid gap-4 rounded-[18px] p-5">
             <h2 className="text-[15px] font-bold">Kosmetik online</h2>
-            <CosmeticsOnline />
+            <CosmeticsOnline key={onlineKey} />
+            <div className="border-t border-line pt-4">
+              <Field
+                label="Cosmetics-Server"
+                hint="Leer lassen für den SlopClient-Server. Eigener Server: siehe deploy/cosmetics. Nach einem Wechsel meldest du dich dort neu an; Instanzen nutzen ihn ab dem nächsten Start."
+              >
+                <input
+                  className={inputClass}
+                  placeholder="SlopClient-Server (Standard)"
+                  spellCheck={false}
+                  value={settings.cosmeticsUrl ?? ""}
+                  onChange={(e) => setSettings({ ...settings, cosmeticsUrl: e.target.value })}
+                />
+              </Field>
+            </div>
           </motion.section>
 
           <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.10 }} className="glass grid gap-4 rounded-[18px] p-5">

@@ -162,9 +162,42 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  # Image of the cosmetics server; pushed to GHCR on tags, only built on manual runs.
+  cosmetics-image:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - if: github.ref_type == 'tag'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/slopclient-cosmetics
+          tags: |
+            type=raw,value=${{ needs.version.outputs.version }}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/cosmetics/Dockerfile
+          push: ${{ github.ref_type == 'tag' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   release:
     if: github.ref_type == 'tag'
-    needs: [version, client-mod, launcher, cli, cosmetics-server]
+    needs: [version, client-mod, launcher, cli, cosmetics-server, cosmetics-image]
     runs-on: ubuntu-latest
     permissions:
       contents: write
