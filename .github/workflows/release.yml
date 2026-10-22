@@ -1,0 +1,196 @@
+name: Release
+
+# Tag push (v0.2.0, v0.3.0-beta.1, ...) builds everything and publishes a GitHub release.
+# Manual run builds everything and only uploads the workflow artifacts (dry run).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  # Defaults baked into launcher and CLI at build time (option_env! in slopclient-core/src/config.rs).
+  SLOPCLIENT_MSA_CLIENT_ID: ${{ vars.SLOPCLIENT_MSA_CLIENT_ID }}
+  SLOPCLIENT_COSMETICS_URL: ${{ vars.SLOPCLIENT_COSMETICS_URL }}
+  SLOPCLIENT_DISCORD_APP_ID: ${{ vars.SLOPCLIENT_DISCORD_APP_ID }}
+  SLOPCLIENT_CURSEFORGE_API_KEY: ${{ secrets.SLOPCLIENT_CURSEFORGE_API_KEY }}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        name: Check that all manifests agree on the version
+        run: |
+          cargo=$(sed -n '/^\[workspace.package\]/,/^\[/s/^version *= *"\(.*\)"/\1/p' Cargo.toml)
+          gradle=$(sed -n 's/^version=//p' client-mod/gradle.properties)
+          tauri=$(jq -r .version launcher/src-tauri/tauri.conf.json)
+          npm=$(jq -r .version launcher/package.json)
+          echo "Cargo=$cargo Gradle=$gradle Tauri=$tauri npm=$npm"
+          for v in "$gradle" "$tauri" "$npm"; do
+            [ "$v" = "$cargo" ] || { echo "::error::Versions differ between manifests"; exit 1; }
+          done
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "${GITHUB_REF_NAME#v}" != "$cargo" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $cargo"; exit 1
+          fi
+          echo "version=$cargo" >> "$GITHUB_OUTPUT"
+
+  client-mod:
+    needs: version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client-mod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew && ./gradlew build --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: client-mod
+          path: |
+            client-mod/build/libs/slopclient-*.jar
+            !client-mod/build/libs/*-sources.jar
+          if-no-files-found: error
+
+  launcher:
+    needs: client-mod
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      # slopclient-core/build.rs embeds the mod jar from client-mod/build/libs.
+      - uses: actions/download-artifact@v4
+        with:
+          name: client-mod
+          path: client-mod/build/libs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: launcher
+      - run: npm ci
+        working-directory: launcher
+      - run: npx tauri build
+        working-directory: launcher
+      - name: Build CLI
+        run: cargo build --release --locked -p slopclient-cli
+      - name: Collect
+        shell: bash
+        run: |
+          mkdir dist
+          cp target/release/bundle/nsis/*-setup.exe dist/
+          cp target/release/slopclient.exe dist/slopclient-cli-windows-x64.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launcher-windows
+          path: dist/*
+          if-no-files-found: error
+
+  cli:
+    needs: client-mod
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x64
+          - os: macos-latest
+            name: macos-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: client-mod
+          path: client-mod/build/libs
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: cli
+      - run: cargo build --release --locked -p slopclient-cli
+      - run: |
+          mkdir dist
+          tar -czf dist/slopclient-cli-${{ matrix.name }}.tar.gz -C target/release slopclient
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.name }}
+          path: dist/*
+          if-no-files-found: error
+
+  cosmetics-server:
+    needs: client-mod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: client-mod
+          path: client-mod/build/libs
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: cosmetics
+      - run: cargo test --release --locked -p slopclient-cosmetics
+      - run: cargo build --release --locked -p slopclient-cosmetics
+      - name: Package with service file, Caddyfile and README
+        run: |
+          pkg=slopclient-cosmetics-linux-x64
+          mkdir -p "$pkg" dist
+          cp target/release/slopclient-cosmetics deploy/cosmetics/* "$pkg"/
+          tar -czf "dist/$pkg.tar.gz" "$pkg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cosmetics-server
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: [version, client-mod, launcher, cli, cosmetics-server]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Checksums
+        working-directory: assets
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="## ${{ needs.version.outputs.version }}" '
+            $0 == v {on=1; next}
+            on && /^## / {exit}
+            on {print}
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Siehe [CHANGELOG.md](CHANGELOG.md)." > notes.md
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pre=""
+          case "$GITHUB_REF_NAME" in *-*) pre="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" assets/* \
+            --title "SlopClient ${{ needs.version.outputs.version }}" \
+            --notes-file notes.md $pre
