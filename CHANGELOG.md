@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.3.0
 
 ### Neuer Name: SlopClient
 - DaClient heißt jetzt **SlopClient**: Launcher, Client-Mod, Installer und Cosmetics-Server.
@@ -17,6 +17,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Skins** unter Kosmetik: Bibliothek mit 3D-Vorschau, breite oder schmale Arme (wird erkannt), mit einem Klick auf den Minecraft-Account hochladen, aktuellen Skin sichern.
 - **Changelogs vor dem Update**: „Änderungen ansehen“ zeigt bei „Alle aktualisieren“ für jeden Mod, was sich ändert.
 - **Desktop-Verknüpfung** pro Instanz mit ihrem Icon; ein Doppelklick startet die Instanz direkt, auch wenn der Launcher schon offen ist.
+- **Eigener Cosmetics-Server** wählbar unter Einstellungen → Kosmetik online. Leer gelassen bleibt es beim SlopClient-Server.
 - Seiten und Instanz-Tabs blieben im installierten Launcher manchmal unsichtbar, bis man das Fenster vergrößerte. Behoben.
 
 ### Client-Mod
@@ -26,6 +27,9 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - Item-Zähler im HUD-Editor des Titelbildschirms ließ das Spiel abstürzen. Behoben.
 - Neue HUD-Elemente: **Kompass**, **Item-Zähler** (Pfeile, Totems, Perlen, Goldäpfel und mehr), **Combo**, **Reichweite** des letzten eigenen Treffers, **Cooldowns** mit Restzeit, **Bossleiste** (verschieben, skalieren, ausblenden), **Arbeitsspeicher**, **Biom**, **Tag**, **Stoppuhr** (eigene Taste) und **Resourcepacks** mit Icon.
 - Meldet dem Launcher für den Discord-Status, ob du im Menü, im Einzelspieler oder auf einem Server bist (nur über das lokale Spiel-Log).
+
+### Cosmetics-Server
+- **Docker-Image** `ghcr.io/ydavinci/slopclient-cosmetics` mit `compose.yaml`, Anleitung in `deploy/cosmetics/`.
 
 ## 0.2.0
 
