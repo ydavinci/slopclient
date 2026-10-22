@@ -186,6 +186,9 @@ jobs:
             type=raw,value=${{ needs.version.outputs.version }}
             type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
       - uses: docker/build-push-action@v6
+        env:
+          # Its build-record artifact breaks the download of all artifacts in the release job.
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: .
           file: deploy/cosmetics/Dockerfile
