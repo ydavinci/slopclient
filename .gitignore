@@ -10,3 +10,8 @@
 /.impeccable/review
 /.impeccable/live
 /launcher/*.tsbuildinfo
+
+# Secrets and build leftovers
+cosmetics.env
+*.env
+*.tgz
