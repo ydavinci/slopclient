@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.4.1
 
 ### Client-Mod
 - Capes auf Elytren sahen aus wie zwei Platten; jetzt haben sie die Flügelform der Elytra (auch bei vorhandenen Capes und denen anderer Spieler).
