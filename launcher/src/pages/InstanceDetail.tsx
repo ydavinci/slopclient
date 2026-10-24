@@ -3,20 +3,51 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, openUrl } from "../lib/ipc";
 import { pendingIcon } from "../lib/icons";
-import { loaderLabel, playTime, relativeTime } from "../lib/format";
+import { loaderLabel, loaderName, playTime, relativeTime } from "../lib/format";
 import { useLaunch, useStore, type InstanceTab } from "../lib/store";
 import { supportsClientMod, CLIENT_MOD_MC, type BlockedFile, type ContentEntry, type ContentType, type Instance, type Source, type UpdateInfo } from "../lib/types";
 import { Button, Chip, EASE, EmptyState, Field, IconButton, InstanceIcon, PlayButton, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "../ui/kit";
 import { ShareLogButton, presetSummary } from "../ui/Modals";
 import { UpdateReview } from "../ui/UpdateReview";
+import { LoaderCard } from "../ui/LoaderCard";
+import { loaderUpdate } from "../lib/loaders";
 import { DropZone, FilePicker, ScreenshotsTab, ServersTab, WorldsTab } from "./InstanceTabs";
 
 export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: InstanceTab }) {
-  const { overview, navigate, openModal, launching, toast } = useStore();
+  const { overview, navigate, openModal, launching, toast, refresh } = useStore();
   const launch = useLaunch();
   const instance = overview?.instances.find((i) => i.id === id);
   const [tab, setTab] = useState<InstanceTab>(initialTab ?? "mods");
   const running = overview?.running.includes(id) ?? false;
+  const [newLoader, setNewLoader] = useState<string | null>(null);
+  const [updatingLoader, setUpdatingLoader] = useState(false);
+  const loaderKey = instance ? `${instance.mcVersion}:${JSON.stringify(instance.loader)}` : "";
+  useEffect(() => {
+    setNewLoader(null);
+    if (!instance) return;
+    let live = true;
+    loaderUpdate(instance)
+      .then((v) => live && setNewLoader(v))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaderKey]);
+
+  async function updateLoader() {
+    if (!instance || !newLoader || instance.loader.type === "vanilla") return;
+    setUpdatingLoader(true);
+    try {
+      await api.saveInstance({ ...instance, loader: { type: instance.loader.type, version: newLoader } });
+      await refresh();
+      toast(`${loaderName(instance.loader)} ${newLoader} wird beim nächsten Start installiert.`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setUpdatingLoader(false);
+    }
+  }
 
   useEffect(() => {
     if (running) setTab("log");
@@ -59,6 +90,22 @@ export function InstanceDetail({ id, tab: initialTab }: { id: string; tab?: Inst
             Minecraft {instance.mcVersion} · {loaderLabel(instance.loader)}
             {instance.lastPlayed ? ` · ${playTime(instance.playTimeSecs)} · zuletzt ${relativeTime(instance.lastPlayed)}` : " · noch nicht gespielt"}
           </p>
+          <AnimatePresence>
+            {newLoader && (
+              <motion.button
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                disabled={running || updatingLoader}
+                onClick={updateLoader}
+                title="Mods, Welten und Einstellungen bleiben"
+                className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-1 text-[11.5px] font-semibold text-accent-2 transition-colors duration-200 hover:bg-accent/25 disabled:opacity-50"
+              >
+                {updatingLoader ? <Spinner className="size-3" /> : <ArrowDownToLine className="size-3" />}
+                {loaderName(instance.loader)} {newLoader} verfügbar · Aktualisieren
+              </motion.button>
+            )}
+          </AnimatePresence>
         </motion.div>
         <motion.div variants={rise} className="ml-auto flex items-center gap-2">
           <Button icon={<FolderOpen className="size-4" />} onClick={() => api.instanceDir(id).then(api.openPath).catch((e) => toast(String(e), "error"))}>
@@ -542,7 +589,19 @@ function SettingsTab({ instance }: { instance: Instance }) {
   const hooks = draft.hooks ?? { preLaunch: "", postExit: "" };
   const setJava = (patch: Partial<Instance["java"]>) => setDraft({ ...draft, java: { ...java, ...patch } });
 
+  const runningGame = overview?.running.includes(instance.id) ?? false;
+  // The header's quick update changes the loader outside this form: follow it.
+  const savedLoader = JSON.stringify(instance.loader);
+  useEffect(() => {
+    setDraft((d) => ({ ...d, loader: instance.loader }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedLoader]);
+
   async function save() {
+    if (draft.loader.type !== "vanilla" && !draft.loader.version) {
+      toast("Wähle zuerst eine Loader-Version.", "error");
+      return;
+    }
     setSaving(true);
     try {
       await api.saveInstance({ ...draft, name: draft.name.trim() || instance.name, group: draft.group?.trim() || null, hooks: { preLaunch: draft.hooks?.preLaunch.trim() ?? "", postExit: draft.hooks?.postExit.trim() ?? "" }, java: { ...java, path: java.path?.trim() || null, jvmArgs: jvmArgs.split(/\s+/).filter(Boolean) } });
@@ -581,6 +640,9 @@ function SettingsTab({ instance }: { instance: Instance }) {
               ))}
             </datalist>
           </Field>
+        </motion.div>
+        <motion.div variants={rise}>
+          <LoaderCard instance={instance} loader={draft.loader} disabled={runningGame} onChange={(loader) => setDraft({ ...draft, loader })} />
         </motion.div>
         <motion.div variants={rise} className="grid grid-cols-2 gap-4">
           <Slider label="Min. Arbeitsspeicher" value={java.minMemoryMb} min={512} max={16384} onChange={(v) => setJava({ minMemoryMb: Math.min(v, java.maxMemoryMb) })} />

@@ -1,10 +1,11 @@
 import { Check, Copy, CopyPlus, ExternalLink, FileText, FileUp, Link2, PowerOff, Share2, Terminal, Upload } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LOADERS, type LoaderChoice } from "../lib/loaders";
 import { api, isTauri, openUrl, pickExportPath, pickFolder, pickModpackFile } from "../lib/ipc";
 import { loaderLabel } from "../lib/format";
 import { useStore } from "../lib/store";
-import type { CopyPart, CrashReport, DeviceCode, InstallReport, ForeignInstance, LoaderKind, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
+import type { CopyPart, CrashReport, DeviceCode, InstallReport, ForeignInstance, LoaderVersion, ManifestEntry, Platform } from "../lib/types";
 import { IconEditor } from "./IconEditor";
 import { Button, Field, Modal, Segmented, Spinner, Toggle, inputClass, rise, stagger } from "./kit";
 
@@ -195,14 +196,6 @@ const COPY_PARTS: [CopyPart, string, string][] = [
   ["shaderPacks", "Shader", "Alle Shaderpacks"],
 ];
 
-type LoaderChoice = "vanilla" | LoaderKind;
-const LOADERS: { value: LoaderChoice; label: string }[] = [
-  { value: "vanilla", label: "Vanilla" },
-  { value: "fabric", label: "Fabric" },
-  { value: "quilt", label: "Quilt" },
-  { value: "neoforge", label: "NeoForge" },
-  { value: "forge", label: "Forge" },
-];
 
 function NewInstance({ onClose }: { onClose: () => void }) {
   const { refresh, toast, navigate, select, runTask, overview } = useStore();

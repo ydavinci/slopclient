@@ -15,6 +15,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Server-Tab** pro Instanz: die Mehrspieler-Liste mit Icon, MOTD, Spielerzahl und Ping (auch über SRV-Einträge). „Beitreten“ startet das Spiel direkt auf dem Server (Quick Play), Welten lassen sich mit „Direkt spielen“ ebenso öffnen.
 - **Discord-Status**: welche Instanz du spielst, auf welchem Server oder im Einzelspieler und seit wann. Abschaltbar, die Serveradresse lässt sich ausblenden.
 - **Skins** unter Kosmetik: Bibliothek mit 3D-Vorschau, breite oder schmale Arme (wird erkannt), mit einem Klick auf den Minecraft-Account hochladen, aktuellen Skin sichern.
+- **Mod-Loader aktualisieren**: In den Instanz-Einstellungen lassen sich Loader und Version bestehender Instanzen ändern (z. B. Fabric 0.19.5 → 0.20.1); gibt es eine neuere stabile Version, zeigt die Instanz einen Hinweis mit „Aktualisieren“. Mods, Welten und Einstellungen bleiben.
 - **Changelogs vor dem Update**: „Änderungen ansehen“ zeigt bei „Alle aktualisieren“ für jeden Mod, was sich ändert.
 - **Desktop-Verknüpfung** pro Instanz mit ihrem Icon; ein Doppelklick startet die Instanz direkt, auch wenn der Launcher schon offen ist.
 - **Eigener Cosmetics-Server** wählbar unter Einstellungen → Kosmetik online. Leer gelassen bleibt es beim SlopClient-Server.

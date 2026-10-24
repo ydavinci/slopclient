@@ -78,6 +78,91 @@
         "rule": "design-system-font-size",
         "value": "30px",
         "createdAt": "2026-10-21T21:35:10.222Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "createdAt": "2026-10-22T19:00:18.938Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0)",
+        "createdAt": "2026-10-23T13:42:37.651Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.02)",
+        "createdAt": "2026-10-23T13:42:37.759Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.035)",
+        "createdAt": "2026-10-23T13:42:37.875Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.05)",
+        "createdAt": "2026-10-23T13:42:37.994Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.06)",
+        "createdAt": "2026-10-23T13:42:38.089Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.08)",
+        "createdAt": "2026-10-23T13:42:38.195Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.1)",
+        "createdAt": "2026-10-23T13:42:38.293Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.12)",
+        "createdAt": "2026-10-23T13:42:38.400Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.13)",
+        "createdAt": "2026-10-23T13:42:38.502Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.14)",
+        "createdAt": "2026-10-23T13:42:38.624Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.18)",
+        "createdAt": "2026-10-23T13:42:38.718Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.22)",
+        "createdAt": "2026-10-23T13:42:38.840Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.3)",
+        "createdAt": "2026-10-23T13:42:38.934Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.42)",
+        "createdAt": "2026-10-23T13:42:39.054Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.55)",
+        "createdAt": "2026-10-23T13:42:39.179Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(255 255 255 / 0.65)",
+        "createdAt": "2026-10-23T13:42:39.296Z"
       }
     ]
   }
