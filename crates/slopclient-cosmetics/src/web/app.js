@@ -3,11 +3,8 @@
 // preview from viewer.js (built from launcher/src/webviewer).
 "use strict";
 
-const SCALES = [1, 2, 4, 8, 16];
-const MAX_FRAMES = 128;
 const TIERS = { shoulder: "Schulter", flying: "fliegend", walking: "laufend" };
 
-let upload = null; // { image, scale, frames, dataUrl }
 let mine = { activeId: null, capes: [] };
 let catalogue = null; // { hats, pets } with the models
 let saved = { hat: null, pet: null };
@@ -74,9 +71,9 @@ async function showCape(id) {
   updateCaption();
   if (!id) return preview.setCape(null);
   if (id === "upload") {
-    if (!upload) return;
-    const frameTime = Math.max(40, Number($("cape-frame-time").value) || 100);
-    return preview.setCape(SlopViewer.capeFrames(upload.image, upload.scale, upload.frames), frameTime, $("cape-elytra").checked);
+    // The pending upload, as upload.js renders it.
+    const p = uploadPreview();
+    return p && preview.setCape(p.frames, p.frameTime, p.elytra);
   }
   const cape = mine.capes.find((c) => c.id === id);
   if (!cape) return;
@@ -229,67 +226,6 @@ async function removeCape(cape) {
   }
 }
 
-// ---------- upload ----------
-
-function pickFile() {
-  upload = null;
-  $("upload").disabled = true;
-  $("cape-preview").hidden = true;
-  const file = $("cape-file").files[0];
-  if (!file) {
-    if (previewCape === "upload") showCape(mine.activeId);
-    return;
-  }
-  if (file.size > 8 * 1024 * 1024) return toast("Die Datei ist größer als 8 MB", "err");
-  const reader = new FileReader();
-  reader.onload = async () => {
-    let img;
-    try {
-      img = await loadImage(reader.result);
-    } catch {
-      return toast("Das ist kein lesbares PNG", "err");
-    }
-    const scale = img.width / 64;
-    const frames = img.height / (32 * scale);
-    if (!SCALES.includes(scale) || !Number.isInteger(frames) || frames < 1 || frames > MAX_FRAMES) {
-      return toast(`${img.width} × ${img.height} passt nicht: Breite 64, 128, 256, 512 oder 1024 px, Höhe die Hälfte der Breite (je Bild)`, "err");
-    }
-    upload = { image: img, dataUrl: reader.result, scale, frames };
-    drawCapeFront($("cape-canvas"), img, scale);
-    $("cape-info").textContent = `${img.width} × ${img.height} px · ${frames} ${frames > 1 ? "Bilder" : "Bild"} · in der Vorschau`;
-    $("frame-time-box").hidden = frames < 2;
-    $("cape-preview").hidden = false;
-    if (!$("cape-name").value) $("cape-name").value = file.name.replace(/\.png$/i, "").slice(0, 40);
-    $("upload").disabled = false;
-    showCape("upload");
-  };
-  reader.readAsDataURL(file);
-}
-
-async function doUpload() {
-  if (!upload) return;
-  const frameTimeMs = upload.frames > 1 ? Math.max(40, Number($("cape-frame-time").value) || 100) : 0;
-  $("upload").disabled = true;
-  try {
-    const cape = await api("PUT", "v1/capes", {
-      name: $("cape-name").value.trim() || "Cape",
-      png: upload.dataUrl,
-      meta: { version: 1, frames: upload.frames, frameTimeMs, scale: upload.scale, elytra: $("cape-elytra").checked },
-      activate: true,
-    });
-    toast("Cape hochgeladen und angelegt");
-    $("cape-file").value = "";
-    $("cape-name").value = "";
-    $("cape-preview").hidden = true;
-    upload = null;
-    previewCape = cape.id;
-    await loadCapes();
-  } catch (e) {
-    toast(e.message, "err");
-    $("upload").disabled = false;
-  }
-}
-
 // ---------- hat and pet ----------
 
 function extrasTiles(kind) {
@@ -401,10 +337,6 @@ $("login-button").onclick = startLogin;
 $("copy-code").onclick = () => navigator.clipboard.writeText($("user-code").textContent).then(() => toast("Code kopiert"));
 $("logout").onclick = () => logout(false);
 $("logout-everywhere").onclick = () => logout(true);
-$("cape-file").onchange = pickFile;
-$("cape-frame-time").oninput = () => previewCape === "upload" && showCape("upload");
-$("cape-elytra").onchange = () => previewCape === "upload" && showCape("upload");
-$("upload").onclick = doUpload;
 $("save-extras").onclick = saveExtras;
 $("reset-extras").onclick = () => {
   chosen = { ...saved };

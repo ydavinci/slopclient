@@ -89,8 +89,8 @@ uid 10001; a bind mount instead of the named volume must be writable for that ui
 ## Web interface
 
 The server's root URL (`https://cosmetics.example.com/`) is a page where players manage their
-cosmetics without the launcher: upload a cape (PNG, 64 × 32 or a multiple, animations as a
-spritesheet), choose or remove the active cape, delete capes, pick hat and pet, delete the account.
+cosmetics without the launcher: upload a cape (any picture or animation such as a GIF, fitted
+into the cape like in the launcher's Cape Studio, or a finished cape texture), choose or remove the active cape, delete capes, pick hat and pet, delete the account.
 A 3D preview (the launcher's viewer, `src/web/viewer.js`) shows the player's own skin with whatever
 cape, hat or pet is clicked, before anything is saved. For it the server fetches the signed-in
 player's skin from Mojang (`GET /v1/skin`), since browsers may not use Mojang's skin images in WebGL.

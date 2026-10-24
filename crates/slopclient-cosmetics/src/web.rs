@@ -32,6 +32,7 @@ const SKIN_CACHE_MAX: usize = 2_000;
 
 const INDEX_HTML: &str = include_str!("web/index.html");
 const COMMON_JS: &str = include_str!("web/common.js");
+const UPLOAD_JS: &str = include_str!("web/upload.js");
 const APP_JS: &str = include_str!("web/app.js");
 /// 3D preview (three.js, skinview3d, hat and pet models), built from launcher/src/webviewer.
 const VIEWER_JS: &str = include_str!("web/viewer.js");
@@ -60,6 +61,7 @@ pub(crate) fn routes(s: &Shared) -> Router<Shared> {
     Router::new()
         .route("/", get(index))
         .route("/common.js", get(|| async { script(COMMON_JS) }))
+        .route("/upload.js", get(|| async { script(UPLOAD_JS) }))
         .route("/app.js", get(|| async { script(APP_JS) }))
         .route("/viewer.js", get(|| async { script(VIEWER_JS) }))
         .route("/v1/extras/catalogue", get(catalogue))

@@ -5,6 +5,7 @@
 import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
 import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, thumbnail, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
 import { fallbackSkin } from "../lib/skin";
+import { SCALES, activeFrames, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame } from "../lib/cape";
 
 export type Pose = "walk" | "fly" | "idle";
 
@@ -165,8 +166,11 @@ export class Preview {
 
 declare global {
   interface Window {
-    SlopViewer: { Preview: typeof Preview; capeFrames: typeof capeFrames; thumbnail: typeof thumbnail };
+    SlopViewer: { Preview: typeof Preview; capeFrames: typeof capeFrames; thumbnail: typeof thumbnail; cape: typeof cape };
   }
 }
 
-window.SlopViewer = { Preview, capeFrames, thumbnail };
+/** The launcher's Cape Studio conversion: any picture or animation into the cape layout. */
+const cape = { SCALES, activeFrames, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame };
+
+window.SlopViewer = { Preview, capeFrames, thumbnail, cape };

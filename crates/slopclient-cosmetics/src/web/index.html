@@ -86,6 +86,9 @@
   #toast.err { border-color: rgb(248 113 113 / 0.5); color: var(--err); }
   #toast.ok { border-color: rgb(74 222 128 / 0.4); }
   .upload-preview { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
+  .editor { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 4px 0 14px; }
+  .editor input[type=range] { padding: 0; accent-color: var(--accent); }
+  select { font: inherit; font-size: 14px; color: var(--text); background: rgb(0 0 0 / 0.3); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; width: 100%; }
   .upload-preview canvas { width: 50px; height: 80px; image-rendering: pixelated; background: rgb(0 0 0 / 0.25); border-radius: 4px; }
   footer { color: var(--dim); font-size: 12px; text-align: center; margin-top: 28px; }
   [hidden] { display: none !important; }
@@ -140,9 +143,9 @@
 
       <section>
         <h2>Cape hochladen</h2>
-        <p class="hint">PNG im Minecraft-Cape-Format: 64 × 32 Pixel oder ein Vielfaches (bis 1024 × 512). Für Animationen die Bilder untereinander als Spritesheet. Hochgeladene Capes sind sofort öffentlich; GIFs und den Editor gibt es im Launcher.</p>
+        <p class="hint">Ein Bild oder eine Animation (GIF, WebP, APNG, PNG, JPG) wird wie im Cape-Studio des Launchers auf die Cape gelegt; Ausschnitt und Tempo stellst du unten ein. Eine fertige Cape-Textur (PNG, 64 × 32 oder ein Vielfaches, Animationen als Bilder untereinander) wird unverändert übernommen. Hochgeladene Capes sind sofort öffentlich.</p>
         <div class="row">
-          <div><label for="cape-file">Datei</label><input type="file" id="cape-file" accept="image/png"></div>
+          <div><label for="cape-file">Datei</label><input type="file" id="cape-file" accept="image/gif,image/png,image/webp,image/apng,image/jpeg"></div>
           <div><label for="cape-name">Name</label><input id="cape-name" maxlength="40" placeholder="Meine Cape"></div>
         </div>
         <div class="upload-preview" id="cape-preview" hidden>
@@ -154,6 +157,15 @@
               <div><label><input type="checkbox" id="cape-elytra" checked style="width:auto"> Auch auf der Elytra</label></div>
             </div>
           </div>
+        </div>
+        <div class="editor" id="cape-edit" hidden>
+          <div><label for="edit-fit">Anpassen</label><select id="edit-fit"><option value="cover">Füllen</option><option value="contain">Einpassen</option></select></div>
+          <div><label for="edit-back">Rückseite</label><select id="edit-back"><option value="mirror">Gespiegelt</option><option value="same">Wie vorne</option></select></div>
+          <div><label for="edit-scale">Auflösung</label><select id="edit-scale"></select></div>
+          <div><label for="edit-zoom">Zoom</label><input type="range" id="edit-zoom" min="0.3" max="3" step="0.05"></div>
+          <div><label for="edit-x">Links / rechts</label><input type="range" id="edit-x" min="-1" max="1" step="0.02"></div>
+          <div><label for="edit-y">Oben / unten</label><input type="range" id="edit-y" min="-1" max="1" step="0.02"></div>
+          <div id="edit-speed-box"><label for="edit-speed">Tempo</label><input type="range" id="edit-speed" min="0.25" max="3" step="0.05"></div>
         </div>
         <button class="primary" id="upload" disabled>Hochladen und tragen</button>
       </section>
@@ -188,6 +200,7 @@
 <div id="toast" role="status"></div>
 <script src="viewer.js"></script>
 <script src="common.js"></script>
+<script src="upload.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

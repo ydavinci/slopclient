@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
+## Unveröffentlicht
+
+### Client-Mod
+- Capes auf Elytren sahen aus wie zwei Platten; jetzt haben sie die Flügelform der Elytra (auch bei vorhandenen Capes und denen anderer Spieler).
+
+### Cosmetics-Server
+- **GIFs als Cape im Webinterface**: Bilder und Animationen (GIF, WebP, APNG, PNG, JPG) werden wie im Cape-Studio des Launchers auf die Cape gelegt, mit Zoom, Ausschnitt, Rückseite, Auflösung und Tempo und live in der 3D-Vorschau. Fertige Cape-Texturen werden weiter unverändert übernommen.
+
 ## 0.4.0
 
 ### Launcher
@@ -43,7 +51,6 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Hüte und Begleiter** im Spiel, auch bei anderen Spielern: texturierte Modelle mit Animationen (Flügel, Schwanz, Beine). Laufende Begleiter folgen dir rechts hinter dir, stehen auf dem Boden und laufen mit; das Mini-Me sitzt mit deinem Skin auf der Schulter. Der Hut sitzt auf Wunsch über dem Helm.
 - **Glow**: Spieler, die du gerade siehst, leuchten mit einem weichen Umriss (Chroma, Akzent, Teamfarbe …). Hinter Wänden leuchtet niemand. Server können das Modul abschalten.
 - **Schrift überall**: Die gewählte Schrift gilt jetzt für das ganze Spiel (Chat, Menüs, Tooltips, Schilder, Nametags), abschaltbar mit „Überall im Spiel“.
-- Capes auf Elytren sahen aus wie zwei Platten; jetzt haben sie die Flügelform der Elytra (auch bei vorhandenen Capes und denen anderer Spieler).
 - Item-Zähler im HUD-Editor des Titelbildschirms ließ das Spiel abstürzen. Behoben.
 - Neue HUD-Elemente: **Kompass**, **Item-Zähler** (Pfeile, Totems, Perlen, Goldäpfel und mehr), **Combo**, **Reichweite** des letzten eigenen Treffers, **Cooldowns** mit Restzeit, **Bossleiste** (verschieben, skalieren, ausblenden), **Arbeitsspeicher**, **Biom**, **Tag**, **Stoppuhr** (eigene Taste) und **Resourcepacks** mit Icon.
 - Meldet dem Launcher für den Discord-Status, ob du im Menü, im Einzelspieler oder auf einem Server bist (nur über das lokale Spiel-Log).
