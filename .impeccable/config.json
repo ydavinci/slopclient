@@ -163,6 +163,16 @@
         "rule": "design-system-color",
         "value": "rgb(255 255 255 / 0.65)",
         "createdAt": "2026-10-23T13:42:39.296Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#fff",
+        "createdAt": "2026-10-24T19:03:14.054Z"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "999px",
+        "createdAt": "2026-10-24T19:03:14.138Z"
       }
     ]
   }

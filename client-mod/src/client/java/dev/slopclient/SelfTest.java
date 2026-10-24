@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, ELYTRA, ELYTRA_SIDE, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -199,7 +199,12 @@ final class SelfTest {
 				if (petShot >= 0) shot(mc, "12-pet-" + PET_SHOTS[petShot][0]);
 				petShot++;
 				if (petShot >= PET_SHOTS.length) {
-					next(Step.DONE, 10);
+					// The cape on elytra: wings, not two slabs.
+					System.setProperty("slopclient.pet", "");
+					mc.player.connection.sendCommand("item replace entity @s armor.chest with elytra");
+					mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+					mc.player.setXRot(10);
+					next(Step.ELYTRA, 30);
 					return;
 				}
 				System.setProperty("slopclient.pet", PET_SHOTS[petShot][0]);
@@ -207,6 +212,16 @@ final class SelfTest {
 				mc.options.setCameraType(PET_SHOTS[petShot][1].equals("front") ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
 				mc.player.setXRot(15);
 				next(Step.PETS, 40);
+			}
+			case ELYTRA -> {
+				shot(mc, "13-elytra-back");
+				mc.player.setYRot(mc.player.getYRot() + 70);
+				mc.player.setYBodyRot(mc.player.getYRot());
+				next(Step.ELYTRA_SIDE, 20);
+			}
+			case ELYTRA_SIDE -> {
+				shot(mc, "14-elytra-side");
+				next(Step.DONE, 10);
 			}
 			case DONE -> {
 				SlopClient.LOG.info("Self-test finished");

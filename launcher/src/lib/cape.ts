@@ -175,8 +175,41 @@ export function renderFrame(frame: ImageBitmap, st: EditorState, edge: string, t
     fill(FACES.elytraArea, edgeFill);
     drawFace(ctx, frame, FACES.elytraFront, s, st, false);
     drawFace(ctx, frame, FACES.elytraBack, s, st, true);
+    shapeElytra(ctx, s);
   }
   return canvas;
+}
+
+/** Wing width at `v` pixels below the top: full at the shoulder, tapering to the tip. */
+function wingWidth(v: number): number {
+  if (v < 3) return 10;
+  const t = Math.min(1, (v - 3) / 17);
+  return 10 * (1 - 0.72 * Math.pow(t, 1.5));
+}
+
+/** Whether a point (in 64 × 32 texture pixels) of the elytra area stays visible. Same as CapeAnimation.keepElytra in the mod. */
+function keepElytra(px: number, py: number): boolean {
+  if (py < 2) return px >= 24 && px < 34;
+  const v = py - 2;
+  if (px >= 24 && px < 34) return px - 24 >= 10 - wingWidth(v);
+  if (px >= 34 && px < 36) return true;
+  if (px >= 36 && px < 46) return px - 36 <= wingWidth(v);
+  return false;
+}
+
+/**
+ * The elytra model is two plain boxes; vanilla gets the wing shape from transparent
+ * pixels, so the painted area is cut into a wing silhouette here.
+ */
+function shapeElytra(ctx: CanvasRenderingContext2D, s: number) {
+  const x0 = 22 * s, w = 24 * s, h = 22 * s;
+  const img = ctx.getImageData(x0, 0, w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!keepElytra((x0 + x + 0.5) / s, (y + 0.5) / s)) img.data[(y * w + x) * 4 + 3] = 0;
+    }
+  }
+  ctx.putImageData(img, x0, 0);
 }
 
 /**

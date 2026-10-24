@@ -41,12 +41,43 @@ public final class CapeAnimation {
 		for (int i = 0; i < count; i++) {
 			NativeImage frame = new NativeImage(w, h, true);
 			sheet.copyRect(frame, 0, i * h, 0, 0, w, h, false, false);
+			if (elytra) shapeElytra(frame, scale);
 			Identifier id = Identifier.fromNamespaceAndPath(Cosmetics.NS, "cape/" + key + "/frame_" + i);
 			Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "slopclient cape " + id, frame));
 			anim.ids.add(id);
 			anim.frames.add(new ClientAsset.ResourceTexture(id, id));
 		}
 		return anim;
+	}
+
+	/**
+	 * Cuts the wing silhouette into the elytra part of the texture. The elytra model is
+	 * two plain boxes; vanilla gets the wing shape from transparent pixels, so a fully
+	 * painted area would show as two slabs. Same shape as cape.ts in the launcher.
+	 */
+	static void shapeElytra(NativeImage img, int scale) {
+		for (int y = 0; y < 22 * scale; y++) {
+			for (int x = 22 * scale; x < 46 * scale; x++) {
+				if (!keepElytra((x + 0.5f) / scale, (y + 0.5f) / scale)) img.setPixel(x, y, 0);
+			}
+		}
+	}
+
+	/** Wing width at v pixels below the top: full at the shoulder, tapering to the tip. */
+	private static float wingWidth(float v) {
+		if (v < 3) return 10;
+		float t = Math.min(1, (v - 3) / 17f);
+		return 10 * (1 - 0.72f * (float) Math.pow(t, 1.5));
+	}
+
+	/** Whether a point (in 64 × 32 texture pixels) of the elytra area stays visible. */
+	static boolean keepElytra(float px, float py) {
+		if (py < 2) return px >= 24 && px < 34; // top face; the bottom face (34..44) is hidden
+		float v = py - 2;
+		if (px >= 24 && px < 34) return px - 24 >= 10 - wingWidth(v); // front: inner edge at the right
+		if (px >= 34 && px < 36) return true; // inner side
+		if (px >= 36 && px < 46) return px - 36 <= wingWidth(v); // back: mirrored
+		return false; // outer side face
 	}
 
 	public int frameCount() {
