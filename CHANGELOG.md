@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
+## Unveröffentlicht
+
+### Launcher
+- **Capes mit umlaufendem Bild**: Im Cape-Studio läuft das Motiv jetzt über die Seiten, die Ober- und die Unterkante der Cape (und die Ränder der Elytra), statt dass sie eine einzige, oft dunkle Farbe bekommen. Neuer Standard „Bild umlaufend“; die Randfarbe lässt sich weiter wählen. Vorhandene Capes ändern sich erst, wenn man sie damit neu speichert.
+
+### Cosmetics-Server
+- Beim Hochladen von Bildern und GIFs im Webinterface gibt es dieselbe Wahl unter „Ränder“, ebenfalls mit „Bild umlaufend“ als Standard.
+
 ## 0.4.1
 
 ### Client-Mod

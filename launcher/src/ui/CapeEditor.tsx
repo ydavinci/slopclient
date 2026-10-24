@@ -174,8 +174,8 @@ export function CapeEditor({ target, onDone }: { target: EditTarget; onDone: (sa
               {st.back === "color" && <ColorInput value={st.backColor} onChange={(backColor) => set({ backColor })} label="Farbe der Rückseite" />}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Segmented value={st.edge} onChange={(edge) => set({ edge })} options={[{ value: "auto", label: "Ränder automatisch" }, { value: "color", label: "Eigene Farbe" }]} />
-              {st.edge === "color" ? <ColorInput value={st.edgeColor} onChange={(edgeColor) => set({ edgeColor })} label="Randfarbe" /> : <span className="size-5 rounded-md border border-line-2" style={{ background: autoEdge }} />}
+              <Segmented value={st.edge} onChange={(edge) => set({ edge })} options={[{ value: "wrap", label: "Bild umlaufend" }, { value: "auto", label: "Ränder automatisch" }, { value: "color", label: "Eigene Farbe" }]} />
+              {st.edge === "color" ? <ColorInput value={st.edgeColor} onChange={(edgeColor) => set({ edgeColor })} label="Randfarbe" /> : st.edge === "auto" && <span className="size-5 rounded-md border border-line-2" style={{ background: autoEdge }} />}
             </div>
             <label className="flex items-center justify-between gap-3 text-[13px]">
               <span>

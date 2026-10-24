@@ -88,6 +88,7 @@ function fillEditor(source, state) {
   scales.value = String(state.scale);
   $("edit-fit").value = state.fit;
   $("edit-back").value = state.back;
+  $("edit-edge").value = state.edge;
   $("edit-zoom").value = String(state.zoom);
   $("edit-x").value = String(state.offsetX);
   $("edit-y").value = String(state.offsetY);
@@ -103,6 +104,7 @@ function editChanged() {
   st.scale = Number($("edit-scale").value);
   st.fit = $("edit-fit").value;
   st.back = $("edit-back").value;
+  st.edge = $("edit-edge").value;
   st.zoom = Number($("edit-zoom").value);
   st.offsetX = Number($("edit-x").value);
   st.offsetY = Number($("edit-y").value);
@@ -172,6 +174,6 @@ async function doUpload() {
 
 $("cape-file").onchange = pickFile;
 $("upload").onclick = doUpload;
-for (const id of ["edit-scale", "edit-fit", "edit-back", "edit-zoom", "edit-x", "edit-y", "edit-speed"]) $(id).oninput = editChanged;
+for (const id of ["edit-scale", "edit-fit", "edit-back", "edit-edge", "edit-zoom", "edit-x", "edit-y", "edit-speed"]) $(id).oninput = editChanged;
 $("cape-elytra").onchange = () => (upload && upload.kind === "convert" ? editChanged() : previewCape === "upload" && showCape("upload"));
 $("cape-frame-time").oninput = () => previewCape === "upload" && showCape("upload");

@@ -38,7 +38,8 @@ export interface EditorState {
   fit: "cover" | "contain";
   back: "mirror" | "same" | "color";
   backColor: string;
-  edge: "auto" | "color";
+  /** "wrap": the picture runs on over the cape's sides, top and bottom; otherwise they get one colour. */
+  edge: "wrap" | "auto" | "color";
   edgeColor: string;
   elytra: boolean;
   trimStart: number;
@@ -56,7 +57,7 @@ export function defaultState(source: Source): EditorState {
     fit: "cover",
     back: "mirror",
     backColor: "#15121f",
-    edge: "auto",
+    edge: "wrap",
     edgeColor: "#15121f",
     elytra: true,
     trimStart: 0,
@@ -126,24 +127,63 @@ export function edgeColor(frame: ImageBitmap): string {
   return `#${hex(r)}${hex(g)}${hex(b)}`;
 }
 
-/** Draws `frame` into a face with the editor's zoom, offset, rotation and fit, clipped to it. */
-function drawFace(ctx: CanvasRenderingContext2D, frame: ImageBitmap, face: { x: number; y: number; w: number; h: number }, s: number, st: EditorState, mirror: boolean) {
-  const fx = face.x * s, fy = face.y * s, fw = face.w * s, fh = face.h * s;
+type Rect = { x: number; y: number; w: number; h: number };
+
+/**
+ * Draws `frame` into a face with the editor's zoom, offset, rotation and fit, clipped to it.
+ * With `bleed` the picture is laid out on the face grown by that many pixels on every side
+ * (the box's edges around it), so the same crop fits the wrapped front.
+ */
+function drawFace(ctx: CanvasRenderingContext2D, frame: ImageBitmap, face: Rect, s: number, st: EditorState, mirror: boolean, bleed = 0) {
+  const fx = face.x * s, fy = face.y * s;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(fx, fy, face.w * s, face.h * s);
+  ctx.clip();
+  layout(ctx, frame, { x: face.x - bleed, y: face.y - bleed, w: face.w + 2 * bleed, h: face.h + 2 * bleed }, s, st, mirror);
+  ctx.restore();
+}
+
+/** Draws `frame` laid out on `area` (texture pixels), without clipping. */
+function layout(ctx: CanvasRenderingContext2D, frame: ImageBitmap, area: Rect, s: number, st: EditorState, mirror: boolean) {
+  const fx = area.x * s, fy = area.y * s, fw = area.w * s, fh = area.h * s;
   const rotated = st.rotation === 90 || st.rotation === 270;
   const iw = rotated ? frame.height : frame.width;
   const ih = rotated ? frame.width : frame.height;
   const base = st.fit === "cover" ? Math.max(fw / iw, fh / ih) : Math.min(fw / iw, fh / ih);
   const k = base * st.zoom;
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(fx, fy, fw, fh);
-  ctx.clip();
   ctx.translate(fx + fw / 2 + st.offsetX * fw * (mirror ? -1 : 1), fy + fh / 2 + st.offsetY * fh);
   if (mirror) ctx.scale(-1, 1);
   ctx.rotate((st.rotation * Math.PI) / 180);
   ctx.scale(k, k);
   ctx.drawImage(frame, -frame.width / 2, -frame.height / 2);
   ctx.restore();
+}
+
+/**
+ * Draws the picture over a box's front face and on over its four edges (depth `d`), like
+ * one sheet wrapped around it: the sides next to the front, the top above it and the
+ * bottom (Minecraft's box UV, whose bottom face is flipped so its last row meets the front).
+ */
+function drawWrapped(ctx: CanvasRenderingContext2D, frame: ImageBitmap, front: Rect, d: number, s: number, st: EditorState) {
+  const w = front.w, h = front.h;
+  const sheet = document.createElement("canvas");
+  sheet.width = (w + 2 * d) * s;
+  sheet.height = (h + 2 * d) * s;
+  const sc = sheet.getContext("2d")!;
+  sc.imageSmoothingEnabled = ctx.imageSmoothingEnabled;
+  sc.imageSmoothingQuality = "high";
+  layout(sc, frame, { x: 0, y: 0, w: w + 2 * d, h: h + 2 * d }, s, st, false);
+  const copy = (sx: number, sy: number, sw: number, sh: number, dx: number, dy: number) => {
+    ctx.drawImage(sheet, sx * s, sy * s, sw * s, sh * s, dx * s, dy * s, sw * s, sh * s);
+  };
+  // Left side, front, right side.
+  copy(0, d, w + 2 * d, h, front.x - d, front.y);
+  // Top, row by row so the one next to the front stays next to it.
+  copy(d, 0, w, d, front.x, front.y - d);
+  // Bottom: flipped, its last texture row meets the front's bottom edge.
+  for (let r = 0; r < d; r++) copy(d, h + d + r, w, 1, front.x + w, front.y - 1 - r);
 }
 
 /** Renders one frame as a 64·s × 32·s cape texture. */
@@ -167,14 +207,18 @@ export function renderFrame(frame: ImageBitmap, st: EditorState, edge: string, t
   ctx.clearRect(0, 0, 1 * s, 1 * s);
   ctx.clearRect(21 * s, 0, 1 * s, 1 * s);
 
-  drawFace(ctx, frame, FACES.front, s, st, false);
+  // Wrapped, the picture is laid out on the front plus its edges, and the back keeps the same crop.
+  const wrap = st.edge === "wrap";
+  if (wrap) drawWrapped(ctx, frame, FACES.front, 1, s, st);
+  else drawFace(ctx, frame, FACES.front, s, st, false);
   if (st.back === "color") fill(FACES.back, st.backColor);
-  else drawFace(ctx, frame, FACES.back, s, st, st.back === "mirror");
+  else drawFace(ctx, frame, FACES.back, s, st, st.back === "mirror", wrap ? 1 : 0);
 
   if (st.elytra) {
     fill(FACES.elytraArea, edgeFill);
-    drawFace(ctx, frame, FACES.elytraFront, s, st, false);
-    drawFace(ctx, frame, FACES.elytraBack, s, st, true);
+    if (wrap) drawWrapped(ctx, frame, FACES.elytraFront, 2, s, st);
+    else drawFace(ctx, frame, FACES.elytraFront, s, st, false);
+    drawFace(ctx, frame, FACES.elytraBack, s, st, true, wrap ? 2 : 0);
     shapeElytra(ctx, s);
   }
   return canvas;
