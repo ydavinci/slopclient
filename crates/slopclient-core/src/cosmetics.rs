@@ -97,10 +97,19 @@ pub fn validate(png: &[u8], meta: &CapeMeta) -> Result<Vec<u8>> {
     if png.len() > MAX_BYTES {
         return Err(Error::Other(format!("the cape is larger than {} MB", MAX_BYTES / 1024 / 1024)));
     }
-    let img = ImageReader::with_format(std::io::Cursor::new(png), ImageFormat::Png)
-        .decode()
-        .map_err(|e| Error::Other(format!("the cape is not a valid PNG: {e}")))?;
     let (w, h) = (BASE_WIDTH * meta.scale, BASE_HEIGHT * meta.scale * meta.frames);
+    // The size comes from the PNG header and is checked before anything is decoded, so a
+    // small file claiming a huge image cannot make us allocate gigabytes.
+    let mut reader = ImageReader::with_format(std::io::Cursor::new(png), ImageFormat::Png);
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(w);
+    limits.max_image_height = Some(h);
+    limits.max_alloc = Some(u64::from(w) * u64::from(h) * 8 + 16 * 1024 * 1024);
+    reader.limits(limits);
+    let img = reader.decode().map_err(|e| match e {
+        image::ImageError::Limits(_) => Error::Other(format!("expected a {w} × {h} spritesheet for {} frames at scale {}", meta.frames, meta.scale)),
+        e => Error::Other(format!("the cape is not a valid PNG: {e}")),
+    })?;
     if img.width() != w || img.height() != h {
         return Err(Error::Other(format!(
             "expected a {w} × {h} spritesheet for {} frames at scale {}, got {} × {}",
@@ -112,7 +121,7 @@ pub fn validate(png: &[u8], meta: &CapeMeta) -> Result<Vec<u8>> {
     }
     // Best compression keeps the re-encoded sheet close to the editor's own export,
     // so the size the editor showed still holds.
-    let rgba = img.to_rgba8();
+    let rgba = img.into_rgba8();
     let mut out = Vec::new();
     PngEncoder::new_with_quality(&mut out, CompressionType::Best, FilterType::Adaptive)
         .write_image(&rgba, rgba.width(), rgba.height(), ExtendedColorType::Rgba8)

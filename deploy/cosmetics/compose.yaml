@@ -6,6 +6,8 @@ services:
     environment:
       SLOPCLIENT_COSMETICS_PUBLIC_URL: https://cosmetics.example.com
       SLOPCLIENT_COSMETICS_ADMIN_TOKEN: ${SLOPCLIENT_COSMETICS_ADMIN_TOKEN:-}
+      # Requests arrive from Caddy: rate limits use the client address it forwards.
+      SLOPCLIENT_COSMETICS_TRUST_PROXY: "1"
     volumes:
       - cosmetics-data:/data
     # Only on localhost: Caddy (Caddyfile next to this file) terminates HTTPS in front of it.

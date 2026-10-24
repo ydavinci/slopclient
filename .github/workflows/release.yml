@@ -66,6 +66,14 @@ jobs:
             client-mod/build/libs/slopclient-*.jar
             !client-mod/build/libs/*-sources.jar
           if-no-files-found: error
+      # Separate artifact: the launcher build embeds whatever jar lies in client-mod/build/libs.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cosmetics-mod
+          path: |
+            client-mod/cosmetics/build/libs/slopclient-cosmetics-mod-*.jar
+            !client-mod/cosmetics/build/libs/*-sources.jar
+          if-no-files-found: error
 
   launcher:
     needs: client-mod

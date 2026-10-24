@@ -3,7 +3,6 @@ package dev.slopclient.cosmetics;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
-import dev.slopclient.SlopClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import net.fabricmc.loader.api.FabricLoader;
@@ -39,9 +38,9 @@ public final class CapeTextures {
 			try (NativeImage sheet = NativeImage.read(Files.readAllBytes(png))) {
 				local = CapeAnimation.fromSheet(sheet, "local", frames, scale, frameTime, elytra, false);
 			}
-			SlopClient.LOG.info("Loaded cape with {} frames ({} ms) at {}x", frames, frameTime, scale);
+			Cosmetics.LOG.info("Loaded cape with {} frames ({} ms) at {}x", frames, frameTime, scale);
 		} catch (Exception e) {
-			SlopClient.LOG.warn("Could not load the SlopClient cape from {}", dir(), e);
+			Cosmetics.LOG.warn("Could not load the SlopClient cape from {}", dir(), e);
 			local = null;
 		}
 	}

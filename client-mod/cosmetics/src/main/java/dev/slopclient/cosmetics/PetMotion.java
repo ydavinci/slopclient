@@ -43,7 +43,7 @@ public final class PetMotion {
 		Set<Integer> seen = new HashSet<>();
 		for (AbstractClientPlayer player : mc.level.players()) {
 			boolean self = player == mc.player;
-			Pets.Pet pet = Extras.pet(self ? Extras.ownPet() : RemoteCapes.pet(player.getUUID()));
+			Pets.Pet pet = Extras.petOf(player, self);
 			if (pet == null || pet.tier() != Pets.Tier.WALKING) continue;
 			seen.add(player.getId());
 			step(mc, states.computeIfAbsent(player.getId(), id -> new State()), player);

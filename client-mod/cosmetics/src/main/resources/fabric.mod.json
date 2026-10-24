@@ -1,0 +1,26 @@
+{
+	"schemaVersion": 1,
+	"id": "slopclient_cosmetics",
+	"version": "${version}",
+	"name": "SlopClient Cosmetics",
+	"description": "Capes, hats and pets of SlopClient players, also without the SlopClient client. Settings in config/slopclient-cosmetics.json.",
+	"icon": "assets/slopclient_cosmetics/icon.png",
+	"authors": ["SlopClient"],
+	"contact": {
+		"sources": "https://github.com/ydavinci/slopclient"
+	},
+	"license": "EPL-2.0",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["dev.slopclient.cosmetics.Cosmetics"]
+	},
+	"mixins": [
+		{ "config": "slopclient_cosmetics.mixins.json", "environment": "client" }
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

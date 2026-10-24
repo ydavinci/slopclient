@@ -16,6 +16,7 @@ sha2 = "0.10"
 hex.workspace = true
 base64 = "0.22"
 getrandom = "0.2"
+tower-http = { version = "0.6", features = ["timeout", "set-header"] }
 
 [dev-dependencies]
 image.workspace = true

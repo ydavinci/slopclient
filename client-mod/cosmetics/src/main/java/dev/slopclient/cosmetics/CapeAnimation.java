@@ -1,7 +1,6 @@
 package dev.slopclient.cosmetics;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import dev.slopclient.SlopClient;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -42,7 +41,7 @@ public final class CapeAnimation {
 		for (int i = 0; i < count; i++) {
 			NativeImage frame = new NativeImage(w, h, true);
 			sheet.copyRect(frame, 0, i * h, 0, 0, w, h, false, false);
-			Identifier id = Identifier.fromNamespaceAndPath(SlopClient.ID, "cape/" + key + "/frame_" + i);
+			Identifier id = Identifier.fromNamespaceAndPath(Cosmetics.NS, "cape/" + key + "/frame_" + i);
 			Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "slopclient cape " + id, frame));
 			anim.ids.add(id);
 			anim.frames.add(new ClientAsset.ResourceTexture(id, id));

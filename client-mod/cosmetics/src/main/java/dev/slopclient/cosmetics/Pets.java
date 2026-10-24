@@ -6,8 +6,6 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import dev.slopclient.SlopClient;
-import dev.slopclient.render.Theme;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.resources.Identifier;
@@ -41,7 +39,7 @@ public final class Pets {
 			default -> Tier.SHOULDER;
 		};
 		boolean minime = o.has("special") && o.get("special").getAsString().equals("minime");
-		Identifier texture = o.has("texture") ? Identifier.fromNamespaceAndPath(SlopClient.ID, "textures/pets/" + o.get("texture").getAsString()) : Extras.TEXTURE;
+		Identifier texture = o.has("texture") ? Identifier.fromNamespaceAndPath(Cosmetics.NS, "textures/pets/" + o.get("texture").getAsString()) : Extras.TEXTURE;
 		int texW = 64, texH = 64;
 		if (o.has("textureSize")) {
 			texW = o.getAsJsonArray("textureSize").get(0).getAsInt();
@@ -171,9 +169,9 @@ public final class Pets {
 
 	private static int rgb(String spec, double phase) {
 		return switch (spec) {
-			case "accent" -> Theme.ACCENT & 0xFFFFFF;
-			case "accent2" -> Theme.ACCENT_2 & 0xFFFFFF;
-			case "chroma" -> Theme.chroma(phase) & 0xFFFFFF;
+			case "accent" -> Cosmetics.settings().accent() & 0xFFFFFF;
+			case "accent2" -> Cosmetics.settings().accent2() & 0xFFFFFF;
+			case "chroma" -> Cosmetics.settings().chroma(phase) & 0xFFFFFF;
 			default -> {
 				try {
 					yield Integer.parseInt(spec.substring(1), 16);

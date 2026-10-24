@@ -1,7 +1,7 @@
 package dev.slopclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.slopclient.cosmetics.RemoteCapes;
+import dev.slopclient.cosmetics.Cosmetics;
 import dev.slopclient.cosmetics.karambit.KarambitModels;
 import dev.slopclient.gui.ClickGuiScreen;
 import dev.slopclient.hud.HudModule;
@@ -9,7 +9,6 @@ import dev.slopclient.module.ModuleManager;
 import dev.slopclient.render.MenuShader;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -70,6 +69,8 @@ public final class SlopClient implements ClientModInitializer {
 		modules = new ModuleManager();
 		config = new Config();
 		config.load(modules);
+		// The bundled cosmetics mod renders and ticks itself; it only needs our settings.
+		Cosmetics.use(new ClientCosmetics());
 
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(ID, "main"));
 		clickGuiKey = KeyMappingHelper.registerKeyMapping(
@@ -82,11 +83,6 @@ public final class SlopClient implements ClientModInitializer {
 		modules.karambit.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.inspect", InputConstants.KEY_V, category)));
 		KarambitModels.register();
-		net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
-			if (renderer instanceof net.minecraft.client.renderer.entity.player.AvatarRenderer<?> avatar) {
-				helper.register(new dev.slopclient.cosmetics.ExtrasLayer(avatar));
-			}
-		});
 		KeyMapping screenshotKey = KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.screenshot", InputConstants.UNKNOWN.getValue(), category));
 		modules.stopwatch.bind(KeyMappingHelper.registerKeyMapping(
@@ -95,7 +91,6 @@ public final class SlopClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) ->
 			level.isClientSide() ? dev.slopclient.hud.InfoHud.Hits.attacked(entity) : net.minecraft.world.InteractionResult.PASS);
 		ServerRules.register();
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> RemoteCapes.clear());
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (screenshotKey.consumeClick()) modules.screenshots.openLatest();
@@ -103,10 +98,8 @@ public final class SlopClient implements ClientModInitializer {
 				if (mc.gui.screen() == null) mc.gui.setScreen(new ClickGuiScreen(null));
 			}
 			modules.tick(mc);
-			RemoteCapes.tick(mc);
 			Presence.tick(mc);
 			dev.slopclient.hud.InfoHud.Hits.tick(mc);
-			dev.slopclient.cosmetics.PetMotion.tick(mc);
 			if (SelfTest.enabled()) SelfTest.tick(mc);
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {

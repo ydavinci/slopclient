@@ -23,6 +23,7 @@
 |---|---|---|
 | **Launcher** | [`SlopClient_<version>_x64-setup.exe`](https://github.com/ydavinci/slopclient/releases/latest) | Windows 10/11, enthält den Client-Mod |
 | Client-Mod einzeln | `slopclient-<version>.jar` | Fabric/Quilt, Minecraft 26.3, für andere Launcher |
+| Nur Kosmetik | `slopclient-cosmetics-mod-<version>.jar` | Capes, Hüte und Begleiter ohne den Client, in jedem Fabric-Launcher ([mehr](#nur-die-kosmetik-als-mod)) |
 | Cosmetics-Server | `ghcr.io/ydavinci/slopclient-cosmetics` | eigener Server für Capes, Hüte und Begleiter ([Anleitung](deploy/cosmetics/README.md)) |
 
 Installer starten, mit dem Microsoft-Konto anmelden, Instanz anlegen, spielen. Der Launcher legt den Client-Mod
@@ -60,6 +61,28 @@ automatisch in passende Instanzen (pro Instanz abschaltbar).
 
 **Fair Play:** SlopClient bietet HUD, Komfort, Performance und Kosmetik, aber keine Vorteile im Kampf.
 
+## Nur die Kosmetik als Mod
+
+`slopclient-cosmetics-mod-<version>.jar` zeigt Capes, Hüte und Begleiter von SlopClient-Spielern auch ohne den
+SlopClient-Client, in jedem Launcher: zusammen mit [Fabric API](https://modrinth.com/mod/fabric-api) in den
+`mods`-Ordner einer Fabric-Instanz für Minecraft 26.3 legen. Du siehst dann die Kosmetik aller Spieler, die auf dem
+Cosmetics-Server angemeldet sind, auch deine eigene.
+
+Einstellungen stehen in `config/slopclient-cosmetics.json` (wird beim ersten Start angelegt):
+
+| Schlüssel | Standard | Bedeutung |
+|---|---|---|
+| `server` | `https://cosmetics.ydavinci.me` | Cosmetics-Server; leer schaltet die Online-Kosmetik ab |
+| `capes`, `capesOfOthers` | `true` | Capes überhaupt / auch bei anderen |
+| `capesOverMojang` | `true` | SlopClient-Cape statt Mojang-Cape zeigen |
+| `animateCapes`, `capesAsElytra` | `true` | animierte Capes, Cape auch auf der Elytra |
+| `hatsAndPets`, `hatsAndPetsOfOthers` | `true` | Hüte und Begleiter / auch bei anderen |
+| `hideHatWithHelmet` | `false` | Hut ausblenden, wenn ein Helm getragen wird |
+
+Die eigene Kosmetik suchst du im Launcher aus oder im Browser auf der Seite des Cosmetics-Servers
+(z. B. `https://cosmetics.ydavinci.me/`, Anmeldung mit Microsoft).
+Der SlopClient-Client enthält diese Mod bereits; beide zusammen zu installieren schadet nicht.
+
 ## Eigener Cosmetics-Server
 
 Der Server (`crates/slopclient-cosmetics`) speichert Capes, Hüte und Begleiter pro Minecraft-Account.
@@ -71,7 +94,8 @@ docker run -d -p 127.0.0.1:8787:8787 -v slopclient-cosmetics:/data \
   ghcr.io/ydavinci/slopclient-cosmetics:latest
 ```
 
-HTTPS, Compose, Konfiguration, Moderation und Backups: [deploy/cosmetics/README.md](deploy/cosmetics/README.md).
+Unter der Server-Adresse liegt ein Webinterface, in dem Spieler ihre Kosmetik ohne Launcher verwalten.
+HTTPS, Compose, Konfiguration, Webinterface, Moderation und Backups: [deploy/cosmetics/README.md](deploy/cosmetics/README.md).
 
 ## Selbst bauen
 
@@ -93,6 +117,10 @@ cargo build --release -p slopclient-cosmetics
 
 Tests: `cargo test --workspace`.
 
+Die 3D-Vorschau im Webinterface des Cosmetics-Servers ist der Viewer des Launchers
+(`launcher/src/webviewer/`), gebaut nach `crates/slopclient-cosmetics/src/web/viewer.js`. Nach Änderungen an
+`launcher/src/lib/extras.ts` oder `cosmetics/` in `launcher/` neu bauen: `npm run build:viewer`.
+
 ### Projektstruktur
 
 | Ordner | Inhalt |
@@ -102,6 +130,7 @@ Tests: `cargo test --workspace`.
 | `crates/slopclient-cosmetics` | Cosmetics-Server (axum + SQLite) |
 | `launcher/` | Launcher-Oberfläche (Tauri 2 + React) |
 | `client-mod/` | In-Game-Client (Fabric) |
+| `client-mod/cosmetics/` | Kosmetik-Mod (Capes, Hüte, Begleiter), im Client enthalten und einzeln nutzbar |
 | `cosmetics/` | Katalog der Hüte und Begleiter, geteilt von Launcher, Mod und Server |
 | `deploy/cosmetics/` | Docker, Compose, systemd und Caddy für den Server |
 | `web/` | Projekt-Website (Astro) |

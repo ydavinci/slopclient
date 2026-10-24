@@ -2,7 +2,6 @@ package dev.slopclient.cosmetics;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import dev.slopclient.SlopClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -29,23 +28,23 @@ public final class ExtrasLayer extends RenderLayer<AvatarRenderState, PlayerMode
 
 	@Override
 	public void submit(PoseStack pose, SubmitNodeCollector collector, int light, AvatarRenderState state, float yRot, float xRot) {
-		if (!SlopClient.ready() || state.isInvisible) return;
-		var module = SlopClient.modules().extras;
-		if (!module.active()) return;
+		if (state.isInvisible) return;
+		CosmeticsSettings settings = Cosmetics.settings();
+		if (!settings.extras()) return;
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.level == null || !(mc.level.getEntity(state.id) instanceof AbstractClientPlayer player)) return;
 
 		boolean self = player == mc.player;
-		if (!self && !module.others.on()) return;
-		Extras.Model hat = Extras.hat(self ? Extras.ownHat() : RemoteCapes.hat(player.getUUID()));
-		Pets.Pet pet = Extras.pet(self ? Extras.ownPet() : RemoteCapes.pet(player.getUUID()));
+		if (!self && !settings.extrasOfOthers()) return;
+		Extras.Model hat = Extras.hatOf(player, self);
+		Pets.Pet pet = Extras.petOf(player, self);
 		if (hat == null && pet == null) return;
 
 		int overlay = LivingEntityRenderer.getOverlayCoords(state, 0);
 		double phase = state.ageInTicks / 60.0;
 
 		// A helmet covers the head: the hat sits on top of it instead.
-		if (hat != null && !(module.hideWithHelmet.on() && !state.headEquipment.isEmpty())) {
+		if (hat != null && !(settings.hideHatWithHelmet() && !state.headEquipment.isEmpty())) {
 			pose.pushPose();
 			getParentModel().head.translateAndRotate(pose);
 			if (!state.headEquipment.isEmpty()) pose.scale(1.15f, 1.15f, 1.15f);

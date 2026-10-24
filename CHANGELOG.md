@@ -2,6 +2,25 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
+## 0.4.0
+
+### Launcher
+- **Mod-Loader aktualisieren**: In den Instanz-Einstellungen lassen sich Loader und Version bestehender Instanzen ändern (z. B. Fabric 0.19.5 → 0.20.1); gibt es eine neuere stabile Version, zeigt die Instanz einen Hinweis mit „Aktualisieren“. Mods, Welten und Einstellungen bleiben.
+
+### Cosmetics-Server
+- **Sicherheit** nach einer Prüfung des Servers:
+  - Anmeldungen sind an die Server-Adresse gebunden. Ein fremder Cosmetics-Server kann eine Anmeldung nicht mehr an den SlopClient-Server weiterreichen und so ein Konto übernehmen. **Launcher vor dieser Version können sich nicht mehr anmelden** (Capes anderer sehen geht weiter).
+  - Präparierte PNGs mit riesiger angegebener Größe werden vor dem Entpacken abgelehnt; höchstens zwei Bildprüfungen gleichzeitig.
+  - Rate-Limits pro Client und Konto, kleine Request-Größen außer beim Upload (dort erst nach der Anmeldung), Timeouts.
+  - Echte Abmeldung (auch „überall abmelden“), Web-Anmeldungen gelten 7 Tage, höchstens 20 Anmeldungen pro Konto.
+  - `DEV_AUTH` startet nur noch auf localhost und wird nicht mehr aus alten `DACLIENT_*`-Variablen übernommen; Admin-Token brauchen mindestens 24 Zeichen.
+  - Moderation: eine Meldung pro Spieler und Cape, Meldungen nach Cape gruppiert; ausgeblendete Bilder werden nicht mehr ausgeliefert und lassen sich nicht erneut hochladen.
+  - Skin-Abruf folgt keinen Weiterleitungen mehr, engere Content-Security-Policy, `no-store` für Kontodaten.
+- **Webinterface** unter der Server-Adresse: Capes hochladen, tragen, ablegen und löschen, Hut und Begleiter wählen, Konto löschen, ganz ohne Launcher. Mit **3D-Vorschau** wie im Launcher: deine Figur mit deinem Skin zeigt jede angeklickte Cape, jeden Hut und Begleiter sofort, auch eine Cape vor dem Hochladen; gehend, stehend oder mit Elytra. Anmeldung mit Microsoft per Code wie im Launcher; der Server liest damit nur den Minecraft-Account und speichert keine Microsoft-Daten. Abschaltbar mit `SLOPCLIENT_COSMETICS_WEB_LOGIN=0`.
+
+### Kosmetik-Mod
+- **Capes, Hüte und Begleiter als eigene Mod** (`slopclient-cosmetics-mod`): zeigt die SlopClient-Kosmetik auch ohne den Client, in jedem Fabric-Launcher. Einstellungen in `config/slopclient-cosmetics.json`. Der Client enthält die Mod und verhält sich wie bisher.
+
 ## 0.3.0
 
 ### Neuer Name: SlopClient
@@ -15,7 +34,6 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Server-Tab** pro Instanz: die Mehrspieler-Liste mit Icon, MOTD, Spielerzahl und Ping (auch über SRV-Einträge). „Beitreten“ startet das Spiel direkt auf dem Server (Quick Play), Welten lassen sich mit „Direkt spielen“ ebenso öffnen.
 - **Discord-Status**: welche Instanz du spielst, auf welchem Server oder im Einzelspieler und seit wann. Abschaltbar, die Serveradresse lässt sich ausblenden.
 - **Skins** unter Kosmetik: Bibliothek mit 3D-Vorschau, breite oder schmale Arme (wird erkannt), mit einem Klick auf den Minecraft-Account hochladen, aktuellen Skin sichern.
-- **Mod-Loader aktualisieren**: In den Instanz-Einstellungen lassen sich Loader und Version bestehender Instanzen ändern (z. B. Fabric 0.19.5 → 0.20.1); gibt es eine neuere stabile Version, zeigt die Instanz einen Hinweis mit „Aktualisieren“. Mods, Welten und Einstellungen bleiben.
 - **Changelogs vor dem Update**: „Änderungen ansehen“ zeigt bei „Alle aktualisieren“ für jeden Mod, was sich ändert.
 - **Desktop-Verknüpfung** pro Instanz mit ihrem Icon; ein Doppelklick startet die Instanz direkt, auch wenn der Launcher schon offen ist.
 - **Eigener Cosmetics-Server** wählbar unter Einstellungen → Kosmetik online. Leer gelassen bleibt es beim SlopClient-Server.

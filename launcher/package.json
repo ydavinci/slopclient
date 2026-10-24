@@ -1,13 +1,14 @@
 {
   "name": "slopclient-launcher",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:viewer": "vite build --config vite.viewer.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.2.0",

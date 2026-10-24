@@ -1,0 +1,42 @@
+// SlopClient Cosmetics: capes, hats and pets as a mod of their own. The SlopClient mod
+// (the parent project) bundles it; it also runs alone, without the client.
+plugins {
+	id 'net.fabricmc.fabric-loom'
+}
+
+base {
+	archivesName = "slopclient-cosmetics-mod"
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+
+	// Hats and pets: the catalogue lives at the repository root, shared with launcher and server.
+	from("../../cosmetics/extras.json") {
+		into "assets/slopclient/cosmetics"
+	}
+	from("../../cosmetics/pets") {
+		into "assets/slopclient/textures/pets"
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = "UTF-8"
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}

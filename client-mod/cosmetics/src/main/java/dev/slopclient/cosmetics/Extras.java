@@ -6,8 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.slopclient.SlopClient;
-import dev.slopclient.render.Theme;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -15,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 
@@ -24,7 +23,7 @@ import net.minecraft.util.LightCoordsUtil;
  * boxes ignore the world light.
  */
 public final class Extras {
-	public static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(SlopClient.ID, "textures/misc/extras.png");
+	public static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Cosmetics.NS, "textures/misc/extras.png");
 
 	/** One box: corners in pixels, colour spec (#rrggbb, accent, accent2, chroma), glow. */
 	record Box(float x1, float y1, float z1, float x2, float y2, float z2, String color, boolean glow) {
@@ -43,7 +42,7 @@ public final class Extras {
 		if (hats != null) return;
 		hats = new HashMap<>();
 		pets = new HashMap<>();
-		Identifier id = Identifier.fromNamespaceAndPath(SlopClient.ID, "cosmetics/extras.json");
+		Identifier id = Identifier.fromNamespaceAndPath(Cosmetics.NS, "cosmetics/extras.json");
 		try (var in = new InputStreamReader(Minecraft.getInstance().getResourceManager().open(id), StandardCharsets.UTF_8)) {
 			JsonObject root = JsonParser.parseReader(in).getAsJsonObject();
 			read(root.getAsJsonArray("hats"), hats);
@@ -52,7 +51,7 @@ public final class Extras {
 				pets.put(pet.id(), pet);
 			}
 		} catch (Exception e) {
-			SlopClient.LOG.warn("Could not load hats and pets", e);
+			Cosmetics.LOG.warn("Could not load hats and pets", e);
 		}
 	}
 
@@ -82,20 +81,22 @@ public final class Extras {
 		return pets.get(id);
 	}
 
-	/** Your own choice from the launcher. */
-	public static String ownHat() {
-		return System.getProperty("slopclient.hat", "");
+	/** Hat of a player: your own from the launcher when the host knows it, else from the server. */
+	static Model hatOf(AbstractClientPlayer player, boolean self) {
+		String own = self ? Cosmetics.settings().ownHat() : null;
+		return hat(own != null ? own : RemoteCapes.hat(player.getUUID()));
 	}
 
-	public static String ownPet() {
-		return System.getProperty("slopclient.pet", "");
+	static Pets.Pet petOf(AbstractClientPlayer player, boolean self) {
+		String own = self ? Cosmetics.settings().ownPet() : null;
+		return pet(own != null ? own : RemoteCapes.pet(player.getUUID()));
 	}
 
 	private static int rgb(String spec, double phase) {
 		return switch (spec) {
-			case "accent" -> Theme.ACCENT & 0xFFFFFF;
-			case "accent2" -> Theme.ACCENT_2 & 0xFFFFFF;
-			case "chroma" -> Theme.chroma(phase) & 0xFFFFFF;
+			case "accent" -> Cosmetics.settings().accent() & 0xFFFFFF;
+			case "accent2" -> Cosmetics.settings().accent2() & 0xFFFFFF;
+			case "chroma" -> Cosmetics.settings().chroma(phase) & 0xFFFFFF;
 			default -> {
 				try {
 					yield Integer.parseInt(spec.substring(1), 16);

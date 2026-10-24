@@ -3,7 +3,6 @@
 	"package": "dev.slopclient.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"AbstractClientPlayerMixin",
 		"BossHealthOverlayAccessor",
 		"CameraMixin",
 		"ChatComponentMixin",

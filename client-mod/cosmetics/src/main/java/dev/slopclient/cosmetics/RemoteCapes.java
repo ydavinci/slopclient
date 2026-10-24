@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
-import dev.slopclient.SlopClient;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,8 +22,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 
 /**
- * Capes of other SlopClient players from the cosmetics server the launcher passes in
- * `-Dslopclient.cosmetics`. Players in view are looked up in batches; every image is
+ * Capes, hats and pets of SlopClient players from the cosmetics server in the settings
+ * (from the launcher's `-Dslopclient.cosmetics` or the standalone config). Players in view are looked up in batches; every image is
  * downloaded once and shared by everyone wearing it. Textures of players out of view
  * are freed again, and a memory budget limits how many HD animations play at once.
  */
@@ -37,7 +36,6 @@ public final class RemoteCapes {
 	private record Entry(String hash, String url, JsonObject meta, long fetchedAt) {
 	}
 
-	private static final String SERVER = System.getProperty("slopclient.cosmetics", "").replaceAll("/+$", "");
 	private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
 
 	/** uuid -> cape (null hash: no cape). */
@@ -55,8 +53,12 @@ public final class RemoteCapes {
 	private RemoteCapes() {
 	}
 
+	private static String server() {
+		return Cosmetics.settings().server();
+	}
+
 	public static boolean enabled() {
-		return !SERVER.isEmpty();
+		return !server().isEmpty();
 	}
 
 	public static String key(UUID uuid) {
@@ -110,7 +112,7 @@ public final class RemoteCapes {
 		JsonArray arr = new JsonArray();
 		batch.forEach(arr::add);
 		body.add("uuids", arr);
-		HttpRequest req = HttpRequest.newBuilder(URI.create(SERVER + "/v1/cosmetics/lookup"))
+		HttpRequest req = HttpRequest.newBuilder(URI.create(server() + "/v1/cosmetics/lookup"))
 			.timeout(Duration.ofSeconds(10))
 			.header("content-type", "application/json")
 			.POST(HttpRequest.BodyPublishers.ofString(body.toString()))
@@ -132,7 +134,7 @@ public final class RemoteCapes {
 					}
 				}
 			} catch (RuntimeException e) {
-				SlopClient.LOG.warn("Unexpected cosmetics lookup answer", e);
+				Cosmetics.LOG.warn("Unexpected cosmetics lookup answer", e);
 			}
 		});
 	}
@@ -159,7 +161,7 @@ public final class RemoteCapes {
 					usedBytes += anim.bytes;
 					animations.put(e.hash, anim);
 				} catch (Exception ex) {
-					SlopClient.LOG.warn("Could not load cape {}", e.url, ex);
+					Cosmetics.LOG.warn("Could not load cape {}", e.url, ex);
 				}
 			});
 		});

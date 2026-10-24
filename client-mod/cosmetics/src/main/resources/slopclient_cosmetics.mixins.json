@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "dev.slopclient.cosmetics.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"AbstractClientPlayerMixin"
+	],
+	"injectors": { "defaultRequire": 1 }
+}

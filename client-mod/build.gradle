@@ -14,6 +14,9 @@ loom {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
+		"slopclient_cosmetics" {
+			sourceSet "main", ":cosmetics"
+		}
 	}
 }
 
@@ -21,6 +24,10 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Capes, hats and pets live in their own mod (cosmetics/), bundled into this jar.
+	implementation project(":cosmetics")
+	include project(":cosmetics")
 }
 
 processResources {
@@ -42,12 +49,3 @@ java {
 	targetCompatibility = JavaVersion.VERSION_25
 }
 
-// Hats and pets: the catalogue lives at the repository root, shared with launcher and server.
-processClientResources {
-	from("../cosmetics/extras.json") {
-		into "assets/slopclient/cosmetics"
-	}
-	from("../cosmetics/pets") {
-		into "assets/slopclient/textures/pets"
-	}
-}

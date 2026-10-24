@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SlopClient Kosmetik</title>
+<style>
+  :root {
+    --bg: #09080e; --panel: #14111e; --raised: #1d1929; --line: rgb(255 255 255 / 0.08);
+    --text: #efecf7; --muted: #a39cb6; --dim: #726b86;
+    --accent: #8b5cf6; --accent-2: #c084fc; --ok: #4ade80; --err: #f87171;
+    /* Read by the 3D preview for hats and pets painted in the accent colours. */
+    --color-accent: #8b5cf6; --color-accent-2: #c084fc;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-image: radial-gradient(60rem 30rem at 80% -10%, rgb(139 92 246 / 0.18), transparent 70%);
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  header h1 { font-size: 22px; margin: 0; flex: 1; letter-spacing: -0.02em; }
+  header .who { color: var(--muted); font-size: 14px; }
+  .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-weight: 800; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin-bottom: 16px; }
+  section h2 { font-size: 16px; margin: 0 0 4px; }
+  p.hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+  button, .button {
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--text); background: var(--raised);
+    border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block;
+  }
+  button:hover, .button:hover { border-color: rgb(255 255 255 / 0.2); }
+  button.primary, .button.primary { background: var(--accent); border-color: transparent; }
+  button.primary:hover { background: #7c4ddf; }
+  button.danger { color: var(--err); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  input {
+    font: inherit; font-size: 14px; color: var(--text); background: rgb(0 0 0 / 0.3); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 12px; width: 100%;
+  }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .row > div { flex: 1; min-width: 160px; }
+  .code { font: 700 34px/1 ui-monospace, "JetBrains Mono", Consolas, monospace; letter-spacing: 0.12em; padding: 16px 20px; background: rgb(0 0 0 / 0.35); border-radius: 12px; display: inline-block; margin: 8px 0 14px; user-select: all; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .stage { position: sticky; top: 16px; }
+  .stage canvas#preview { width: 100%; display: block; cursor: grab; border-radius: 12px; background: radial-gradient(closest-side, rgb(139 92 246 / 0.16), transparent); }
+  .stage canvas#preview:active { cursor: grabbing; }
+  .stage .caption { color: var(--muted); font-size: 13px; text-align: center; margin: 8px 0 12px; min-height: 20px; }
+  .segmented { display: flex; background: rgb(0 0 0 / 0.3); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .segmented button { flex: 1; border: 0; background: none; padding: 6px 8px; font-size: 13px; color: var(--muted); }
+  .segmented button.on { background: var(--raised); color: var(--text); }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; }
+    .stage { position: static; }
+    .stage canvas#preview { max-width: 300px; margin: 0 auto; }
+  }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  .tile {
+    background: var(--raised); border: 1px solid var(--line); border-radius: 14px; padding: 10px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; color: var(--text); font-weight: 400;
+  }
+  .tile:hover { border-color: rgb(255 255 255 / 0.2); }
+  .tile.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(139 92 246 / 0.25); }
+  .tile canvas { width: 50px; height: 80px; image-rendering: pixelated; border-radius: 4px; background: rgb(0 0 0 / 0.25); }
+  .tile img, .tile .none { width: 72px; height: 72px; }
+  .tile .none { display: grid; place-items: center; color: var(--dim); font-size: 28px; }
+  .tile .name { font-weight: 600; font-size: 13px; word-break: break-word; }
+  .tile .meta { color: var(--dim); font-size: 12px; }
+  .tile .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .tile .actions button { padding: 4px 9px; font-size: 12px; }
+  .badge { font-size: 11px; font-weight: 700; border-radius: 99px; padding: 2px 8px; background: rgb(139 92 246 / 0.2); color: var(--accent-2); }
+  .badge.warn { background: rgb(248 113 113 / 0.15); color: var(--err); }
+  .subhead { font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 8px; }
+  .savebar { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+  .savebar .state { color: var(--muted); font-size: 13px; }
+  .savebar .state.dirty { color: var(--accent-2); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .warn-box { border: 1px solid rgb(248 113 113 / 0.35); background: rgb(248 113 113 / 0.08); color: var(--text); border-radius: 10px; padding: 8px 12px; margin: 10px 0 0; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; font-size: 14px; display: none; max-width: calc(100% - 32px); z-index: 5; }
+  #toast.err { border-color: rgb(248 113 113 / 0.5); color: var(--err); }
+  #toast.ok { border-color: rgb(74 222 128 / 0.4); }
+  .upload-preview { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
+  .upload-preview canvas { width: 50px; height: 80px; image-rendering: pixelated; background: rgb(0 0 0 / 0.25); border-radius: 4px; }
+  footer { color: var(--dim); font-size: 12px; text-align: center; margin-top: 28px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">S</div>
+    <h1>SlopClient Kosmetik</h1>
+    <span class="who" id="who"></span>
+    <button id="logout" hidden>Abmelden</button>
+  </header>
+
+  <section id="login" hidden>
+    <h2>Anmelden</h2>
+    <p class="hint">Mit deinem Microsoft-Konto, wie im Launcher. Der Server prüft damit nur, welcher Minecraft-Account dir gehört; Microsoft-Zugangsdaten werden nicht gespeichert.</p>
+    <div id="login-start">
+      <button class="primary" id="login-button">Mit Microsoft anmelden</button>
+    </div>
+    <div id="login-code" hidden>
+      <p class="hint" style="margin:0">Öffne die Microsoft-Seite und gib diesen Code ein:</p>
+      <p class="hint warn-box"><strong>Nur Codes eingeben, die du selbst hier gerade erzeugt hast.</strong> Wer dir einen Code schickt („gib den mal ein“), will dein Konto übernehmen.</p>
+      <div class="code" id="user-code"></div>
+      <div class="row" style="align-items:center">
+        <a class="button primary" id="verify-link" target="_blank" rel="noopener noreferrer">Microsoft-Seite öffnen</a>
+        <button id="copy-code">Code kopieren</button>
+        <span class="hint" id="login-wait" style="margin:0">Warte auf die Anmeldung …</span>
+      </div>
+    </div>
+  </section>
+
+  <div id="app" class="layout" hidden>
+    <aside class="stage">
+      <section>
+        <canvas id="preview" aria-label="3D-Vorschau, zum Drehen ziehen"></canvas>
+        <div class="caption" id="preview-caption"></div>
+        <div class="segmented" id="pose">
+          <button data-pose="walk" class="on">Gehen</button>
+          <button data-pose="idle">Stehen</button>
+          <button data-pose="fly">Elytra</button>
+        </div>
+      </section>
+    </aside>
+
+    <div>
+      <section>
+        <h2>Capes</h2>
+        <p class="hint">Klick auf eine Cape zeigt sie in der Vorschau. Die getragene Cape sehen alle SlopClient-Spieler.</p>
+        <div class="tiles" id="capes"></div>
+      </section>
+
+      <section>
+        <h2>Cape hochladen</h2>
+        <p class="hint">PNG im Minecraft-Cape-Format: 64 × 32 Pixel oder ein Vielfaches (bis 1024 × 512). Für Animationen die Bilder untereinander als Spritesheet. Hochgeladene Capes sind sofort öffentlich; GIFs und den Editor gibt es im Launcher.</p>
+        <div class="row">
+          <div><label for="cape-file">Datei</label><input type="file" id="cape-file" accept="image/png"></div>
+          <div><label for="cape-name">Name</label><input id="cape-name" maxlength="40" placeholder="Meine Cape"></div>
+        </div>
+        <div class="upload-preview" id="cape-preview" hidden>
+          <canvas id="cape-canvas" width="10" height="16"></canvas>
+          <div>
+            <div id="cape-info"></div>
+            <div class="row" style="margin-top:10px">
+              <div id="frame-time-box" hidden><label for="cape-frame-time">Millisekunden pro Bild</label><input type="number" id="cape-frame-time" min="40" value="100"></div>
+              <div><label><input type="checkbox" id="cape-elytra" checked style="width:auto"> Auch auf der Elytra</label></div>
+            </div>
+          </div>
+        </div>
+        <button class="primary" id="upload" disabled>Hochladen und tragen</button>
+      </section>
+
+      <section>
+        <h2>Hut &amp; Begleiter</h2>
+        <p class="hint">Auswählen zeigt sie sofort in der Vorschau; sichtbar für alle SlopClient-Spieler erst nach dem Speichern.</p>
+        <div class="subhead">Hut</div>
+        <div class="tiles" id="hats"></div>
+        <div class="subhead">Begleiter</div>
+        <div class="tiles" id="pets"></div>
+        <div class="savebar">
+          <button class="primary" id="save-extras" disabled>Speichern</button>
+          <button id="reset-extras" disabled>Zurücksetzen</button>
+          <span class="state" id="extras-state"></span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Konto</h2>
+        <p class="hint">„Überall abmelden“ beendet alle Anmeldungen deines Kontos auf diesem Server, auch in Launchern und anderen Browsern. „Alle Daten löschen“ entfernt Capes, Hut, Begleiter und Meldungen; lokale Kosmetik im Launcher bleibt.</p>
+        <div class="row" style="align-items:center">
+          <button id="logout-everywhere">Überall abmelden</button>
+          <button class="danger" id="delete-account">Alle Daten löschen …</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</footer>
+</main>
+<div id="toast" role="status"></div>
+<script src="viewer.js"></script>
+<script src="common.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

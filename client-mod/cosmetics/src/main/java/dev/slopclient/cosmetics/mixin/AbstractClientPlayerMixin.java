@@ -1,4 +1,4 @@
-package dev.slopclient.mixin;
+package dev.slopclient.cosmetics.mixin;
 
 import dev.slopclient.cosmetics.CapeSkins;
 import net.minecraft.client.player.AbstractClientPlayer;

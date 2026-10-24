@@ -10,3 +10,4 @@ pluginManagement {
 }
 
 rootProject.name = 'slopclient-core-mod'
+include 'cosmetics'

@@ -12,6 +12,16 @@ use crate::{
 
 const MOJANG_JOIN: &str = "https://sessionserver.mojang.com/session/minecraft/join";
 
+/// What the launcher joins at Mojang for a cosmetics sign-in: the challenge bound to the
+/// server's address. A server that relays another server's challenge to the launcher
+/// therefore gets a join that is worthless at the other server. The server computes
+/// the same value from its public URL (crates/slopclient-cosmetics).
+pub fn bound_server_id(server_url: &str, challenge: &str) -> String {
+    use sha1::{Digest, Sha1};
+    let server = server_url.trim().trim_end_matches('/').to_ascii_lowercase();
+    hex::encode(Sha1::digest(format!("slopclient-cosmetics:{server}:{challenge}").as_bytes()))
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OnlineSession {
@@ -104,7 +114,7 @@ pub async fn sign_in(paths: &Paths, auth: &LaunchAuth) -> Result<OnlineSession> 
     if auth.user_type == "msa" {
         let join = http::client()
             .post(MOJANG_JOIN)
-            .json(&json!({ "accessToken": auth.access_token, "selectedProfile": auth.uuid, "serverId": c.server_id }))
+            .json(&json!({ "accessToken": auth.access_token, "selectedProfile": auth.uuid, "serverId": bound_server_id(&server, &c.server_id) }))
             .send()
             .await?;
         if !join.status().is_success() {
