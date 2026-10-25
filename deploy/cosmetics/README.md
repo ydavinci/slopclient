@@ -98,7 +98,7 @@ pets need only a server update**. Clients refuse catalogues beyond their limits 
 
 The server's root URL (`https://cosmetics.example.com/`) is a page where players manage their
 cosmetics without the launcher: upload a cape (any picture or animation such as a GIF, fitted
-into the cape like in the launcher's Cape Studio, or a finished cape texture), choose or remove the active cape, delete capes, pick hat and pet, delete the account.
+into the cape with the same editor as the launcher's Cape Studio, or a finished cape texture), edit capes made from pictures again (the original picture stays in the browser, so only in the browser that uploaded it), choose or remove the active cape, delete capes, pick hat and pet, delete the account.
 A 3D preview (the launcher's viewer, `src/web/viewer.js`) shows the player's own skin with whatever
 cape, hat or pet is clicked, before anything is saved. For it the server fetches the signed-in
 player's skin from Mojang (`GET /v1/skin`), since browsers may not use Mojang's skin images in WebGL.

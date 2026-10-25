@@ -86,8 +86,35 @@
   #toast.err { border-color: rgb(248 113 113 / 0.5); color: var(--err); }
   #toast.ok { border-color: rgb(74 222 128 / 0.4); }
   .upload-preview { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
-  .editor { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 4px 0 14px; }
+  .editor { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; margin: 4px 0 16px; align-items: start; }
   .editor input[type=range] { padding: 0; accent-color: var(--accent); }
+  .editor .face {
+    width: 200px; height: 320px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); cursor: grab; touch-action: none;
+    background: repeating-conic-gradient(var(--raised) 0% 25%, var(--panel) 0% 50%) 0 0 / 20px 20px;
+  }
+  .editor .face:active { cursor: grabbing; }
+  .editor .face:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .editor .face canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .editor .face + .hint { margin: 8px 0 0; font-size: 12px; }
+  .editor .controls { display: grid; gap: 18px; }
+  .editor .group { display: grid; gap: 10px; }
+  .editor .group .subhead { margin: 0; }
+  .editor .subhead .count { font: 400 12px ui-monospace, "JetBrains Mono", Consolas, monospace; color: var(--dim); margin-left: 6px; }
+  .editor .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .editor .inline .segmented { flex: 0 1 auto; }
+  .editor .segmented button { white-space: nowrap; }
+  .editor .range { display: grid; gap: 4px; margin: 0; font-weight: 400; font-size: 13px; }
+  .editor .range span { display: flex; justify-content: space-between; }
+  .editor .range output { font: 12px ui-monospace, "JetBrains Mono", Consolas, monospace; color: var(--text); }
+  .editor input[type=color] { width: 40px; height: 32px; padding: 2px; border-radius: 8px; cursor: pointer; }
+  .editor .swatch { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgb(255 255 255 / 0.15); }
+  .editor .note { color: var(--dim); font-size: 12px; margin: 0; }
+  .editor .size.err { color: var(--err); }
+  .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  @media (max-width: 560px) {
+    .editor { grid-template-columns: 1fr; }
+    .editor .face { margin: 0 auto; }
+  }
   select { font: inherit; font-size: 14px; color: var(--text); background: rgb(0 0 0 / 0.3); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; width: 100%; }
   .upload-preview canvas { width: 50px; height: 80px; image-rendering: pixelated; background: rgb(0 0 0 / 0.25); border-radius: 4px; }
   footer { color: var(--dim); font-size: 12px; text-align: center; margin-top: 28px; }
@@ -141,9 +168,9 @@
         <div class="tiles" id="capes"></div>
       </section>
 
-      <section>
-        <h2>Cape hochladen</h2>
-        <p class="hint">Ein Bild oder eine Animation (GIF, WebP, APNG, PNG, JPG) wird wie im Cape-Studio des Launchers auf die Cape gelegt; Ausschnitt und Tempo stellst du unten ein. Eine fertige Cape-Textur (PNG, 64 × 32 oder ein Vielfaches, Animationen als Bilder untereinander) wird unverändert übernommen. Hochgeladene Capes sind sofort öffentlich.</p>
+      <section id="upload-section">
+        <h2 id="upload-title">Cape hochladen</h2>
+        <p class="hint">Ein Bild oder eine Animation (GIF, WebP, APNG, PNG, JPG) wird wie im Cape-Studio des Launchers auf die Cape gelegt und lässt sich unten genauso einstellen. Eine fertige Cape-Textur (PNG, 64 × 32 oder ein Vielfaches, Animationen als Bilder untereinander) wird unverändert übernommen. Capes aus Bildern kannst du in diesem Browser später mit „Bearbeiten“ wieder öffnen. Hochgeladene Capes sind sofort öffentlich.</p>
         <div class="row">
           <div><label for="cape-file">Datei</label><input type="file" id="cape-file" accept="image/gif,image/png,image/webp,image/apng,image/jpeg"></div>
           <div><label for="cape-name">Name</label><input id="cape-name" maxlength="40" placeholder="Meine Cape"></div>
@@ -154,21 +181,60 @@
             <div id="cape-info"></div>
             <div class="row" style="margin-top:10px">
               <div id="frame-time-box" hidden><label for="cape-frame-time">Millisekunden pro Bild</label><input type="number" id="cape-frame-time" min="40" value="100"></div>
-              <div><label><input type="checkbox" id="cape-elytra" checked style="width:auto"> Auch auf der Elytra</label></div>
+              <div id="sheet-elytra-box"><label><input type="checkbox" id="cape-elytra" checked style="width:auto"> Auch auf der Elytra</label></div>
             </div>
           </div>
         </div>
         <div class="editor" id="cape-edit" hidden>
-          <div><label for="edit-fit">Anpassen</label><select id="edit-fit"><option value="cover">Füllen</option><option value="contain">Einpassen</option></select></div>
-          <div><label for="edit-back">Rückseite</label><select id="edit-back"><option value="mirror">Gespiegelt</option><option value="same">Wie vorne</option></select></div>
-          <div><label for="edit-edge">Ränder</label><select id="edit-edge"><option value="wrap">Bild umlaufend</option><option value="auto">Passende Farbe</option></select></div>
-          <div><label for="edit-scale">Auflösung</label><select id="edit-scale"></select></div>
-          <div><label for="edit-zoom">Zoom</label><input type="range" id="edit-zoom" min="0.3" max="3" step="0.05"></div>
-          <div><label for="edit-x">Links / rechts</label><input type="range" id="edit-x" min="-1" max="1" step="0.02"></div>
-          <div><label for="edit-y">Oben / unten</label><input type="range" id="edit-y" min="-1" max="1" step="0.02"></div>
-          <div id="edit-speed-box"><label for="edit-speed">Tempo</label><input type="range" id="edit-speed" min="0.25" max="3" step="0.05"></div>
+          <div>
+            <div class="face" id="edit-face" tabindex="0" aria-label="Vorderseite. Ziehen oder Pfeiltasten verschieben das Bild, Mausrad oder Plus und Minus zoomen.">
+              <canvas id="edit-face-canvas"></canvas>
+            </div>
+            <p class="hint">Ziehen verschiebt das Bild, das Mausrad zoomt. So sieht man die Cape von hinten.</p>
+          </div>
+          <div class="controls">
+            <div class="group">
+              <div class="subhead">Bild</div>
+              <div class="inline">
+                <div class="segmented" id="edit-fit"><button type="button" data-value="cover">Füllen</button><button type="button" data-value="contain">Einpassen</button></div>
+                <button type="button" id="edit-rotate">Drehen</button>
+              </div>
+              <label class="range"><span>Zoom <output id="edit-zoom-value"></output></span><input type="range" id="edit-zoom" min="0.2" max="8" step="0.01"></label>
+            </div>
+
+            <div class="group">
+              <div class="subhead">Rückseite und Ränder</div>
+              <div class="inline">
+                <div class="segmented" id="edit-back"><button type="button" data-value="mirror">Gespiegelt</button><button type="button" data-value="same">Gleich</button><button type="button" data-value="color">Farbe</button></div>
+                <input type="color" id="edit-back-color" aria-label="Farbe der Rückseite" hidden>
+              </div>
+              <div class="inline">
+                <div class="segmented" id="edit-edge"><button type="button" data-value="wrap">Bild umlaufend</button><button type="button" data-value="auto">Automatisch</button><button type="button" data-value="color">Eigene Farbe</button></div>
+                <input type="color" id="edit-edge-color" aria-label="Randfarbe" hidden>
+                <span class="swatch" id="edit-edge-swatch" title="Automatische Randfarbe" hidden></span>
+              </div>
+              <label style="margin:0;font-weight:400;font-size:13px;color:var(--text)"><input type="checkbox" id="edit-elytra" style="width:auto;margin-right:6px">Auch als Elytra <span style="color:var(--dim)">· die Flügel zeigen dasselbe Motiv</span></label>
+            </div>
+
+            <div class="group" id="edit-anim">
+              <div class="subhead">Animation <span class="count" id="edit-anim-count"></span></div>
+              <label class="range"><span>Erstes Bild <output id="edit-start-value"></output></span><input type="range" id="edit-start" min="0" step="1"></label>
+              <label class="range"><span>Letztes Bild <output id="edit-end-value"></output></span><input type="range" id="edit-end" min="0" step="1"></label>
+              <label class="range"><span>Geschwindigkeit <output id="edit-speed-value"></output></span><input type="range" id="edit-speed" min="0.25" max="4" step="0.05"></label>
+              <p class="note" id="edit-thinned" hidden></p>
+            </div>
+
+            <div class="group">
+              <div class="subhead">Auflösung</div>
+              <select id="edit-scale"></select>
+              <p class="note size" id="edit-size"></p>
+            </div>
+          </div>
         </div>
-        <button class="primary" id="upload" disabled>Hochladen und tragen</button>
+        <div class="upload-actions">
+          <button class="primary" id="upload" disabled>Hochladen und tragen</button>
+          <button id="upload-cancel" hidden>Abbrechen</button>
+        </div>
       </section>
 
       <section>

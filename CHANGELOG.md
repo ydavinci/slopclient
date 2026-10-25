@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
+## Unveröffentlicht
+
+### Cosmetics-Server
+- **Cape-Editor im Webinterface wie im Launcher**: Vorderseite mit der Maus verschieben und zoomen (auch per Tastatur), Drehen, Zoom bis 8×, Rückseite in einer Farbe, Ränder umlaufend, automatisch oder in eigener Farbe, Animation kürzen (erstes und letztes Bild), Tempo bis 4× und die Dateigröße live mit der 8-MB-Grenze.
+- **Capes im Webinterface bearbeiten**: Capes aus Bildern lassen sich im selben Browser mit „Bearbeiten“ wieder öffnen und neu hochladen; die alte Fassung wird ersetzt und bleibt getragen, wenn sie es war. Das Originalbild bleibt dafür nur im Browser.
+
 ## 0.4.2
 
 ### Hüte & Begleiter vom Server

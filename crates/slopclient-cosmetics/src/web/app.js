@@ -145,6 +145,7 @@ function markCapeTiles() {
 
 async function loadCapes() {
   mine = await api("GET", "v1/capes/mine");
+  const editable = await editableCapes();
   const list = $("capes");
   list.replaceChildren();
 
@@ -188,6 +189,14 @@ async function loadCapes() {
       };
       actions.append(wear);
     }
+    if (editable.has(cape.id) && !cape.hidden) {
+      const edit = el("button", "", "Bearbeiten");
+      edit.onclick = (ev) => {
+        ev.stopPropagation();
+        editCape(cape);
+      };
+      actions.append(edit);
+    }
     const del = el("button", "danger", "Löschen");
     del.onclick = (ev) => {
       ev.stopPropagation();
@@ -219,6 +228,8 @@ async function removeCape(cape) {
   try {
     await api("DELETE", `v1/capes/${encodeURIComponent(cape.id)}`);
     frameCache.delete(cape.id);
+    await dropSource(cape.id);
+    if (upload && upload.kind === "convert" && upload.replaces && upload.replaces.id === cape.id) cancelUpload();
     toast("Cape gelöscht");
     await loadCapes();
   } catch (e) {
@@ -306,6 +317,7 @@ async function deleteAccount() {
   if (name.trim().toLowerCase() !== session.name.toLowerCase()) return toast("Name stimmt nicht, nichts gelöscht", "err");
   try {
     await api("DELETE", "v1/account");
+    await dropAllSources();
     saveSession(null);
     toast("Alle Daten gelöscht");
     render();
