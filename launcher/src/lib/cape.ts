@@ -224,21 +224,41 @@ export function renderFrame(frame: ImageBitmap, st: EditorState, edge: string, t
   return canvas;
 }
 
-/** Wing width at `v` pixels below the top: full at the shoulder, tapering to the tip. */
-function wingWidth(v: number): number {
-  if (v < 3) return 10;
-  const t = Math.min(1, (v - 3) / 17);
-  return 10 * (1 - 0.72 * Math.pow(t, 1.5));
-}
+/**
+ * The painted pixels of the vanilla elytra texture (x 22..45, y 0..21). The wing is one
+ * face of a box that Minecraft inflates to 4 px thickness: vanilla paints only the back
+ * face and a few edge pixels and leaves the front face and sides clear. Painting more
+ * shows the box as a hollow slab. Same mask as CapeAnimation.ELYTRA_MASK in the mod.
+ */
+const ELYTRA_MASK = [
+  ".........#########......",
+  "..........##............",
+  "............########....",
+  "............#########...",
+  ".............#########..",
+  ".............#########..",
+  ".............#########..",
+  ".............##########.",
+  ".............##########.",
+  ".............##########.",
+  ".............##########.",
+  "#.............##########",
+  "#.............##########",
+  "#.............##########",
+  "#.............##########",
+  "#.............##########",
+  "#..............#########",
+  "#..............#########",
+  "#..............#########",
+  "#...............########",
+  "#...............########",
+  "#................#######",
+];
 
-/** Whether a point (in 64 × 32 texture pixels) of the elytra area stays visible. Same as CapeAnimation.keepElytra in the mod. */
+/** Whether a point (in 64 × 32 texture pixels) of the elytra area stays visible. */
 function keepElytra(px: number, py: number): boolean {
-  if (py < 2) return px >= 24 && px < 34;
-  const v = py - 2;
-  if (px >= 24 && px < 34) return px - 24 >= 10 - wingWidth(v);
-  if (px >= 34 && px < 36) return true;
-  if (px >= 36 && px < 46) return px - 36 <= wingWidth(v);
-  return false;
+  const row = ELYTRA_MASK[Math.floor(py)];
+  return row !== undefined && row[Math.floor(px) - 22] === "#";
 }
 
 /**

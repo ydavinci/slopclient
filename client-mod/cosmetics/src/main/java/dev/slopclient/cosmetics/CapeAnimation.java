@@ -85,7 +85,7 @@ public final class CapeAnimation {
 	/**
 	 * Cuts the wing silhouette into the elytra part of the texture. The elytra model is
 	 * two plain boxes; vanilla gets the wing shape from transparent pixels, so a fully
-	 * painted area would show as two slabs. Same shape as cape.ts in the launcher.
+	 * painted area would show as hollow slabs. Same shape as cape.ts in the launcher.
 	 */
 	static void shapeElytra(NativeImage img, int scale) {
 		for (int y = 0; y < 22 * scale; y++) {
@@ -95,21 +95,41 @@ public final class CapeAnimation {
 		}
 	}
 
-	/** Wing width at v pixels below the top: full at the shoulder, tapering to the tip. */
-	private static float wingWidth(float v) {
-		if (v < 3) return 10;
-		float t = Math.min(1, (v - 3) / 17f);
-		return 10 * (1 - 0.72f * (float) Math.pow(t, 1.5));
-	}
+	/**
+	 * The painted pixels of the vanilla elytra texture (x 22..45, y 0..21). The wing is one
+	 * face of a box that Minecraft inflates to 4 px thickness: vanilla paints only the back
+	 * face and a few edge pixels and leaves the front face and sides clear. Painting more
+	 * shows the box as a hollow slab. Same mask as cape.ts in the launcher.
+	 */
+	private static final String[] ELYTRA_MASK = {
+		".........#########......",
+		"..........##............",
+		"............########....",
+		"............#########...",
+		".............#########..",
+		".............#########..",
+		".............#########..",
+		".............##########.",
+		".............##########.",
+		".............##########.",
+		".............##########.",
+		"#.............##########",
+		"#.............##########",
+		"#.............##########",
+		"#.............##########",
+		"#.............##########",
+		"#..............#########",
+		"#..............#########",
+		"#..............#########",
+		"#...............########",
+		"#...............########",
+		"#................#######",
+	};
 
 	/** Whether a point (in 64 × 32 texture pixels) of the elytra area stays visible. */
 	static boolean keepElytra(float px, float py) {
-		if (py < 2) return px >= 24 && px < 34; // top face; the bottom face (34..44) is hidden
-		float v = py - 2;
-		if (px >= 24 && px < 34) return px - 24 >= 10 - wingWidth(v); // front: inner edge at the right
-		if (px >= 34 && px < 36) return true; // inner side
-		if (px >= 36 && px < 46) return px - 36 <= wingWidth(v); // back: mirrored
-		return false; // outer side face
+		int x = (int) px - 22, y = (int) py;
+		return y >= 0 && y < ELYTRA_MASK.length && x >= 0 && x < 24 && ELYTRA_MASK[y].charAt(x) == '#';
 	}
 
 	public int frameCount() {
