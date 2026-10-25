@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/slopclient-core", "crates/slopclient-cli", "crates/slopclient-cosmetics", "launcher/src-tauri"]
 
 [workspace.package]
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 
 [workspace.dependencies]

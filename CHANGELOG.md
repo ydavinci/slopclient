@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.2
 
 ### Zubehör
 - **Katana (schwarz-rot)** von dragonKnight127 (Cosmetica, mit Erlaubnis): ein schwarzes Katana mit rot-schwarzem Griff an der linken Hüfte.
