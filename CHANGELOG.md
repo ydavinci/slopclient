@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.0
 
 ### Zubehör
 - **Neuer Platz „Zubehör“** neben Hut und Begleiter, im Launcher, im Webinterface und im Spiel (auch bei anderen Spielern). Zubehör sitzt am Körper oder Kopf und darf wie ein Java-Blockmodell aufgebaut sein (Flächen-UVs, gedrehte Teile).
