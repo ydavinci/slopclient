@@ -119,7 +119,10 @@ Tests: `cargo test --workspace`.
 
 Die 3D-Vorschau im Webinterface des Cosmetics-Servers ist der Viewer des Launchers
 (`launcher/src/webviewer/`), gebaut nach `crates/slopclient-cosmetics/src/web/viewer.js`. Nach Änderungen an
-`launcher/src/lib/extras.ts` oder `cosmetics/` in `launcher/` neu bauen: `npm run build:viewer`.
+`launcher/src/lib/extras.ts` oder `launcher/src/lib/cape.ts` in `launcher/` neu bauen: `npm run build:viewer`.
+
+**Neue Hüte und Begleiter** kommen nach `cosmetics/extras.json` (Begleiter-Texturen nach `cosmetics/pets/`) und
+brauchen nur ein neues Server-Release: Mod, Launcher und Webinterface holen den Katalog vom Cosmetics-Server.
 
 ### Projektstruktur
 

@@ -86,6 +86,14 @@ uid 10001; a bind mount instead of the named volume must be writable for that ui
 | `SLOPCLIENT_COSMETICS_WEB_LOGIN` | on | `0` switches the web interface's Microsoft sign-in off |
 | `SLOPCLIENT_COSMETICS_MSA_CLIENT_ID` | SlopClient's Azure app | Azure client id for the web sign-in (needs "Allow public client flows" and Mojang's approval) |
 
+## Hats and pets
+
+The server hands out the hat and pet catalogue (`GET /v1/extras/catalogue`, with an ETag) and the
+pet textures (`GET /v1/extras/textures/<file>.png`), both built in from `cosmetics/` at the repository
+root. The mod, the launcher and the web page fetch them from here and keep a copy, so **new hats and
+pets need only a server update**. Clients refuse catalogues beyond their limits (256 hats or pets,
+512 boxes per model, 64 parts per pet, textures up to 512 × 512 px and 512 KB).
+
 ## Web interface
 
 The server's root URL (`https://cosmetics.example.com/`) is a page where players manage their

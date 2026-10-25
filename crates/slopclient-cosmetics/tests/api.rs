@@ -370,10 +370,59 @@ async fn sign_in_is_rate_limited() {
 }
 
 #[test]
+fn public_url_must_be_an_address() {
+    use slopclient_cosmetics::check_public_url;
+    assert!(check_public_url("https://cosmetics.example.com").is_ok());
+    assert!(check_public_url("https://cosmetics.example.com/").is_ok());
+    assert!(check_public_url("http://127.0.0.1:8787").is_ok());
+    // `https://${DOMAIN}` with an empty DOMAIN, which gave clients `https:/files/…`.
+    assert!(check_public_url("https://").is_err());
+    assert!(check_public_url("cosmetics.example.com").is_err());
+    assert!(check_public_url("https://example.com/cosmetics").is_err());
+}
+
+#[test]
 fn dev_auth_only_on_loopback() {
     assert!(slopclient_cosmetics::is_loopback_bind("127.0.0.1:8787"));
     assert!(slopclient_cosmetics::is_loopback_bind("[::1]:8787"));
     assert!(slopclient_cosmetics::is_loopback_bind("localhost:8787"));
     assert!(!slopclient_cosmetics::is_loopback_bind("0.0.0.0:8787"));
     assert!(!slopclient_cosmetics::is_loopback_bind("192.168.1.5:8787"));
+}
+
+// ---------- catalogue for clients ----------
+
+#[tokio::test]
+async fn catalogue_and_textures_for_clients() {
+    use slopclient_core::extras;
+    let env = start().await;
+    let r = env.http.get(format!("{}/v1/extras/catalogue", env.base)).send().await.unwrap();
+    assert_eq!(r.status(), 200);
+    let etag = r.headers()["etag"].to_str().unwrap().to_owned();
+    assert!(extras::validate(&r.text().await.unwrap()).is_ok());
+    // Unchanged: only a 304.
+    let r = env.http.get(format!("{}/v1/extras/catalogue", env.base)).header("if-none-match", &etag).send().await.unwrap();
+    assert_eq!(r.status(), 304);
+    let png = env.http.get(format!("{}/v1/extras/textures/fuchs.png", env.base)).send().await.unwrap();
+    assert_eq!(png.status(), 200);
+    assert!(png.bytes().await.unwrap().starts_with(b"\x89PNG"));
+    for bad in ["nope.png", "..%2Fextras.json", "fuchs"] {
+        assert_eq!(env.http.get(format!("{}/v1/extras/textures/{bad}", env.base)).send().await.unwrap().status(), 404);
+    }
+
+    // The launcher's copy: fetched once, then only revalidated.
+    // SAFETY: no other test reads these variables (the others build their Config directly).
+    unsafe {
+        std::env::remove_var("SLOPCLIENT_COSMETICS_URL");
+        std::env::remove_var("DACLIENT_COSMETICS_URL");
+    }
+    let dir = std::env::temp_dir().join(format!("slopclient-launcher-{}-{}", std::process::id(), rand_id()));
+    let _cleanup = TempDir(dir.clone());
+    let paths = slopclient_core::Paths::new(&dir);
+    slopclient_core::config::Settings { cosmetics_url: Some(env.base.clone()), ..Default::default() }.save(&paths).unwrap();
+    assert!(extras::refresh(&paths).await.unwrap());
+    assert!(!extras::refresh(&paths).await.unwrap());
+    assert!(extras::texture(&paths, "fuchs.png").is_some_and(|p| p.starts_with(b"\x89PNG")));
+    assert!(extras::texture(&paths, "../settings.json").is_none());
+    assert_eq!(extras::catalogue_json(&paths), extras::CATALOGUE_JSON);
 }

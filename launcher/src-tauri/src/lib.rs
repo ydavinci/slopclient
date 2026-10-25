@@ -1062,10 +1062,22 @@ async fn cape_set_active(state: State<'_, AppState>, id: Option<String>) -> CmdR
     Ok(cosmetics_online::publish_active(&state.paths).await.err().map(|e| e.to_string()))
 }
 
-/// The hat and pet catalogue (models included) for the launcher's preview.
+/// The hat and pet catalogue (models included) for the launcher's preview: first brought
+/// up to date from the cosmetics server (a quick 304 when unchanged), the copy or the
+/// shipped one when the server is slow or unreachable.
 #[tauri::command]
-fn extras_catalogue() -> serde_json::Value {
-    serde_json::from_str(slopclient_core::extras::CATALOGUE_JSON).unwrap_or_default()
+async fn extras_catalogue(state: State<'_, AppState>) -> CmdResult<serde_json::Value> {
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(5), slopclient_core::extras::refresh(&state.paths)).await;
+    Ok(serde_json::from_str(&slopclient_core::extras::catalogue_json(&state.paths)).unwrap_or_default())
+}
+
+/// A pet texture from the server's copy of the catalogue as data URL; none falls back to
+/// the textures shipped with the launcher.
+#[tauri::command]
+async fn extras_texture(state: State<'_, AppState>, name: String) -> CmdResult<Option<String>> {
+    use base64::Engine;
+    Ok(slopclient_core::extras::texture(&state.paths, &name)
+        .map(|png| format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png))))
 }
 
 #[tauri::command]
@@ -1338,6 +1350,7 @@ pub fn run() {
             cape_source,
             cosmetics_status,
             extras_catalogue,
+            extras_texture,
             extras_current,
             extras_set,
             cosmetics_sign_in,

@@ -35,6 +35,7 @@ use tower_http::{
 
 mod auth;
 mod capes;
+mod catalogue;
 mod limits;
 mod moderation;
 mod web;
@@ -182,6 +183,19 @@ fn normalize_uuid(uuid: &str) -> Option<String> {
     (u.len() == 32 && u.chars().all(|c| c.is_ascii_hexdigit())).then_some(u)
 }
 
+/// Checks `SLOPCLIENT_COSMETICS_PUBLIC_URL`: clients load images from it and sign-ins are
+/// bound to it, so it must be a full http(s) address such as `https://cosmetics.example.com`.
+pub fn check_public_url(url: &str) -> Result<(), String> {
+    let parsed = reqwest::Url::parse(url).map_err(|e| format!("{url:?} is not a URL ({e})"))?;
+    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none_or(str::is_empty) {
+        return Err(format!("{url:?} needs http:// or https:// and a host name (is the domain variable empty?)"));
+    }
+    if parsed.path() != "/" || parsed.query().is_some() {
+        return Err(format!("{url:?} must be just the address, without a path"));
+    }
+    Ok(())
+}
+
 /// Whether a bind address only accepts local connections.
 pub fn is_loopback_bind(bind: &str) -> bool {
     let host = bind.rsplit_once(':').map_or(bind, |(h, _)| h).trim_matches(['[', ']']);
@@ -288,6 +302,7 @@ pub fn router(state: Shared) -> Router {
                     .layer(DefaultBodyLimit::max(UPLOAD_BODY_LIMIT)),
             ),
         )
+        .merge(catalogue::routes(s))
         .merge(web::routes(s))
         .layer(DefaultBodyLimit::max(BODY_LIMIT))
         .layer(RequestBodyTimeoutLayer::new(Duration::from_secs(30)))

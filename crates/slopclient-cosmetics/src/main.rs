@@ -10,6 +10,10 @@ use std::net::SocketAddr;
 async fn main() -> std::io::Result<()> {
     let config = slopclient_cosmetics::Config::from_env();
     let bind = std::env::var("SLOPCLIENT_COSMETICS_BIND").or_else(|_| std::env::var("DACLIENT_COSMETICS_BIND")).unwrap_or_else(|_| "127.0.0.1:8787".into());
+    if let Err(e) = slopclient_cosmetics::check_public_url(&config.public_url) {
+        eprintln!("SLOPCLIENT_COSMETICS_PUBLIC_URL: {e}");
+        std::process::exit(2);
+    }
     // Without the Mojang check anyone can sign in as anyone: only for a local test server.
     if config.dev_auth && !slopclient_cosmetics::is_loopback_bind(&bind) {
         eprintln!("SLOPCLIENT_COSMETICS_DEV_AUTH=1 only works with a loopback SLOPCLIENT_COSMETICS_BIND (127.0.0.1), not {bind}");

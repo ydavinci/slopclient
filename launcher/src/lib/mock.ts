@@ -190,6 +190,9 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       return delay("### Neu\n- Schnellere Chunk-Updates\n- Fix für den Absturz beim Beitreten\n\n[Alle Änderungen](https://modrinth.com)", 500);
     case "extras_catalogue":
       return delay(extrasJson);
+    case "extras_texture":
+      // The preview has no server copy: the shipped textures are used.
+      return delay(null);
     case "extras_current":
       return delay(mockExtras);
     case "extras_set":

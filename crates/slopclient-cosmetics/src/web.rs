@@ -64,7 +64,6 @@ pub(crate) fn routes(s: &Shared) -> Router<Shared> {
         .route("/upload.js", get(|| async { script(UPLOAD_JS) }))
         .route("/app.js", get(|| async { script(APP_JS) }))
         .route("/viewer.js", get(|| async { script(VIEWER_JS) }))
-        .route("/v1/extras/catalogue", get(catalogue))
         .merge(limited(s, &limits::READ, Router::new().route("/v1/skin", get(own_skin))))
         .merge(limited(s, &limits::WEB_LOGIN, Router::new().route("/v1/web/login", post(start_login))))
         .merge(limited(s, &limits::POLL, Router::new().route("/v1/web/login/{id}", get(login_status))))
@@ -88,11 +87,6 @@ async fn index() -> Response {
 
 fn script(body: &'static str) -> Response {
     ([(header::CONTENT_TYPE, "text/javascript; charset=utf-8"), (header::CACHE_CONTROL, "no-cache")], body).into_response()
-}
-
-/// The hat and pet catalogue (cosmetics/extras.json) with the models, for the page's 3D preview.
-async fn catalogue() -> Response {
-    ([(header::CONTENT_TYPE, "application/json"), (header::CACHE_CONTROL, "public, max-age=3600")], slopclient_core::extras::CATALOGUE_JSON).into_response()
 }
 
 // ---------- skin for the preview ----------

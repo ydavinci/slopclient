@@ -1,7 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { installLauncherTextures } from "./lib/petTextures";
 import "./styles.css";
+
+installLauncherTextures();
 
 // The launcher is a desktop app: no browser context menu outside text fields.
 window.addEventListener("contextmenu", (e) => {

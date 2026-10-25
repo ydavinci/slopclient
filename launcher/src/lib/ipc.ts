@@ -134,6 +134,7 @@ export const api = {
   modpackImport: (source: string, isFile: boolean, platform: Platform, name: string | null, taskId: string) =>
     call<Instance>("modpack_import", { source, isFile, platform, name, taskId }),
   extrasCatalogue: () => call<ExtrasCatalogue>("extras_catalogue"),
+  extrasTexture: (name: string) => call<string | null>("extras_texture", { name }),
   extrasCurrent: () => call<ExtrasChoice>("extras_current"),
   extrasSet: (hat: string | null, pet: string | null) => call<string | null>("extras_set", { hat, pet }),
   skins: () => call<Skin[]>("skins_list"),

@@ -3,7 +3,7 @@
 // `npm run build:viewer` and exposed as `window.SlopViewer`.
 
 import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
-import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, thumbnail, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
+import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, setTextureSource, thumbnail, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
 import { fallbackSkin } from "../lib/skin";
 import { SCALES, activeFrames, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame } from "../lib/cape";
 
@@ -169,6 +169,9 @@ declare global {
     SlopViewer: { Preview: typeof Preview; capeFrames: typeof capeFrames; thumbnail: typeof thumbnail; cape: typeof cape };
   }
 }
+
+// Pet textures come from the cosmetics server, like its catalogue.
+setTextureSource((file) => `v1/extras/textures/${encodeURIComponent(file)}`);
 
 /** The launcher's Cape Studio conversion: any picture or animation into the cape layout. */
 const cape = { SCALES, activeFrames, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame };

@@ -31,7 +31,8 @@ public final class Pets {
 	private Pets() {
 	}
 
-	static Pet read(JsonObject o) {
+	/** `textures` turns the catalogue's texture file name into the texture to use. */
+	static Pet read(JsonObject o, java.util.function.Function<String, Identifier> textures) {
 		String id = o.get("id").getAsString();
 		Tier tier = switch (o.has("tier") ? o.get("tier").getAsString() : "shoulder") {
 			case "flying" -> Tier.FLYING;
@@ -39,7 +40,7 @@ public final class Pets {
 			default -> Tier.SHOULDER;
 		};
 		boolean minime = o.has("special") && o.get("special").getAsString().equals("minime");
-		Identifier texture = o.has("texture") ? Identifier.fromNamespaceAndPath(Cosmetics.NS, "textures/pets/" + o.get("texture").getAsString()) : Extras.TEXTURE;
+		Identifier texture = o.has("texture") ? textures.apply(o.get("texture").getAsString()) : Extras.TEXTURE;
 		int texW = 64, texH = 64;
 		if (o.has("textureSize")) {
 			texW = o.getAsJsonArray("textureSize").get(0).getAsInt();

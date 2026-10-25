@@ -20,6 +20,7 @@ public final class Cosmetics implements ClientModInitializer {
 	public static final Logger LOG = LoggerFactory.getLogger("SlopClient Cosmetics");
 
 	private static volatile CosmeticsSettings settings;
+	private static boolean tickFailed;
 
 	/** The SlopClient mod calls this from its entrypoint. */
 	public static void use(CosmeticsSettings host) {
@@ -45,8 +46,15 @@ public final class Cosmetics implements ClientModInitializer {
 		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> RemoteCapes.clear());
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-			RemoteCapes.tick(mc);
-			PetMotion.tick(mc);
+			// Cosmetics are extras: a bug or a bad server answer here must never end the game.
+			try {
+				Catalogue.tick(mc);
+				RemoteCapes.tick(mc);
+				PetMotion.tick(mc);
+			} catch (RuntimeException e) {
+				if (!tickFailed) LOG.error("Cosmetics stopped updating after an error", e);
+				tickFailed = true;
+			}
 		});
 	}
 }

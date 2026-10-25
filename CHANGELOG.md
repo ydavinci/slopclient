@@ -4,11 +4,18 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 
 ## Unveröffentlicht
 
+### Hüte & Begleiter vom Server
+- **Neue Hüte und Begleiter brauchen nur noch ein Server-Update**: Mod, Launcher und Webinterface holen Katalog und Begleiter-Texturen vom Cosmetics-Server (mit ETag, unverändert nur ein kurzer Abgleich) und merken sie sich für den nächsten Start und offline. Ohne Server gilt der mitgelieferte Katalog. Kataloge vom Server werden auf Größen und Anzahlen geprüft und sonst verworfen.
+
 ### Launcher
 - **Capes mit umlaufendem Bild**: Im Cape-Studio läuft das Motiv jetzt über die Seiten, die Ober- und die Unterkante der Cape (und die Ränder der Elytra), statt dass sie eine einzige, oft dunkle Farbe bekommen. Neuer Standard „Bild umlaufend“; die Randfarbe lässt sich weiter wählen. Vorhandene Capes ändern sich erst, wenn man sie damit neu speichert.
 
+### Client-Mod
+- Eine kaputte Bild-Adresse vom Cosmetics-Server (z. B. bei falsch gesetzter `PUBLIC_URL`) ließ das Spiel abstürzen. Die Mod lädt das Bild jetzt direkt vom Server oder überspringt die Cape; Fehler in der Kosmetik beenden das Spiel nie mehr.
+
 ### Cosmetics-Server
 - Beim Hochladen von Bildern und GIFs im Webinterface gibt es dieselbe Wahl unter „Ränder“, ebenfalls mit „Bild umlaufend“ als Standard.
+- Startet nicht mehr mit ungültiger `SLOPCLIENT_COSMETICS_PUBLIC_URL` (z. B. `https://` bei leerer Domain-Variable), sondern meldet den Fehler.
 
 ## 0.4.1
 

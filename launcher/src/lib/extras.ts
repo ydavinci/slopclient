@@ -55,11 +55,14 @@ export interface ExtrasChoice {
   pet: string | null;
 }
 
-// Pet textures, bundled from cosmetics/pets (shared with the mod).
-const TEXTURE_URLS = import.meta.glob("../../../cosmetics/pets/*.png", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+/** Where a pet texture comes from: the launcher's copy of the server's catalogue (lib/petTextures.ts), or the server itself on the web page. */
+type TextureSource = (file: string) => string | undefined | Promise<string | undefined>;
+let textureSource: TextureSource = () => undefined;
 
-function textureUrl(file: string): string | undefined {
-  return Object.entries(TEXTURE_URLS).find(([path]) => path.endsWith(`/${file}`))?.[1];
+/** Sets where pet textures are loaded from; call it before building pets. */
+export function setTextureSource(source: TextureSource) {
+  textureSource = source;
+  textures.clear();
 }
 
 const textures = new Map<string, Promise<THREE.Texture>>();
@@ -67,16 +70,16 @@ const textures = new Map<string, Promise<THREE.Texture>>();
 function loadTexture(file: string): Promise<THREE.Texture> {
   let t = textures.get(file);
   if (!t) {
-    const url = textureUrl(file);
-    t = url
-      ? new THREE.TextureLoader().loadAsync(url).then((tex) => {
-          tex.magFilter = THREE.NearestFilter;
-          tex.minFilter = THREE.NearestFilter;
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.flipY = false;
-          return tex;
-        })
-      : Promise.reject(new Error(`missing pet texture ${file}`));
+    t = Promise.resolve(textureSource(file)).then((url) => {
+      if (!url) throw new Error(`missing pet texture ${file}`);
+      return new THREE.TextureLoader().loadAsync(url).then((tex) => {
+        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = false;
+        return tex;
+      });
+    });
     textures.set(file, t);
   }
   return t;

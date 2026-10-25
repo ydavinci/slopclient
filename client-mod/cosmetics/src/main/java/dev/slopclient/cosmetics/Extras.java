@@ -20,7 +20,8 @@ import net.minecraft.util.LightCoordsUtil;
 /**
  * Hats and pets: small voxel models from {@code cosmetics/extras.json} (the same file
  * the launcher previews). A model is a list of coloured boxes in pixels; glowing
- * boxes ignore the world light.
+ * boxes ignore the world light. The catalogue in use comes from the cosmetics server
+ * (see Catalogue), the one shipped with the mod until then.
  */
 public final class Extras {
 	public static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Cosmetics.NS, "textures/misc/extras.png");
@@ -32,27 +33,44 @@ public final class Extras {
 	public record Model(String id, String name, boolean spin, List<Box> boxes) {
 	}
 
-	private static Map<String, Model> hats;
-	private static Map<String, Pets.Pet> pets;
+	private static volatile Map<String, Model> hats;
+	private static volatile Map<String, Pets.Pet> pets;
 
 	private Extras() {
 	}
 
+	/** A pet texture shipped with the mod. */
+	static Identifier shippedTexture(String file) {
+		return Identifier.fromNamespaceAndPath(Cosmetics.NS, "textures/pets/" + file);
+	}
+
+	/** On first use: the copy of the server's catalogue, else the one shipped with the mod. */
 	private static void load() {
 		if (hats != null) return;
-		hats = new HashMap<>();
-		pets = new HashMap<>();
+		if (Catalogue.loadCached()) return;
 		Identifier id = Identifier.fromNamespaceAndPath(Cosmetics.NS, "cosmetics/extras.json");
 		try (var in = new InputStreamReader(Minecraft.getInstance().getResourceManager().open(id), StandardCharsets.UTF_8)) {
-			JsonObject root = JsonParser.parseReader(in).getAsJsonObject();
-			read(root.getAsJsonArray("hats"), hats);
-			for (JsonElement el : root.getAsJsonArray("pets")) {
-				Pets.Pet pet = Pets.read(el.getAsJsonObject());
-				pets.put(pet.id(), pet);
-			}
+			install(JsonParser.parseReader(in).getAsJsonObject(), Extras::shippedTexture);
 		} catch (Exception e) {
 			Cosmetics.LOG.warn("Could not load hats and pets", e);
 		}
+		if (hats == null) {
+			hats = new HashMap<>();
+			pets = new HashMap<>();
+		}
+	}
+
+	/** Makes `root` the catalogue in use; an unreadable one leaves the current one. */
+	static void install(JsonObject root, java.util.function.Function<String, Identifier> textures) {
+		Map<String, Model> newHats = new HashMap<>();
+		Map<String, Pets.Pet> newPets = new HashMap<>();
+		read(root.getAsJsonArray("hats"), newHats);
+		for (JsonElement el : root.getAsJsonArray("pets")) {
+			Pets.Pet pet = Pets.read(el.getAsJsonObject(), textures);
+			newPets.put(pet.id(), pet);
+		}
+		pets = newPets;
+		hats = newHats;
 	}
 
 	private static void read(JsonArray list, Map<String, Model> into) {

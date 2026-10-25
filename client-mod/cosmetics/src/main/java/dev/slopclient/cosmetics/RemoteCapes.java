@@ -47,6 +47,8 @@ public final class RemoteCapes {
 	/** hash -> loaded animation (render thread only). */
 	private static final Map<String, CapeAnimation> animations = new HashMap<>();
 	private static final Set<String> downloading = ConcurrentHashMap.newKeySet();
+	/** Capes whose image has no usable address; not tried again until the world changes. */
+	private static final Set<String> unusable = ConcurrentHashMap.newKeySet();
 	private static long usedBytes;
 	private static int ticks;
 
@@ -100,7 +102,7 @@ public final class RemoteCapes {
 		for (int i = 0; i < stale.size(); i += LOOKUP_MAX) lookup(stale.subList(i, Math.min(stale.size(), i + LOOKUP_MAX)));
 		// Make sure every cape in use is loaded.
 		for (Entry e : players.values()) {
-			if (e.hash != null && !animations.containsKey(e.hash)) download(e);
+			if (e.hash != null && !animations.containsKey(e.hash) && !unusable.contains(e.hash)) download(e);
 		}
 		if (ticks % 1200 == 0) forget(now);
 	}
@@ -112,11 +114,19 @@ public final class RemoteCapes {
 		JsonArray arr = new JsonArray();
 		batch.forEach(arr::add);
 		body.add("uuids", arr);
-		HttpRequest req = HttpRequest.newBuilder(URI.create(server() + "/v1/cosmetics/lookup"))
-			.timeout(Duration.ofSeconds(10))
-			.header("content-type", "application/json")
-			.POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-			.build();
+		HttpRequest req;
+		try {
+			req = HttpRequest.newBuilder(URI.create(server() + "/v1/cosmetics/lookup"))
+				.timeout(Duration.ofSeconds(10))
+				.header("content-type", "application/json")
+				.POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+				.build();
+		} catch (IllegalArgumentException ex) {
+			// A broken server address in the settings must not crash the game.
+			Cosmetics.LOG.warn("Invalid cosmetics server address {}", server());
+			batch.forEach(pending::remove);
+			return;
+		}
 		HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofString()).whenComplete((resp, err) -> {
 			batch.forEach(pending::remove);
 			if (err != null || resp.statusCode() != 200) return;
@@ -139,9 +149,35 @@ public final class RemoteCapes {
 		});
 	}
 
+	/** http(s) address with a host, or null. */
+	private static URI web(String url) {
+		try {
+			URI u = URI.create(url);
+			String scheme = u.getScheme();
+			return u.getHost() != null && ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme)) ? u : null;
+		} catch (IllegalArgumentException | NullPointerException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Where the cape image is: the server's link, or, when that is broken (for example a
+	 * server whose public URL is set wrongly), the image path on the server we asked.
+	 */
+	private static URI imageUri(Entry e) {
+		URI given = web(e.url);
+		if (given != null) return given;
+		return e.hash.matches("[0-9a-f]{64}") ? web(server() + "/files/" + e.hash + ".png") : null;
+	}
+
 	private static void download(Entry e) {
+		URI uri = imageUri(e);
+		if (uri == null) {
+			if (unusable.add(e.hash)) Cosmetics.LOG.warn("Cape {} has no usable image address ({})", e.hash, e.url);
+			return;
+		}
 		if (!downloading.add(e.hash)) return;
-		HttpRequest req = HttpRequest.newBuilder(URI.create(e.url)).timeout(Duration.ofSeconds(20)).GET().build();
+		HttpRequest req = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(20)).GET().build();
 		HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofByteArray()).whenComplete((resp, err) -> {
 			if (err != null || resp.statusCode() != 200) {
 				downloading.remove(e.hash);
@@ -187,6 +223,7 @@ public final class RemoteCapes {
 	/** Leaving a world: everything is looked up again next time. */
 	public static void clear() {
 		players.clear();
+		unusable.clear();
 		lastSeen.clear();
 		Minecraft.getInstance().execute(() -> {
 			animations.values().forEach(CapeAnimation::release);
