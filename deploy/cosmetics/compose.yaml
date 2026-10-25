@@ -2,6 +2,11 @@
 services:
   cosmetics:
     image: ghcr.io/ydavinci/slopclient-cosmetics:latest
+    # `docker compose up -d --build` builds from this checkout instead (server, web page
+    # and its 3D preview), e.g. for changes that are not in a release yet.
+    build:
+      context: ../..
+      dockerfile: deploy/cosmetics/Dockerfile
     restart: unless-stopped
     environment:
       SLOPCLIENT_COSMETICS_PUBLIC_URL: https://cosmetics.example.com

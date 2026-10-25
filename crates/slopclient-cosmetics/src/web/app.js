@@ -16,14 +16,55 @@ let preview = null;
 let skinCanvas = null;
 const frameCache = new Map(); // cape id -> Promise<canvas[]>
 
+// ---------- small icons (same 1.8 stroke as the dock's tabs) ----------
+
+function icon(paths) {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.8");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  for (const d of paths) {
+    const p = document.createElementNS(ns, "path");
+    p.setAttribute("d", d);
+    svg.append(p);
+  }
+  return svg;
+}
+/** "Nothing": an empty circle struck through. */
+const ICON_NONE = ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z", "M5.6 18.4 18.4 5.6"];
+const ICON_EDIT = ["M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"];
+const ICON_DELETE = ["M4 7h16", "M10 11v6M14 11v6", "M6 7l1 13h10l1-13", "M9 7V4h6v3"];
+
+function noneTile() {
+  const d = el("div", "none");
+  d.append(icon(ICON_NONE));
+  return d;
+}
+
+function iconButton(paths, label, className) {
+  const b = el("button", `icon ${className || ""}`.trim());
+  b.type = "button";
+  b.setAttribute("aria-label", label);
+  b.title = label;
+  b.append(icon(paths));
+  return b;
+}
+
 // ---------- 3D preview ----------
 
 function ensurePreview() {
   if (preview) return;
   const canvas = $("preview");
+  // The player fills the stage above the dock (shell.js), up to a generous size.
   const size = () => {
-    const w = Math.max(200, Math.min(canvas.parentElement.clientWidth, 340));
-    return [w, Math.round(w * 1.3)];
+    const box = canvas.closest(".figure") || canvas.parentElement;
+    const w = Math.max(160, Math.min(box.clientWidth, (box.clientHeight - 34) / 1.3, 560));
+    return [Math.round(w), Math.round(w * 1.3)];
   };
   preview = new SlopViewer.Preview(canvas, ...size());
   window.addEventListener("resize", () => preview && preview.setSize(...size()));
@@ -70,6 +111,8 @@ function updateCaption() {
 
 async function showCape(id) {
   previewCape = id;
+  // Turn the player so the chosen cape is in sight.
+  if (id && preview.faceCape) preview.faceCape();
   markCapeTiles();
   updateCaption();
   if (!id) return preview.setCape(null);
@@ -155,7 +198,7 @@ async function loadCapes() {
   // "No cape" first.
   const none = el("div", "tile");
   none.dataset.id = "";
-  none.append(el("div", "none", "∅"), el("div", "name", "Keine Cape"));
+  none.append(noneTile(), el("div", "name", "Keine Cape"));
   const noneActions = el("div", "actions");
   if (!mine.activeId) noneActions.append(el("span", "badge", "Getragen"));
   else {
@@ -176,7 +219,7 @@ async function loadCapes() {
     tile.dataset.id = cape.id;
     const canvas = el("canvas");
     loadImage(capePath(cape)).then((img) => drawCapeFront(canvas, img, cape.meta.scale), () => {});
-    const meta = cape.meta.frames > 1 ? `${cape.meta.frames} Bilder · ${64 * cape.meta.scale} px` : `${64 * cape.meta.scale} px`;
+    const meta = cape.meta.frames > 1 ? `${cape.meta.frames}\u00a0Bilder · ${64 * cape.meta.scale}\u00a0px` : `${64 * cape.meta.scale}\u00a0px`;
     const actions = el("div", "actions");
     if (cape.hidden) {
       const badge = el("span", "badge warn", "Ausgeblendet");
@@ -193,14 +236,14 @@ async function loadCapes() {
       actions.append(wear);
     }
     if (editable.has(cape.id) && !cape.hidden) {
-      const edit = el("button", "", "Bearbeiten");
+      const edit = iconButton(ICON_EDIT, `„${cape.name}“ bearbeiten`);
       edit.onclick = (ev) => {
         ev.stopPropagation();
         editCape(cape);
       };
       actions.append(edit);
     }
-    const del = el("button", "danger", "Löschen");
+    const del = iconButton(ICON_DELETE, `„${cape.name}“ löschen`, "danger");
     del.onclick = (ev) => {
       ev.stopPropagation();
       removeCape(cape);
@@ -261,7 +304,7 @@ function extrasTiles(kind) {
       if (model.tier) tile.append(el("div", "meta", TIERS[model.tier] || model.tier));
       if (model.credit) tile.append(el("div", "meta", `von ${model.credit}`));
     } else {
-      tile.append(el("div", "none", "∅"), el("div", "name", none));
+      tile.append(noneTile(), el("div", "name", none));
     }
     tile.onclick = () => {
       chosen = { ...chosen, [kind]: model ? model.id : null };

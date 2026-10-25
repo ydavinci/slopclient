@@ -1,9 +1,22 @@
 # SlopClient cosmetics backend. Build from the repository root:
 #   docker build -f deploy/cosmetics/Dockerfile -t slopclient-cosmetics .
 
+# The web page's 3D preview (src/web/viewer.js) is built from the launcher's viewer, so the
+# image never ships a stale copy of the one in the repository.
+FROM node:22-bookworm-slim AS viewer
+WORKDIR /src/launcher
+COPY launcher/package.json launcher/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --ignore-scripts --no-audit --no-fund
+COPY launcher/vite.viewer.config.ts launcher/tsconfig.json ./
+COPY launcher/src/lib src/lib
+COPY launcher/src/webviewer src/webviewer
+RUN mkdir -p ../crates/slopclient-cosmetics/src/web && npm run build:viewer
+
 FROM rust:1-bookworm AS build
 WORKDIR /src
 COPY . .
+COPY --from=viewer /src/crates/slopclient-cosmetics/src/web/viewer.js crates/slopclient-cosmetics/src/web/viewer.js
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/src/target \
     cargo build --release --locked -p slopclient-cosmetics \

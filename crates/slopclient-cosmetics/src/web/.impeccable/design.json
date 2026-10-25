@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T12:00:00Z",
+  "title": "Design System: SlopClient Kosmetik (web)",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Dusk Ink", "canonical": "#09080e", "tonalRamp": ["#09080e", "#15121f", "#231e33", "#352e4a", "#4c4466", "#6b6287", "#9d95b5", "#e4e0ef"] },
+      "ink-raised": { "role": "neutral", "displayName": "Raised Ink", "canonical": "#15121f", "tonalRamp": ["#09080e", "#15121f", "#231e33", "#352e4a", "#4c4466", "#6b6287", "#9d95b5", "#e4e0ef"] },
+      "text": { "role": "neutral", "displayName": "Moon White", "canonical": "#efecf7", "tonalRamp": ["#1d1a26", "#36323f", "#524d5d", "#726c7e", "#958fa2", "#bab5c6", "#d8d4e3", "#efecf7"] },
+      "muted": { "role": "neutral", "displayName": "Lavender Grey", "canonical": "#a39cb6", "tonalRamp": ["#1c1924", "#302b3c", "#463f56", "#5f5772", "#7b7290", "#a39cb6", "#c7c1d6", "#e7e3f0"] },
+      "dim": { "role": "neutral", "displayName": "Ash Violet", "canonical": "#8a83a0", "tonalRamp": ["#1a1722", "#2c2838", "#403a50", "#575069", "#716a85", "#8a83a0", "#b5afc7", "#e2dfec"] },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "rgb(255 255 255 / 0.07)" },
+      "hairline-strong": { "role": "neutral", "displayName": "Strong Hairline", "canonical": "rgb(255 255 255 / 0.14)" },
+      "wash": { "role": "neutral", "displayName": "Wash", "canonical": "rgb(255 255 255 / 0.06)" },
+      "well": { "role": "neutral", "displayName": "Well", "canonical": "rgb(0 0 0 / 0.32)" },
+      "violet": { "role": "primary", "displayName": "Electric Violet", "canonical": "#8b5cf6", "tonalRamp": ["#1e0f45", "#2e1667", "#43208f", "#5b2bbd", "#7140e6", "#8b5cf6", "#b49cfa", "#e6deff"] },
+      "lilac": { "role": "secondary", "displayName": "Lilac Glow", "canonical": "#c084fc", "tonalRamp": ["#2b0d4a", "#43166f", "#5f2297", "#7e33c2", "#9f54ea", "#c084fc", "#dbb7fd", "#f4e8ff"] },
+      "magenta": { "role": "tertiary", "displayName": "Orchid Magenta", "canonical": "#e879f9", "tonalRamp": ["#3d0a45", "#5c1268", "#7f1d8f", "#a52cb8", "#cc47e0", "#e879f9", "#f3b3fb", "#fdeaff"] },
+      "status-on": { "role": "status", "displayName": "Signal Green", "canonical": "#4ade80" },
+      "status-warn": { "role": "status", "displayName": "Signal Amber", "canonical": "#fbbf24" },
+      "status-err": { "role": "status", "displayName": "Signal Rose", "canonical": "#fb7185" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The sign-in headline only." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "SlopClient in the top bar." },
+      "title": { "displayName": "Title", "purpose": "Visible panel headings." },
+      "body": { "displayName": "Body", "purpose": "Base text." },
+      "hint": { "displayName": "Hint", "purpose": "Explanatory lines at the top of panels, max 72ch." },
+      "label": { "displayName": "Label", "purpose": "Buttons, tabs, chip, toast, player caption." },
+      "field-label": { "displayName": "Field label", "purpose": "Form labels and editor group heads (700)." },
+      "meta": { "displayName": "Meta", "purpose": "Tile secondary lines, legal text." },
+      "code": { "displayName": "Code", "purpose": "The Microsoft device code." },
+      "numeric": { "displayName": "Numeric", "purpose": "Slider outputs and counts." }
+    },
+    "shadows": [
+      { "name": "liquid-glass", "value": "inset 0 1px 0.5px rgb(255 255 255 / 0.42), inset 0 -1px 0.5px rgb(255 255 255 / 0.12), inset 1px 0 0.5px rgb(255 255 255 / 0.14), inset 0 0 22px rgb(255 255 255 / 0.05), 0 28px 60px -24px rgb(0 0 0 / 0.75), 0 2px 8px -2px rgb(0 0 0 / 0.4)", "purpose": "Dock, top-bar chip and button, pose switch, save bar, sign-in card." },
+      { "name": "glass-drop", "value": "inset 0 1px 0.5px rgb(255 255 255 / 0.65), inset 0 -1px 1px rgb(255 255 255 / 0.18), inset 0 0 10px rgb(255 255 255 / 0.08), 0 6px 14px -6px rgb(0 0 0 / 0.55), 0 0 22px -6px color-mix(in oklab, #c084fc 55%, transparent)", "purpose": "The lens under the active dock tab." },
+      { "name": "chroma-lift", "value": "inset 0 1px 0 rgb(255 255 255 / 0.35), 0 10px 24px -10px color-mix(in oklab, #8b5cf6 80%, transparent)", "purpose": "Primary buttons." },
+      { "name": "selection-halo", "value": "0 0 0 1.5px #c084fc, 0 0 0 5px color-mix(in oklab, #8b5cf6 22%, transparent), 0 14px 28px -14px color-mix(in oklab, #8b5cf6 80%, transparent)", "purpose": "The tile currently shown on the player." },
+      { "name": "toast", "value": "0 18px 40px -16px rgb(0 0 0 / 0.8)", "purpose": "Toast notification." },
+      { "name": "pixel-preview", "value": "0 6px 14px -6px rgb(0 0 0 / 0.7)", "purpose": "Cape canvases in tiles." },
+      { "name": "status-glow", "value": "0 0 10px currentColor", "purpose": "Toast dot and Studio pending dot." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Layout morphs (0.6s), tile lift (0.35s), save bar (0.5s), toast (0.45s), button press." },
+      { "name": "spring", "value": "cubic-bezier(0.34, 1.36, 0.64, 1)", "purpose": "The glass drop following the active tab (0.55s) only." },
+      { "name": "chroma-slide", "value": "6s linear infinite", "purpose": "Chroma gradient sliding across a 300% background." },
+      { "name": "rim-spin", "value": "9s linear infinite (disc), 6s (worn tile)", "purpose": "Conic chroma rims via @property --spin." },
+      { "name": "pulse", "value": "1.4s ease-in-out infinite", "purpose": "Waiting-for-sign-in dot." },
+      { "name": "reduced-motion", "value": "durations 0.01ms; shader renders one frame", "purpose": "prefers-reduced-motion: reduce." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "760px" },
+      { "name": "sheet", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Default control: white wash, strong hairline, 12px radius.",
+      "html": "<button class=\"ds-btn\">Code kopieren</button>",
+      "css": ".ds-btn { font: 600 13.5px/1 Sora, system-ui, sans-serif; color: #efecf7; background: rgb(255 255 255 / 0.06); border: 1px solid rgb(255 255 255 / 0.14); border-radius: 12px; height: 38px; padding: 0 15px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn:hover { background: rgb(255 255 255 / 0.1); border-color: rgb(255 255 255 / 0.22); } .ds-btn:active { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Sliding chroma gradient; primary actions only.",
+      "html": "<button class=\"ds-btn-primary\">Speichern</button>",
+      "css": ".ds-btn-primary { font: 600 13.5px/1 Sora, system-ui, sans-serif; color: #fff; border: 0; border-radius: 12px; height: 38px; padding: 0 15px; cursor: pointer; background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma 6s linear infinite; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 10px 24px -10px color-mix(in oklab, #8b5cf6 80%, transparent); transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; } @keyframes ds-chroma { to { background-position: 300% 0; } }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action: rose text, rose tint on hover.",
+      "html": "<button class=\"ds-btn-danger\">Alle Daten löschen …</button>",
+      "css": ".ds-btn-danger { font: 600 13.5px/1 Sora, system-ui, sans-serif; color: #fb7185; background: rgb(255 255 255 / 0.06); border: 1px solid rgb(255 255 255 / 0.14); border-radius: 12px; height: 38px; padding: 0 15px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; } .ds-btn-danger:hover { background: color-mix(in oklab, #fb7185 14%, transparent); border-color: color-mix(in oklab, #fb7185 35%, transparent); } .ds-btn-danger:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Recessed black well with a violet focus halo.",
+      "html": "<label class=\"ds-label\">Name<input class=\"ds-input\" placeholder=\"Meine Cape\"></label>",
+      "css": ".ds-label { display: block; font: 600 12px Sora, system-ui, sans-serif; color: #a39cb6; } .ds-input { display: block; margin-top: 6px; font: 500 14px/1.2 Sora, system-ui, sans-serif; color: #efecf7; background: rgb(0 0 0 / 0.32); border: 1px solid rgb(255 255 255 / 0.14); border-radius: 12px; height: 40px; padding: 0 13px; width: 100%; caret-color: #c084fc; transition: border-color 0.2s, box-shadow 0.2s; } .ds-input::placeholder { color: #8a83a0; } .ds-input:focus { outline: none; border-color: color-mix(in oklab, #c084fc 60%, transparent); box-shadow: 0 0 0 3px color-mix(in oklab, #8b5cf6 25%, transparent); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented",
+      "description": "Black-well track; the active option is a lit white wash.",
+      "html": "<div class=\"ds-seg\"><button class=\"on\">Gehen</button><button>Stehen</button><button>Elytra</button></div>",
+      "css": ".ds-seg { display: inline-flex; background: rgb(0 0 0 / 0.32); border: 1px solid rgb(255 255 255 / 0.07); border-radius: 12px; padding: 3px; gap: 2px; } .ds-seg button { font: 600 12.5px/1 Sora, system-ui, sans-serif; height: 30px; border: 0; background: none; padding: 0 12px; color: #a39cb6; border-radius: 9px; cursor: pointer; } .ds-seg button:hover { background: rgb(255 255 255 / 0.05); color: #efecf7; } .ds-seg button.on { background: rgb(255 255 255 / 0.13); color: #fff; box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.3), 0 4px 10px -4px rgb(0 0 0 / 0.6); } .ds-seg button:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Liquid Glass Dock",
+      "kind": "nav",
+      "refersTo": "dock",
+      "description": "The floating dock with tabs and the glass drop under the active one.",
+      "html": "<nav class=\"ds-dock\"><div class=\"ds-tabs\"><span class=\"ds-drop\"></span><button class=\"ds-tab on\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"><path d=\"M7 3h10l1 18-6-3-6 3z\"/></svg>Capes</button><button class=\"ds-tab\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"><path d=\"M3 18h18M6 18V9l3 3 3-6 3 6 3-3v9\"/></svg>Hut</button></div></nav>",
+      "css": ".ds-dock { position: relative; border-radius: 26px; background: linear-gradient(160deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02) 38%, rgb(255 255 255 / 0.035)), color-mix(in oklab, #8b5cf6 7%, rgb(12 10 20 / 0.5)); backdrop-filter: blur(22px) saturate(175%); box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.42), inset 0 -1px 0.5px rgb(255 255 255 / 0.12), inset 1px 0 0.5px rgb(255 255 255 / 0.14), inset 0 0 22px rgb(255 255 255 / 0.05), 0 28px 60px -24px rgb(0 0 0 / 0.75), 0 2px 8px -2px rgb(0 0 0 / 0.4); } .ds-tabs { position: relative; display: flex; gap: 4px; padding: 7px; } .ds-drop { position: absolute; top: 7px; left: 7px; width: 112px; height: 42px; border-radius: 16px; background: linear-gradient(170deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.06) 55%, rgb(255 255 255 / 0.1)); box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.65), inset 0 -1px 1px rgb(255 255 255 / 0.18), 0 6px 14px -6px rgb(0 0 0 / 0.55), 0 0 22px -6px color-mix(in oklab, #c084fc 55%, transparent); } .ds-tab { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 9px; height: 42px; padding: 0 16px; border: 0; background: none; border-radius: 16px; color: #a39cb6; font: 600 13.5px/1 Sora, system-ui, sans-serif; cursor: pointer; } .ds-tab svg { width: 18px; height: 18px; } .ds-tab:hover { background: rgb(255 255 255 / 0.06); color: #efecf7; } .ds-tab.on { color: #fff; background: none; } .ds-tab:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Shelf Tile",
+      "kind": "card",
+      "refersTo": "tile",
+      "description": "Item on the shelf; selected gets the lilac halo, worn gets the turning chroma rim and the chroma badge.",
+      "html": "<div class=\"ds-tile selected\"><div class=\"ds-prev\"></div><div class=\"ds-name\">anime-girl</div><div class=\"ds-meta\">64 Bilder · 1024 px</div><span class=\"ds-badge\">Getragen</span></div>",
+      "css": ".ds-tile { width: 132px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 10px 10px; text-align: center; border-radius: 18px; border: 1px solid rgb(255 255 255 / 0.07); background: rgb(255 255 255 / 0.04); color: #efecf7; font-family: Sora, system-ui, sans-serif; transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s, background-color 0.2s, box-shadow 0.3s; } .ds-tile:hover { transform: translateY(-3px); border-color: rgb(255 255 255 / 0.14); background: rgb(255 255 255 / 0.07); } .ds-tile.selected { border-color: transparent; background: rgb(255 255 255 / 0.09); box-shadow: 0 0 0 1.5px #c084fc, 0 0 0 5px color-mix(in oklab, #8b5cf6 22%, transparent), 0 14px 28px -14px color-mix(in oklab, #8b5cf6 80%, transparent); } .ds-prev { width: 46px; height: 74px; border-radius: 6px; background: rgb(0 0 0 / 0.3); box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.7); } .ds-name { font-weight: 600; font-size: 13px; line-height: 1.25; } .ds-meta { color: #8a83a0; font-size: 11.5px; line-height: 1.2; } .ds-badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 99px; font-size: 11px; font-weight: 700; color: #fff; background-image: linear-gradient(90deg, #8b5cf6, #c084fc, #e879f9, #c084fc, #8b5cf6); background-size: 300% 100%; animation: ds-chroma2 6s linear infinite; } @keyframes ds-chroma2 { to { background-position: 300% 0; } }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Top-centre status message with a glowing dot.",
+      "html": "<div class=\"ds-toast\">Gespeichert</div>",
+      "css": ".ds-toast { position: relative; display: inline-block; border-radius: 16px; padding: 11px 16px 11px 38px; font: 600 13.5px Sora, system-ui, sans-serif; color: #efecf7; background: rgb(20 17 30 / 0.86); border: 1px solid rgb(255 255 255 / 0.14); backdrop-filter: blur(18px); box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.8); } .ds-toast::before { content: \"\"; position: absolute; left: 15px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 99px; background: #4ade80; box-shadow: 0 0 10px #4ade80; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Turntable in the Dusk",
+    "overview": "The player is the page. A large 3D Minecraft figure stands on a lit disc at the centre of a full-bleed violet shader, and every control lives in one floating Liquid Glass dock below it. Nothing is stacked as a settings page; on wide screens, Studio and Konto morph the dock into a right-hand sheet and the player slides left instead of being covered.\n\nThe mood is a night-time game lobby: deep ink, slow-moving violet and magenta fog, glass that bends light at its rim, and one animated chroma gradient reserved for what you act on or what you are wearing. Density is moderate and compact inside the dock (12-16px panel padding, 10px tile gaps) so the figure keeps the room. Every visual comes from the launcher, so the browser and the desktop app read as one product.",
+    "keyCharacteristics": [
+      "Full-bleed animated fbm shader on ink (#09080e) with a 6% overlay grain; CSS radial-gradient fallback when WebGL is missing.",
+      "Floating chrome is Liquid Glass: specular inner rims, pointer-following light, lens refraction at the rim in Chromium.",
+      "One moving chroma gradient (violet, lilac, magenta) marks primary actions and worn items.",
+      "Sora for everything human; JetBrains Mono only for codes and numbers.",
+      "Corners run from 6px (pixel previews) to 28px (sign-in card); pills for status and the save bar.",
+      "German UI copy, sentence case, no uppercase labels."
+    ],
+    "rules": [
+      { "name": "The Earned Chroma Rule", "body": "The animated gradient `linear-gradient(90deg, violet, lilac, magenta, lilac, violet)` at `background-size: 300%`, sliding over 6s, appears only on: primary buttons, the \"Getragen\" badge, the rotating rim of a worn tile, the turntable disc rim, and the account avatar. Everything else is neutral. If chroma appears on anything not on this list, it is wrong.", "section": "colors" },
+      { "name": "The Alpha-Not-Grey Rule", "body": "Neutral surfaces are white or black alpha over the shader, never opaque greys. The dusk must show through every interior fill.", "section": "colors" },
+      { "name": "The Machine Voice Rule", "body": "JetBrains Mono with tabular figures is used for device codes, slider values and counts, and nowhere else. Sizes, names and prose stay in Sora.", "section": "typography" },
+      { "name": "The Sentence Case Rule", "body": "No uppercase, no tracked-out small labels. Hierarchy comes from weight (400/600/700/800) and the text/muted/dim ladder.", "section": "typography" },
+      { "name": "The Player Is the Page Rule", "body": "The 3D figure owns the centre and is never covered: controls float in the dock, and when a panel needs height it becomes a side sheet that pushes the player aside. No stacked full-width sections.", "section": "layout" },
+      { "name": "The Glass Floats, the Inside Stays Flat Rule", "body": "Liquid Glass is only for chrome that floats over the shader. Nothing inside the dock is glass again; tiles, inputs and buttons inside use washes and wells.", "section": "elevation" },
+      { "name": "The Graceful Lens Rule", "body": "The SVG displacement lens (chromatic rim refraction, `blur(3px) saturate(180%) brightness(1.06)`) is a Chromium enhancement. Every glass element must look finished with only `blur(22px) saturate(175%)`.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the shader dusk full-bleed behind every state, with the radial-gradient fallback on ink (#09080e).",
+      "Do put new controls in the dock; if a feature needs height, make it a sheet tab that pushes the player aside (>= 1100px).",
+      "Do use the Liquid Glass recipe for anything that floats over the shader, and washes/wells for anything inside it.",
+      "Do reserve the sliding chroma gradient for primary actions and worn items (plus the existing turntable rim and avatar).",
+      "Do mark \"shown on the player\" with the lilac ring and halo, and \"worn\" with the turning chroma rim.",
+      "Do use JetBrains Mono with tabular figures for codes and numbers only.",
+      "Do move with the ease-out curve `cubic-bezier(0.22, 1, 0.36, 1)` for layout (0.6s) and the spring `cubic-bezier(0.34, 1.36, 0.64, 1)` only for the tab drop; honour `prefers-reduced-motion` (shader freezes on one frame, animations collapse).",
+      "Do draw icons as 1.8px-stroke inline SVG in `currentColor`."
+    ],
+    "donts": [
+      "Don't build stacked full-width settings sections or a scrolling page; the viewport is fixed and the player is the centre.",
+      "Don't cover the player with a modal or an overlay panel.",
+      "Don't nest glass inside glass or use opaque grey surfaces.",
+      "Don't use the chroma gradient for decoration, headings or secondary buttons.",
+      "Don't use uppercase or letter-spaced micro-labels, or hard offset shadows.",
+      "Don't depend on the SVG lens for legibility; it exists only in Chromium.",
+      "Don't set text below the dim value (#8a83a0) on ink."
+    ]
+  }
+}

@@ -34,6 +34,10 @@ const INDEX_HTML: &str = include_str!("web/index.html");
 const COMMON_JS: &str = include_str!("web/common.js");
 const UPLOAD_JS: &str = include_str!("web/upload.js");
 const APP_JS: &str = include_str!("web/app.js");
+const SHELL_JS: &str = include_str!("web/shell.js");
+const FONT_SORA: &[u8] = include_bytes!("web/fonts/sora.woff2");
+const FONT_SORA_EXT: &[u8] = include_bytes!("web/fonts/sora-ext.woff2");
+const FONT_MONO: &[u8] = include_bytes!("web/fonts/jetbrains-mono.woff2");
 /// 3D preview (three.js, skinview3d, hat and pet models), built from launcher/src/webviewer.
 const VIEWER_JS: &str = include_str!("web/viewer.js");
 /// Largest skin the preview fetches from Mojang.
@@ -63,14 +67,18 @@ pub(crate) fn routes(s: &Shared) -> Router<Shared> {
         .route("/common.js", get(|| async { script(COMMON_JS) }))
         .route("/upload.js", get(|| async { script(UPLOAD_JS) }))
         .route("/app.js", get(|| async { script(APP_JS) }))
+        .route("/shell.js", get(|| async { script(SHELL_JS) }))
+        .route("/fonts/sora.woff2", get(|| async { font(FONT_SORA) }))
+        .route("/fonts/sora-ext.woff2", get(|| async { font(FONT_SORA_EXT) }))
+        .route("/fonts/jetbrains-mono.woff2", get(|| async { font(FONT_MONO) }))
         .route("/viewer.js", get(|| async { script(VIEWER_JS) }))
         .merge(limited(s, &limits::READ, Router::new().route("/v1/skin", get(own_skin))))
         .merge(limited(s, &limits::WEB_LOGIN, Router::new().route("/v1/web/login", post(start_login))))
         .merge(limited(s, &limits::POLL, Router::new().route("/v1/web/login/{id}", get(login_status))))
 }
 
-/// The page only loads its own scripts and same-origin, data and blob images.
-const CSP: &str = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+/// The page only loads its own scripts and fonts and same-origin, data and blob images.
+const CSP: &str = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 async fn index() -> Response {
     (
@@ -83,6 +91,11 @@ async fn index() -> Response {
         INDEX_HTML,
     )
         .into_response()
+}
+
+/// Self-hosted fonts (Sora, JetBrains Mono; OFL, see web/fonts/OFL.txt).
+fn font(body: &'static [u8]) -> Response {
+    ([(header::CONTENT_TYPE, "font/woff2"), (header::CACHE_CONTROL, "public, max-age=604800")], body).into_response()
 }
 
 fn script(body: &'static str) -> Response {

@@ -69,8 +69,18 @@ docker compose up -d
 curl http://127.0.0.1:8787/health     # → ok
 ```
 
-Caddy then runs on the host as above. To build the image yourself, from the repository root:
-`docker build -f deploy/cosmetics/Dockerfile -t slopclient-cosmetics .`. The container runs as
+Caddy then runs on the host as above. Update to a new release with `docker compose pull && docker compose up -d`.
+
+The image contains the whole server including the web interface (page, fonts and the 3D preview,
+which the build compiles from the launcher's viewer). To run what is in your checkout rather than
+the last release, build it with compose from this directory:
+
+```
+git pull
+docker compose up -d --build
+```
+
+Or by hand from the repository root: `docker build -f deploy/cosmetics/Dockerfile -t slopclient-cosmetics .`. The container runs as
 uid 10001; a bind mount instead of the named volume must be writable for that uid.
 
 ## Configuration

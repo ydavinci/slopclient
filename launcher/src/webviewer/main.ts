@@ -89,6 +89,40 @@ export class Preview {
     this.applyCape();
   }
 
+  /**
+   * Turns the player to a three-quarter view of the back, so the cape being chosen is
+   * in sight, and holds it there until `spin()` (the turntable rotates the player, not
+   * the camera).
+   */
+  faceCape() {
+    const v = this.v;
+    const cam = v.camera.position.clone().sub(v.controls.target);
+    const wrapper = v.playerWrapper;
+    const from = wrapper.rotation.y;
+    // The back faces the camera when the total yaw is the camera's azimuth plus π;
+    // 0.55 rad more is three-quarter.
+    let to = Math.atan2(cam.x, cam.z) + Math.PI - v.playerObject.rotation.y + 0.55;
+    while (to - from > Math.PI) to -= Math.PI * 2;
+    while (to - from < -Math.PI) to += Math.PI * 2;
+    cancelAnimationFrame(this.faceFrame);
+    v.autoRotate = false;
+    const start = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - start) / 700);
+      wrapper.rotation.y = from + (to - from) * (1 - Math.pow(1 - k, 4));
+      if (k < 1) this.faceFrame = requestAnimationFrame(step);
+    };
+    this.faceFrame = requestAnimationFrame(step);
+  }
+
+  /** Resumes the slow turntable spin. */
+  spin() {
+    cancelAnimationFrame(this.faceFrame);
+    this.v.autoRotate = true;
+  }
+
+  private faceFrame = 0;
+
   /** `null` takes the cape off. */
   setCape(frames: HTMLCanvasElement[] | null, frameTimeMs = 100, elytra = true) {
     this.cape = frames && frames.length ? { frames, frameTimeMs, elytra } : null;

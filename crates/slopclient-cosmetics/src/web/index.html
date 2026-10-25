@@ -2,177 +2,409 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#09080e">
 <title>SlopClient Kosmetik</title>
+<link rel="icon" href="data:image/png;base64,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">
 <style>
+  @font-face { font-family: "Sora"; src: url("fonts/sora.woff2") format("woff2"); font-weight: 100 800; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Sora"; src: url("fonts/sora-ext.woff2") format("woff2"); font-weight: 100 800; font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+  @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
   :root {
-    --bg: #09080e; --panel: #14111e; --raised: #1d1929; --line: rgb(255 255 255 / 0.08);
-    --text: #efecf7; --muted: #a39cb6; --dim: #726b86;
-    --accent: #8b5cf6; --accent-2: #c084fc; --ok: #4ade80; --err: #f87171;
+    /* The launcher's tokens (launcher/src/styles.css). */
+    --bg: #09080e; --panel: rgb(20 17 30 / 0.72); --panel-solid: #15121f; --raised: rgb(38 32 54 / 0.72);
+    --line: rgb(255 255 255 / 0.07); --line-2: rgb(255 255 255 / 0.14);
+    --text: #efecf7; --muted: #a39cb6; --dim: #8a83a0;
+    --accent: #8b5cf6; --accent-2: #c084fc; --accent-3: #e879f9;
+    --on: #4ade80; --warn: #fbbf24; --err: #fb7185;
     /* Read by the 3D preview for hats and pets painted in the accent colours. */
     --color-accent: #8b5cf6; --color-accent-2: #c084fc;
+    --chroma: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent-2), var(--accent));
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+    --top: 68px;
+    --dock-gap: 16px;
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
-    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background-image: radial-gradient(60rem 30rem at 80% -10%, rgb(139 92 246 / 0.18), transparent 70%);
+    margin: 0; background: var(--bg); color: var(--text); overflow: hidden;
+    font: 400 14.5px/1.55 "Sora", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
   }
-  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
-  header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-  header h1 { font-size: 22px; margin: 0; flex: 1; letter-spacing: -0.02em; }
-  header .who { color: var(--muted); font-size: 14px; }
-  .logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-weight: 800; }
-  section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin-bottom: 16px; }
-  section h2 { font-size: 16px; margin: 0 0 4px; }
-  p.hint { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+  ::selection { background: color-mix(in oklab, var(--accent) 55%, transparent); color: #fff; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.12); border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in oklab, var(--accent-2) 45%, transparent); }
+  :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- the world: the launcher's shader dusk ---------- */
+  .world { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    background: radial-gradient(ellipse at 30% 20%, rgb(91 33 182 / 0.35), transparent 55%), radial-gradient(ellipse at 80% 70%, rgb(162 28 175 / 0.22), transparent 50%), var(--bg); }
+  .world canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .world .grain { position: absolute; inset: 0; opacity: 0.06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>"); }
+
+  /* ---------- glass ---------- */
+  .glass { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%); }
+  /* Liquid Glass (shell.js adds the lens refraction where the browser supports it). */
+  .liquid {
+    position: relative; isolation: isolate;
+    background: linear-gradient(160deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02) 38%, rgb(255 255 255 / 0.035)), color-mix(in oklab, var(--accent) 7%, rgb(12 10 20 / 0.5));
+    backdrop-filter: blur(22px) saturate(175%); -webkit-backdrop-filter: blur(22px) saturate(175%);
+    box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.42), inset 0 -1px 0.5px rgb(255 255 255 / 0.12), inset 1px 0 0.5px rgb(255 255 255 / 0.14),
+      inset 0 0 22px rgb(255 255 255 / 0.05), 0 28px 60px -24px rgb(0 0 0 / 0.75), 0 2px 8px -2px rgb(0 0 0 / 0.4);
+  }
+  .liquid::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 1;
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.06) 32%, rgb(255 255 255 / 0) 55%, rgb(255 255 255 / 0.08) 80%, rgb(255 255 255 / 0.3));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .liquid::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+    background: radial-gradient(220px circle at var(--lx, 50%) var(--ly, 0%), rgb(255 255 255 / 0.1), transparent 60%); opacity: var(--lo, 0); transition: opacity 0.35s ease; }
+  .liquid > * { position: relative; z-index: 2; }
+
+  /* ---------- controls ---------- */
   button, .button {
-    font: inherit; font-size: 14px; font-weight: 600; color: var(--text); background: var(--raised);
-    border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block;
+    font: 600 13.5px/1 "Sora", system-ui, sans-serif; color: var(--text); background: rgb(255 255 255 / 0.06);
+    border: 1px solid var(--line-2); border-radius: 12px; height: 38px; padding: 0 15px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; white-space: nowrap;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s var(--ease), color 0.2s;
   }
-  button:hover, .button:hover { border-color: rgb(255 255 255 / 0.2); }
-  button.primary, .button.primary { background: var(--accent); border-color: transparent; }
-  button.primary:hover { background: #7c4ddf; }
+  button:hover, .button:hover { background: rgb(255 255 255 / 0.1); border-color: rgb(255 255 255 / 0.22); }
+  button:active, .button:active { transform: scale(0.97); }
+  button.primary, .button.primary {
+    border: 0; color: #fff; background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 10px 24px -10px color-mix(in oklab, var(--accent) 80%, transparent);
+  }
+  button.primary:hover, .button.primary:hover { filter: brightness(1.08); }
   button.danger { color: var(--err); }
-  button:disabled { opacity: 0.5; cursor: default; }
-  input {
-    font: inherit; font-size: 14px; color: var(--text); background: rgb(0 0 0 / 0.3); border: 1px solid var(--line);
-    border-radius: 10px; padding: 8px 12px; width: 100%;
+  button.danger:hover { background: color-mix(in oklab, var(--err) 14%, transparent); border-color: color-mix(in oklab, var(--err) 35%, transparent); }
+  button:disabled { opacity: 0.45; cursor: default; transform: none; filter: none; }
+  @keyframes chroma { to { background-position: 300% 0; } }
+  input, select {
+    font: 500 14px/1.2 "Sora", system-ui, sans-serif; color: var(--text); background: rgb(0 0 0 / 0.32);
+    border: 1px solid var(--line-2); border-radius: 12px; height: 40px; padding: 0 13px; width: 100%; caret-color: var(--accent-2);
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
+  input:focus, select:focus { outline: none; border-color: color-mix(in oklab, var(--accent-2) 60%, transparent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent); }
+  input::placeholder { color: var(--dim); }
+  select option { background: var(--panel-solid); }
+  input[type=checkbox] { width: 17px; height: 17px; padding: 0; accent-color: var(--accent); vertical-align: -3px; }
+  input[type=range] { height: 22px; padding: 0; border: 0; background: none; accent-color: var(--accent-2); box-shadow: none; }
+  input[type=color] { width: 42px; height: 34px; padding: 3px; border-radius: 10px; cursor: pointer; }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
-  .row > div { flex: 1; min-width: 160px; }
-  .code { font: 700 34px/1 ui-monospace, "JetBrains Mono", Consolas, monospace; letter-spacing: 0.12em; padding: 16px 20px; background: rgb(0 0 0 / 0.35); border-radius: 12px; display: inline-block; margin: 8px 0 14px; user-select: all; }
+  .segmented { display: inline-flex; background: rgb(0 0 0 / 0.32); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
+  .segmented button { height: 30px; border: 0; background: none; padding: 0 12px; font-size: 12.5px; color: var(--muted); border-radius: 9px; }
+  .segmented button:hover { background: rgb(255 255 255 / 0.05); color: var(--text); }
+  .segmented button.on { background: rgb(255 255 255 / 0.13); color: #fff; box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.3), 0 4px 10px -4px rgb(0 0 0 / 0.6); }
+  .hint { color: var(--muted); font-size: 13px; margin: 0; max-width: 72ch; }
 
-  .layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
-  .stage { position: sticky; top: 16px; }
-  .stage canvas#preview { width: 100%; display: block; cursor: grab; border-radius: 12px; background: radial-gradient(closest-side, rgb(139 92 246 / 0.16), transparent); }
-  .stage canvas#preview:active { cursor: grabbing; }
-  .stage .caption { color: var(--muted); font-size: 13px; text-align: center; margin: 8px 0 12px; min-height: 20px; }
-  .segmented { display: flex; background: rgb(0 0 0 / 0.3); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-  .segmented button { flex: 1; border: 0; background: none; padding: 6px 8px; font-size: 13px; color: var(--muted); }
-  .segmented button.on { background: var(--raised); color: var(--text); }
-  @media (max-width: 760px) {
-    .layout { grid-template-columns: 1fr; }
-    .stage { position: static; }
-    .stage canvas#preview { max-width: 300px; margin: 0 auto; }
+  /* ---------- top bar ---------- */
+  .top { position: fixed; z-index: 30; top: 0; left: 0; right: 0; height: var(--top); display: flex; align-items: center; gap: 12px; padding: 0 22px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: var(--text); }
+  .brand img { width: 34px; height: 34px; filter: drop-shadow(0 4px 12px rgb(192 132 252 / 0.45)); }
+  .brand b { font-weight: 800; font-size: 17px; letter-spacing: -0.02em; }
+  .brand span { color: var(--muted); font-weight: 600; font-size: 14px; padding-left: 10px; border-left: 1px solid var(--line-2); }
+  .account-chip { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px 0 6px; border-radius: 999px; font-weight: 600; font-size: 13.5px; }
+  .account-chip:has(#who:empty) { display: none; }
+  .avatar { width: 26px; height: 26px; border-radius: 999px; background: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; box-shadow: inset 0 0 0 2px rgb(9 8 14 / 0.55); }
+
+  /* ---------- sign-in ---------- */
+  .login { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: calc(var(--top) + 12px) 18px 56px; overflow: auto; }
+  .login-card { width: min(560px, 100%); border-radius: 28px; padding: clamp(24px, 4vw, 40px); }
+  .login h1 { font-size: clamp(28px, 4.2vw, 40px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800; margin: 0 0 12px; text-wrap: balance; }
+  .login .hint { font-size: 14px; }
+  .login-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; }
+  .login-actions .primary { height: 46px; padding: 0 22px; font-size: 15px; border-radius: 14px; }
+  .code {
+    display: block; margin: 18px 0 6px; padding: 18px 20px; border-radius: 18px; text-align: center; user-select: all;
+    font: 700 clamp(30px, 6vw, 44px)/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: 0.16em; font-variant-numeric: tabular-nums;
+    background: rgb(0 0 0 / 0.35); border: 1px solid var(--line-2); box-shadow: inset 0 2px 14px rgb(0 0 0 / 0.5);
   }
+  .warn-box { margin-top: 14px; border: 1px solid color-mix(in oklab, var(--warn) 35%, transparent); background: color-mix(in oklab, var(--warn) 9%, transparent); color: var(--text); border-radius: 14px; padding: 11px 14px; font-size: 13px; }
+  .warn-box strong { color: var(--warn); }
+  .waiting { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .waiting::before { content: ""; width: 9px; height: 9px; border-radius: 99px; background: var(--accent-2); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.25; transform: scale(0.7); } }
 
-  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  /* ---------- the stage: your player on a turntable ---------- */
+  .app { position: fixed; inset: 0; z-index: 5; }
+  .stage {
+    position: absolute; left: 0; right: 0; top: var(--top); bottom: var(--dock-space, 300px);
+    display: grid; place-items: center; transition: right 0.6s var(--ease), bottom 0.6s var(--ease);
+  }
+  .app.sheet .stage { right: var(--sheet-w); bottom: 24px; }
+  /* The player stands at the bottom of the stage, feet on the turntable, caption below. */
+  .figure { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: min(100%, 560px); display: grid; place-items: end center; padding-bottom: 30px; }
+  .figure canvas#preview { position: relative; z-index: 2; display: block; cursor: grab; touch-action: none; }
+  .figure canvas#preview:active { cursor: grabbing; }
+  /* The turntable: a lit disc with a slowly turning chroma rim under the player's feet. */
+  .turntable { position: relative; line-height: 0; }
+  .turntable::before { content: ""; position: absolute; z-index: 0; left: 50%; bottom: 0; width: 120%; height: 96%; transform: translateX(-50%); pointer-events: none;
+    background: radial-gradient(48% 62% at 50% 92%, rgb(192 132 252 / 0.2), transparent 70%), conic-gradient(from 168deg at 50% -6%, transparent 0deg, rgb(239 236 247 / 0.07) 12deg, transparent 24deg); }
+  .disc { position: absolute; z-index: 1; left: 50%; bottom: 21.5%; width: 66%; aspect-ratio: 3.4 / 1; /* centred on the feet, which stand at 71% of the canvas */ transform: translateX(-50%); border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(192 132 252 / 0.28), rgb(139 92 246 / 0.12) 55%, transparent 72%); }
+  .disc::before { content: ""; position: absolute; inset: 0; border-radius: 50%; padding: 1.5px;
+    background: conic-gradient(from var(--spin, 0deg), transparent 0 15%, var(--accent-2) 30%, var(--accent-3) 45%, transparent 60% 80%, var(--accent) 92%, transparent);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.85; animation: spin 9s linear infinite; }
+  .disc::after { content: ""; position: absolute; inset: 22% 12%; border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / 0.55), transparent); filter: blur(6px); }
+  @property --spin { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+  @keyframes spin { to { --spin: 360deg; } }
+  .caption { position: absolute; z-index: 3; left: 50%; bottom: 0; transform: translateX(-50%); max-width: 92%; text-align: center;
+    font-size: 13.5px; font-weight: 600; color: var(--text); text-shadow: 0 2px 10px rgb(0 0 0 / 0.7); }
+  .caption:empty { display: none; }
+  .pose { position: absolute; z-index: 4; right: max(18px, calc(50% - 360px)); top: 18px; flex-direction: column; border-radius: 16px; padding: 4px; }
+  .pose button { width: 100%; justify-content: flex-start; height: 34px; border-radius: 12px; }
+  .drag-hint { position: absolute; z-index: 3; left: max(18px, calc(50% - 360px)); top: 22px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .drag-hint svg { width: 18px; height: 18px; color: var(--accent-2); }
+
+  /* ---------- the dock ---------- */
+  .dock {
+    --dock-w: min(1040px, calc(100% - 24px));
+    position: absolute; z-index: 20; left: calc((100% - var(--dock-w)) / 2); bottom: calc(var(--dock-gap) + 18px); width: var(--dock-w);
+    border-radius: 26px; display: flex; flex-direction: column; max-height: calc(100% - var(--top) - 60px);
+    transition: left 0.6s var(--ease), width 0.6s var(--ease), bottom 0.6s var(--ease), max-height 0.6s var(--ease), border-radius 0.6s var(--ease);
+  }
+  /* Studio and Konto: the dock rises into a sheet on the right; the player steps left. */
+  .app.sheet .dock { left: calc(100% - var(--sheet-w) + 16px); width: calc(var(--sheet-w) - 32px); bottom: 16px; max-height: calc(100% - var(--top) - 20px); height: calc(100% - var(--top) - 20px); }
+  .app.sheet .tab:not([aria-selected="true"]) .label { display: none; }
+  .tabs { display: flex; gap: 4px; padding: 7px; position: relative; overflow-x: auto; scrollbar-width: none; flex: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { position: relative; z-index: 1; height: 42px; padding: 0 16px; border: 0; background: none; border-radius: 16px; color: var(--muted); font-size: 13.5px; gap: 9px; }
+  .tab:hover { background: rgb(255 255 255 / 0.06); color: var(--text); }
+  .tab[aria-selected="true"] { color: #fff; background: none; }
+  .tab svg { width: 18px; height: 18px; flex: none; }
+  .tab .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--accent-3); box-shadow: 0 0 10px var(--accent-3); }
+  .tab-spacer { flex: 1; }
+  /* The glass drop under the active tab; shell.js moves it with a spring. */
+  .drop { position: absolute; z-index: 0; top: 7px; height: 42px; border-radius: 16px; pointer-events: none;
+    background: linear-gradient(170deg, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0.06) 55%, rgb(255 255 255 / 0.1));
+    box-shadow: inset 0 1px 0.5px rgb(255 255 255 / 0.65), inset 0 -1px 1px rgb(255 255 255 / 0.18), inset 0 0 10px rgb(255 255 255 / 0.08), 0 6px 14px -6px rgb(0 0 0 / 0.55), 0 0 22px -6px color-mix(in oklab, var(--accent-2) 55%, transparent);
+    transition: transform 0.55s var(--spring), width 0.55s var(--spring); }
+  .panels { border-top: 1px solid var(--line); overflow: auto; flex: 1 1 auto; min-height: 0; overscroll-behavior: contain; }
+  .panel { padding: 12px 16px 14px; }
+  .panel-head { margin-bottom: 8px; }
+  .panel:not(.is-active) { display: none; }
+  .panel-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+  .panel-head h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .panel-head h2.sr { position: absolute; }
+
+  /* Shelf: one scrolling row of items, like a locker. */
+  .tiles { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x proximity; scroll-padding: 2px; }
+  .app.sheet .tiles { flex-wrap: wrap; overflow: visible; }
   .tile {
-    background: var(--raised); border: 1px solid var(--line); border-radius: 14px; padding: 10px; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; color: var(--text); font-weight: 400;
+    flex: none; width: 132px; scroll-snap-align: start; position: relative; height: auto;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 10px 10px; text-align: center; white-space: normal;
+    border-radius: 18px; border: 1px solid var(--line); background: rgb(255 255 255 / 0.04); color: var(--text); font-weight: 400; cursor: pointer;
+    transition: transform 0.35s var(--ease), border-color 0.2s, background-color 0.2s, box-shadow 0.3s;
   }
-  .tile:hover { border-color: rgb(255 255 255 / 0.2); }
-  .tile.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(139 92 246 / 0.25); }
-  .tile canvas { width: 50px; height: 80px; image-rendering: pixelated; border-radius: 4px; background: rgb(0 0 0 / 0.25); }
-  .tile img, .tile .none { width: 72px; height: 72px; }
-  .tile .none { display: grid; place-items: center; color: var(--dim); font-size: 28px; }
-  .tile .name { font-weight: 600; font-size: 13px; word-break: break-word; }
-  .tile .meta { color: var(--dim); font-size: 12px; }
-  .tile .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-  .tile .actions button { padding: 4px 9px; font-size: 12px; }
-  .badge { font-size: 11px; font-weight: 700; border-radius: 99px; padding: 2px 8px; background: rgb(139 92 246 / 0.2); color: var(--accent-2); }
-  .badge.warn { background: rgb(248 113 113 / 0.15); color: var(--err); }
-  .subhead { font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 8px; }
-  .savebar { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
-  .savebar .state { color: var(--muted); font-size: 13px; }
-  .savebar .state.dirty { color: var(--accent-2); }
-  .empty { color: var(--muted); font-size: 14px; }
-  .warn-box { border: 1px solid rgb(248 113 113 / 0.35); background: rgb(248 113 113 / 0.08); color: var(--text); border-radius: 10px; padding: 8px 12px; margin: 10px 0 0; }
-  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; font-size: 14px; display: none; max-width: calc(100% - 32px); z-index: 5; }
-  #toast.err { border-color: rgb(248 113 113 / 0.5); color: var(--err); }
-  #toast.ok { border-color: rgb(74 222 128 / 0.4); }
-  .upload-preview { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
-  .editor { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; margin: 4px 0 16px; align-items: start; }
-  .editor input[type=range] { padding: 0; accent-color: var(--accent); }
-  .editor .face {
-    width: 200px; height: 320px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); cursor: grab; touch-action: none;
-    background: repeating-conic-gradient(var(--raised) 0% 25%, var(--panel) 0% 50%) 0 0 / 20px 20px;
-  }
+  .tile:hover { transform: translateY(-3px); border-color: var(--line-2); background: rgb(255 255 255 / 0.07); }
+  .tile.selected { border-color: transparent; background: rgb(255 255 255 / 0.09);
+    box-shadow: 0 0 0 1.5px var(--accent-2), 0 0 0 5px color-mix(in oklab, var(--accent) 22%, transparent), 0 14px 28px -14px color-mix(in oklab, var(--accent) 80%, transparent); }
+  .tile canvas { width: 46px; height: 74px; image-rendering: pixelated; border-radius: 6px; background: rgb(0 0 0 / 0.3); box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.7); }
+  .tile img { width: 76px; height: 76px; }
+  .tile .none { width: 76px; height: 76px; display: grid; place-items: center; color: var(--dim); }
+  .tile .none svg { width: 30px; height: 30px; }
+  .tile .name { font-weight: 600; font-size: 13px; line-height: 1.25; word-break: break-word; }
+  .tile .meta { color: var(--dim); font-size: 11.5px; line-height: 1.2; }
+  .tile .actions { display: flex; gap: 4px; flex-wrap: nowrap; justify-content: center; align-items: center; margin-top: 2px; }
+  .tile .actions button { height: 26px; padding: 0 9px; font-size: 11.5px; border-radius: 9px; }
+  .tile .actions button.icon { width: 26px; padding: 0; }
+  .tile .actions button.icon svg { width: 14px; height: 14px; }
+  /* Worn (the tile carries the "Getragen" badge): a turning chroma rim, the world's mark for it. */
+  .tile:has(.badge:not(.warn))::before { content: ""; position: absolute; inset: -1px; border-radius: 19px; padding: 1.5px; pointer-events: none;
+    background: conic-gradient(from var(--spin, 0deg), var(--accent), var(--accent-2), var(--accent-3), var(--accent-2), var(--accent));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 6s linear infinite; }
+  .badge:not(.warn) { background-image: var(--chroma); background-size: 300% 100%; animation: chroma 6s linear infinite; color: #fff; }
+  .badge { display: inline-flex; align-items: center; height: 22px; font-size: 11px; font-weight: 700; border-radius: 99px; padding: 0 9px; background: color-mix(in oklab, var(--accent) 22%, transparent); color: var(--accent-2); }
+  .badge.warn { background: color-mix(in oklab, var(--err) 16%, transparent); color: var(--err); }
+
+  /* Studio: upload and the Cape Studio editor. */
+  .dropzone { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; border: 1.5px dashed var(--line-2); background: rgb(0 0 0 / 0.2); transition: border-color 0.2s, background-color 0.2s; }
+  .dropzone:hover, .dropzone:focus-within { border-color: color-mix(in oklab, var(--accent-2) 60%, transparent); background: color-mix(in oklab, var(--accent) 8%, transparent); }
+  .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; height: 100%; cursor: pointer; }
+  .dropzone .glyph { width: 44px; height: 44px; flex: none; border-radius: 14px; display: grid; place-items: center; background: color-mix(in oklab, var(--accent) 20%, transparent); color: var(--accent-2); }
+  .dropzone .glyph svg { width: 22px; height: 22px; }
+  .dropzone b { display: block; font-size: 14px; }
+  .dropzone small { color: var(--muted); font-size: 12.5px; }
+  .studio-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+  .app.sheet .studio-grid { grid-template-columns: 1fr; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+  .row > div { flex: 1; min-width: 150px; }
+  .upload-preview { display: flex; gap: 14px; align-items: center; margin: 14px 0 0; }
+  .upload-preview canvas { width: 50px; height: 80px; image-rendering: pixelated; background: rgb(0 0 0 / 0.3); border-radius: 6px; }
+  #cape-info { font-size: 13px; font-weight: 600; }
+  .editor { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 20px; margin: 16px 0; align-items: start; }
+  .editor .face { width: 180px; height: 288px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line-2); cursor: grab; touch-action: none;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.06) 0% 25%, rgb(0 0 0 / 0.25) 0% 50%) 0 0 / 18px 18px; box-shadow: 0 14px 30px -14px rgb(0 0 0 / 0.8); }
   .editor .face:active { cursor: grabbing; }
-  .editor .face:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .editor .face canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-  .editor .face + .hint { margin: 8px 0 0; font-size: 12px; }
+  .editor .face + .hint { margin-top: 8px; font-size: 12px; }
   .editor .controls { display: grid; gap: 18px; }
-  .editor .group { display: grid; gap: 10px; }
-  .editor .group .subhead { margin: 0; }
-  .editor .subhead .count { font: 400 12px ui-monospace, "JetBrains Mono", Consolas, monospace; color: var(--dim); margin-left: 6px; }
+  .editor .group { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .editor .group:last-child { border-bottom: 0; padding-bottom: 0; }
+  .subhead { font-size: 12px; font-weight: 700; letter-spacing: 0.01em; color: var(--muted); margin: 0; }
+  .subhead .count { font: 500 11.5px "JetBrains Mono", ui-monospace, monospace; color: var(--dim); margin-left: 6px; font-variant-numeric: tabular-nums; }
   .editor .inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .editor .inline .segmented { flex: 0 1 auto; }
-  .editor .segmented button { white-space: nowrap; }
-  .editor .range { display: grid; gap: 4px; margin: 0; font-weight: 400; font-size: 13px; }
+  .editor .range { display: grid; gap: 4px; margin: 0; font-weight: 500; font-size: 13px; color: var(--text); }
   .editor .range span { display: flex; justify-content: space-between; }
-  .editor .range output { font: 12px ui-monospace, "JetBrains Mono", Consolas, monospace; color: var(--text); }
-  .editor input[type=color] { width: 40px; height: 32px; padding: 2px; border-radius: 8px; cursor: pointer; }
-  .editor .swatch { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgb(255 255 255 / 0.15); }
+  .editor .range output { font: 500 12px "JetBrains Mono", ui-monospace, monospace; color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  .editor .swatch { width: 22px; height: 22px; border-radius: 7px; border: 1px solid rgb(255 255 255 / 0.18); }
   .editor .note { color: var(--dim); font-size: 12px; margin: 0; }
   .editor .size.err { color: var(--err); }
-  .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-  @media (max-width: 560px) {
+  .check { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 500; font-size: 13px; color: var(--text); cursor: pointer; }
+  .check small { color: var(--dim); font-size: 12px; }
+  .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .upload-actions .primary { height: 42px; padding: 0 20px; }
+
+  /* Account. */
+  .account { display: grid; gap: 14px; max-width: 72ch; }
+  .account .row { align-items: center; }
+  .legal { color: var(--dim); font-size: 11.5px; margin: 0; }
+
+  /* Save pill for hat, pet and accessory: floats above the dock while changes are unsaved. */
+  .savebar { position: absolute; z-index: 25; left: 50%; bottom: calc(var(--dock-space, 300px) + 6px); display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 16px; border-radius: 999px;
+    transform: translate(-50%, 14px) scale(0.96); opacity: 0; pointer-events: none; transition: transform 0.5s var(--ease), opacity 0.25s, bottom 0.6s var(--ease); }
+  .savebar.show { transform: translate(-50%, 0) scale(1); opacity: 1; pointer-events: auto; }
+  .app.sheet .savebar { left: calc((100% - var(--sheet-w)) / 2); bottom: 28px; }
+  .savebar .state { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .savebar .state.dirty { color: var(--text); }
+  .savebar button { height: 34px; border-radius: 999px; }
+
+  /* Toast, as the launcher shows them. */
+  #toast { position: fixed; z-index: 60; left: 50%; top: calc(var(--top) + 4px); transform: translateX(-50%); display: none; max-width: calc(100% - 32px);
+    border-radius: 16px; padding: 11px 16px 11px 38px; font-size: 13.5px; font-weight: 600;
+    background: rgb(20 17 30 / 0.86); border: 1px solid var(--line-2); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.8); animation: toast 0.45s var(--ease); }
+  #toast::before { content: ""; position: absolute; left: 15px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 99px; background: var(--on); box-shadow: 0 0 10px var(--on); }
+  #toast.err { color: #ffd5dc; border-color: color-mix(in oklab, var(--err) 40%, transparent); }
+  #toast.err::before { background: var(--err); box-shadow: 0 0 10px var(--err); }
+  @keyframes toast { from { opacity: 0; transform: translate(-50%, -10px) scale(0.97); } }
+
+  footer.legal { position: fixed; z-index: 15; left: 0; right: 0; bottom: 8px; text-align: center; pointer-events: none; padding: 0 16px; }
+  .app.sheet ~ footer.legal { right: var(--sheet-w); }
+
+  /* ---------- phones ---------- */
+  @media (max-width: 760px) {
+    :root { --top: 60px; }
+    .top { padding: 0 14px; }
+    .brand span { display: none; }
+    .account-chip { padding-right: 6px; gap: 0; }
+    .account-chip #who { display: none; }
+    .dock { --dock-w: calc(100% - 16px); bottom: 26px; border-radius: 22px; }
+    .tab { padding: 0 13px; }
+    .tab .label { display: none; }
+    .tab[aria-selected="true"] .label { display: inline; }
+    .pose { flex-direction: row; top: 6px; right: 10px; }
+    /* Keep the player large: the dock shows one shelf row and scrolls inside. */
+    .panels { max-height: 36vh; }
+    .panel { padding: 12px 12px 14px; }
+    .panel-head .hint { display: none; }
+    .pose button { width: auto; padding: 0 10px; }
+    .drag-hint { display: none; }
+    .studio-grid { grid-template-columns: 1fr; }
     .editor { grid-template-columns: 1fr; }
     .editor .face { margin: 0 auto; }
+    .tile { width: 116px; }
+    body:has(#app:not([hidden])) footer.legal { display: none; }
   }
-  select { font: inherit; font-size: 14px; color: var(--text); background: rgb(0 0 0 / 0.3); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; width: 100%; }
-  .upload-preview canvas { width: 50px; height: 80px; image-rendering: pixelated; background: rgb(0 0 0 / 0.25); border-radius: 4px; }
-  footer { color: var(--dim); font-size: 12px; text-align: center; margin-top: 28px; }
-  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <div class="logo">S</div>
-    <h1>SlopClient Kosmetik</h1>
-    <span class="who" id="who"></span>
-    <button id="logout" hidden>Abmelden</button>
-  </header>
+<!--
+THESIS: The player is the page. Your Minecraft self stands huge on a lit turntable in the launcher's shader dusk, and every control lives in one Liquid Glass dock; it refuses the stacked-sections settings page.
+OWN-WORLD: The launcher's world: ink #09080e under the violet fbm shader, Liquid Glass with lens-refracted rim, specular edge and pointer light, chroma gradient (violet, lilac, magenta) only for primary actions and the worn item, Sora 400-800, JetBrains Mono for codes and numbers, 12-28px radii.
+STORY: Sign in with a device code, see yourself in 3D, flip through capes, hats, pets and accessories on a shelf, build a cape in the Studio, save once.
+FIRST VIEWPORT: Full-bleed shader; brand top left, account chip top right; the player centred at about 70% of the free height on a turntable disc with a turning chroma rim; pose switch to its right; the dock bottom centre, 1040px, tabs over a shelf of items. Studio and Konto morph the dock into a right-hand sheet while the player slides left.
+FORM: Drehbühne mit Glas-Dock, the dealt lead (surface roll 5 of 7), seed 5f126246.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+<div class="world" aria-hidden="true"><canvas id="bg"></canvas><div class="grain"></div></div>
 
-  <section id="login" hidden>
-    <h2>Anmelden</h2>
-    <p class="hint">Mit deinem Microsoft-Konto, wie im Launcher. Der Server prüft damit nur, welcher Minecraft-Account dir gehört; Microsoft-Zugangsdaten werden nicht gespeichert.</p>
-    <div id="login-start">
+<header class="top">
+  <a class="brand" href="./" aria-label="SlopClient Kosmetik">
+    <img src="data:image/png;base64,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" alt="">
+    <b>SlopClient</b><span>Kosmetik</span>
+  </a>
+  <span class="account-chip liquid"><span class="avatar" aria-hidden="true"></span><span id="who"></span></span>
+  <button id="logout" class="liquid" hidden>Abmelden</button>
+</header>
+
+<section id="login" class="login" hidden>
+  <div class="login-card liquid">
+    <h1>Deine Kosmetik, im Browser.</h1>
+    <p class="hint">Capes, Hut, Begleiter und Zubehör für SlopClient. Anmeldung mit deinem Microsoft-Konto, wie im Launcher. Der Server prüft damit nur, welcher Minecraft-Account dir gehört; Microsoft-Zugangsdaten werden nicht gespeichert.</p>
+    <div id="login-start" class="login-actions">
       <button class="primary" id="login-button">Mit Microsoft anmelden</button>
     </div>
     <div id="login-code" hidden>
-      <p class="hint" style="margin:0">Öffne die Microsoft-Seite und gib diesen Code ein:</p>
-      <p class="hint warn-box"><strong>Nur Codes eingeben, die du selbst hier gerade erzeugt hast.</strong> Wer dir einen Code schickt („gib den mal ein“), will dein Konto übernehmen.</p>
-      <div class="code" id="user-code"></div>
-      <div class="row" style="align-items:center">
+      <p class="hint" style="margin-top:22px">Öffne die Microsoft-Seite und gib diesen Code ein:</p>
+      <output class="code" id="user-code"></output>
+      <p class="warn-box"><strong>Nur Codes eingeben, die du selbst hier gerade erzeugt hast.</strong> Wer dir einen Code schickt („gib den mal ein“), will dein Konto übernehmen.</p>
+      <div class="login-actions">
         <a class="button primary" id="verify-link" target="_blank" rel="noopener noreferrer">Microsoft-Seite öffnen</a>
         <button id="copy-code">Code kopieren</button>
-        <span class="hint" id="login-wait" style="margin:0">Warte auf die Anmeldung …</span>
+        <span class="waiting" id="login-wait">Warte auf die Anmeldung …</span>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <div id="app" class="layout" hidden>
-    <aside class="stage">
-      <section>
-        <canvas id="preview" aria-label="3D-Vorschau, zum Drehen ziehen"></canvas>
-        <div class="caption" id="preview-caption"></div>
-        <div class="segmented" id="pose">
-          <button data-pose="walk" class="on">Gehen</button>
-          <button data-pose="idle">Stehen</button>
-          <button data-pose="fly">Elytra</button>
-        </div>
-      </section>
-    </aside>
+<main id="app" class="app" hidden>
+  <div class="stage">
+    <div class="figure">
+      <div class="turntable">
+        <div class="disc" aria-hidden="true"></div>
+        <canvas id="preview" aria-label="3D-Vorschau deines Spielers, zum Drehen ziehen"></canvas>
+      </div>
+      <div class="caption" id="preview-caption"></div>
+    </div>
+    <p class="drag-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>Ziehen dreht den Spieler</p>
+    <div class="segmented pose liquid" id="pose" aria-label="Pose">
+      <button data-pose="walk" class="on">Gehen</button>
+      <button data-pose="idle">Stehen</button>
+      <button data-pose="fly">Elytra</button>
+    </div>
+  </div>
 
-    <div>
-      <section>
-        <h2>Capes</h2>
-        <p class="hint">Klick auf eine Cape zeigt sie in der Vorschau. Die getragene Cape sehen alle SlopClient-Spieler.</p>
+  <div class="savebar liquid" id="savebar" aria-live="polite">
+    <span class="state" id="extras-state"></span>
+    <button id="reset-extras" disabled>Zurücksetzen</button>
+    <button class="primary" id="save-extras" disabled>Speichern</button>
+  </div>
+
+  <nav class="dock liquid" id="dock" aria-label="Kosmetik">
+    <div class="tabs" role="tablist">
+      <span class="drop" aria-hidden="true"></span>
+      <button class="tab" role="tab" data-tab="capes" aria-controls="panel-capes" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10l1 18-6-3-6 3z"/></svg><span class="label">Capes</span></button>
+      <button class="tab" role="tab" data-tab="studio" aria-controls="upload-section" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.1 11.9 8-8.1a2.8 2.8 0 1 1 4.1 4.1l-8.1 8"/><path d="M7.1 14.9c-1.7 0-3 1.4-3 3 0 1.4-2.5 1.6-2 2.1 1.1 1.1 2.5 2 4 2 2.2 0 4-1.8 4-4a3 3 0 0 0-3-3.1z"/></svg><span class="label">Studio</span><span class="dot" id="studio-dot" hidden></span></button>
+      <button class="tab" role="tab" data-tab="hats" aria-controls="panel-hats" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 18h18M6 18V9l3 3 3-6 3 6 3-3v9"/></svg><span class="label">Hut</span></button>
+      <button class="tab" role="tab" data-tab="pets" aria-controls="panel-pets" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6.5" cy="10" r="1.8"/><circle cx="10" cy="6" r="1.8"/><circle cx="14" cy="6" r="1.8"/><circle cx="17.5" cy="10" r="1.8"/><path d="M8 17c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5c0 1.6-1.6 2.5-4 2.5s-4-.9-4-2.5z"/></svg><span class="label">Begleiter</span></button>
+      <button class="tab" role="tab" data-tab="accessories" aria-controls="panel-accessories" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 3.5c-3 1-8 5-11.6 9.4l1.7 1.7C15 11 19.5 6.5 20.5 3.5z"/><path d="m7.6 13.6 2.8 2.8M9 15l-4.6 4.6M3.4 18.6l2 2"/></svg><span class="label">Zubehör</span></button>
+      <span class="tab-spacer"></span>
+      <button class="tab" role="tab" data-tab="account" aria-controls="panel-account" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span class="label">Konto</span></button>
+    </div>
+
+    <div class="panels">
+      <section class="panel is-active" id="panel-capes" role="tabpanel" data-panel="capes">
+        <div class="panel-head"><h2 class="sr">Capes</h2><p class="hint">Klick zeigt die Cape am Spieler. Die getragene Cape sehen alle SlopClient-Spieler.</p></div>
         <div class="tiles" id="capes"></div>
       </section>
 
-      <section id="upload-section">
-        <h2 id="upload-title">Cape hochladen</h2>
+      <section class="panel" id="upload-section" role="tabpanel" data-panel="studio">
+        <div class="panel-head"><h2 id="upload-title">Cape hochladen</h2></div>
         <p class="hint">Ein Bild oder eine Animation (GIF, WebP, APNG, PNG, JPG) wird wie im Cape-Studio des Launchers auf die Cape gelegt und lässt sich unten genauso einstellen. Eine fertige Cape-Textur (PNG, 64 × 32 oder ein Vielfaches, Animationen als Bilder untereinander) wird unverändert übernommen. Capes aus Bildern kannst du in diesem Browser später mit „Bearbeiten“ wieder öffnen. Hochgeladene Capes sind sofort öffentlich.</p>
-        <div class="row">
-          <div><label for="cape-file">Datei</label><input type="file" id="cape-file" accept="image/gif,image/png,image/webp,image/apng,image/jpeg"></div>
+        <div class="studio-grid">
+          <div class="dropzone">
+            <span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+            <span><b>Bild hierher ziehen</b><small>oder klicken und auswählen</small></span>
+            <input type="file" id="cape-file" aria-label="Bild oder Cape-Textur auswählen" accept="image/gif,image/png,image/webp,image/apng,image/jpeg">
+          </div>
           <div><label for="cape-name">Name</label><input id="cape-name" maxlength="40" placeholder="Meine Cape"></div>
         </div>
         <div class="upload-preview" id="cape-preview" hidden>
@@ -181,7 +413,7 @@
             <div id="cape-info"></div>
             <div class="row" style="margin-top:10px">
               <div id="frame-time-box" hidden><label for="cape-frame-time">Millisekunden pro Bild</label><input type="number" id="cape-frame-time" min="40" value="100"></div>
-              <div id="sheet-elytra-box"><label><input type="checkbox" id="cape-elytra" checked style="width:auto"> Auch auf der Elytra</label></div>
+              <div id="sheet-elytra-box"><label class="check"><input type="checkbox" id="cape-elytra" checked> Auch auf der Elytra</label></div>
             </div>
           </div>
         </div>
@@ -201,7 +433,6 @@
               </div>
               <label class="range"><span>Zoom <output id="edit-zoom-value"></output></span><input type="range" id="edit-zoom" min="0.2" max="8" step="0.01"></label>
             </div>
-
             <div class="group">
               <div class="subhead">Rückseite und Ränder</div>
               <div class="inline">
@@ -213,9 +444,8 @@
                 <input type="color" id="edit-edge-color" aria-label="Randfarbe" hidden>
                 <span class="swatch" id="edit-edge-swatch" title="Automatische Randfarbe" hidden></span>
               </div>
-              <label style="margin:0;font-weight:400;font-size:13px;color:var(--text)"><input type="checkbox" id="edit-elytra" style="width:auto;margin-right:6px">Auch als Elytra <span style="color:var(--dim)">· die Flügel zeigen dasselbe Motiv</span></label>
+              <label class="check"><input type="checkbox" id="edit-elytra">Auch als Elytra <small>· die Flügel zeigen dasselbe Motiv</small></label>
             </div>
-
             <div class="group" id="edit-anim">
               <div class="subhead">Animation <span class="count" id="edit-anim-count"></span></div>
               <label class="range"><span>Erstes Bild <output id="edit-start-value"></output></span><input type="range" id="edit-start" min="0" step="1"></label>
@@ -223,10 +453,9 @@
               <label class="range"><span>Geschwindigkeit <output id="edit-speed-value"></output></span><input type="range" id="edit-speed" min="0.25" max="4" step="0.05"></label>
               <p class="note" id="edit-thinned" hidden></p>
             </div>
-
             <div class="group">
               <div class="subhead">Auflösung</div>
-              <select id="edit-scale"></select>
+              <select id="edit-scale" aria-label="Auflösung"></select>
               <p class="note size" id="edit-size"></p>
             </div>
           </div>
@@ -237,36 +466,40 @@
         </div>
       </section>
 
-      <section>
-        <h2>Hut, Begleiter &amp; Zubehör</h2>
-        <p class="hint">Auswählen zeigt sie sofort in der Vorschau; sichtbar für alle SlopClient-Spieler erst nach dem Speichern.</p>
-        <div class="extras-group"><div class="subhead">Hut</div><div class="tiles" id="hats"></div></div>
-        <div class="extras-group"><div class="subhead">Begleiter</div><div class="tiles" id="pets"></div></div>
-        <div class="extras-group"><div class="subhead">Zubehör</div><div class="tiles" id="accessories"></div></div>
-        <div class="savebar">
-          <button class="primary" id="save-extras" disabled>Speichern</button>
-          <button id="reset-extras" disabled>Zurücksetzen</button>
-          <span class="state" id="extras-state"></span>
-        </div>
+      <section class="panel extras-group" id="panel-hats" role="tabpanel" data-panel="hats">
+        <div class="panel-head"><h2 class="sr">Hut</h2><p class="hint">Auswählen zeigt ihn sofort am Spieler; für alle sichtbar nach dem Speichern.</p></div>
+        <div class="tiles" id="hats"></div>
+      </section>
+      <section class="panel extras-group" id="panel-pets" role="tabpanel" data-panel="pets">
+        <div class="panel-head"><h2 class="sr">Begleiter</h2><p class="hint">Auf der Schulter, fliegend oder laufend; für alle sichtbar nach dem Speichern.</p></div>
+        <div class="tiles" id="pets"></div>
+      </section>
+      <section class="panel extras-group" id="panel-accessories" role="tabpanel" data-panel="accessories">
+        <div class="panel-head"><h2 class="sr">Zubehör</h2><p class="hint">Auswählen zeigt es sofort am Spieler; für alle sichtbar nach dem Speichern.</p></div>
+        <div class="tiles" id="accessories"></div>
       </section>
 
-      <section>
-        <h2>Konto</h2>
-        <p class="hint">„Überall abmelden“ beendet alle Anmeldungen deines Kontos auf diesem Server, auch in Launchern und anderen Browsern. „Alle Daten löschen“ entfernt Capes, Hut, Begleiter und Meldungen; lokale Kosmetik im Launcher bleibt.</p>
-        <div class="row" style="align-items:center">
-          <button id="logout-everywhere">Überall abmelden</button>
-          <button class="danger" id="delete-account">Alle Daten löschen …</button>
+      <section class="panel" id="panel-account" role="tabpanel" data-panel="account">
+        <div class="account">
+          <div class="panel-head"><h2>Konto</h2></div>
+          <p class="hint">„Überall abmelden“ beendet alle Anmeldungen deines Kontos auf diesem Server, auch in Launchern und anderen Browsern. „Alle Daten löschen“ entfernt Capes, Hut, Begleiter und Meldungen; lokale Kosmetik im Launcher bleibt.</p>
+          <div class="row">
+            <button id="logout-everywhere">Überall abmelden</button>
+            <button class="danger" id="delete-account">Alle Daten löschen …</button>
+          </div>
+          <p class="legal">Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</p>
         </div>
       </section>
     </div>
-  </div>
-
-  <footer>Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</footer>
+  </nav>
 </main>
+
+<footer class="legal">Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</footer>
 <div id="toast" role="status"></div>
 <script src="viewer.js"></script>
 <script src="common.js"></script>
 <script src="upload.js"></script>
+<script src="shell.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

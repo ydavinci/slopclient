@@ -185,7 +185,8 @@ async function editCape(cape) {
   state.trimStart = Math.min(state.trimStart, last);
   state.trimEnd = Math.min(state.trimEnd, last);
   openEditor(record.file, source, state, cape);
-  $("upload-section").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (window.openPanel) window.openPanel("studio");
+  else $("upload-section").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function openEditor(file, source, state, replaces) {
