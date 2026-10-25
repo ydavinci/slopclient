@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, ELYTRA, ELYTRA_SIDE, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -199,12 +199,12 @@ final class SelfTest {
 				if (petShot >= 0) shot(mc, "12-pet-" + PET_SHOTS[petShot][0]);
 				petShot++;
 				if (petShot >= PET_SHOTS.length) {
-					// The cape on elytra: wings, not two slabs.
+					// The cape at an angle: its sides carry on the image.
 					System.setProperty("slopclient.pet", "");
-					mc.player.connection.sendCommand("item replace entity @s armor.chest with elytra");
 					mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
 					mc.player.setXRot(10);
-					next(Step.ELYTRA, 30);
+					mc.player.setYBodyRot(mc.player.getYRot() + 50);
+					next(Step.CAPE_SIDE, 15);
 					return;
 				}
 				System.setProperty("slopclient.pet", PET_SHOTS[petShot][0]);
@@ -213,14 +213,20 @@ final class SelfTest {
 				mc.player.setXRot(15);
 				next(Step.PETS, 40);
 			}
-			case ELYTRA -> {
-				shot(mc, "13-elytra-back");
-				mc.player.setYRot(mc.player.getYRot() + 70);
+			case CAPE_SIDE -> {
+				shot(mc, "13-cape-side");
+				// The cape on elytra: wings, not two slabs.
+				mc.player.connection.sendCommand("item replace entity @s armor.chest with elytra");
 				mc.player.setYBodyRot(mc.player.getYRot());
-				next(Step.ELYTRA_SIDE, 20);
+				next(Step.ELYTRA, 30);
+			}
+			case ELYTRA -> {
+				shot(mc, "14-elytra-back");
+				mc.player.setYBodyRot(mc.player.getYRot() + 50);
+				next(Step.ELYTRA_SIDE, 15);
 			}
 			case ELYTRA_SIDE -> {
-				shot(mc, "14-elytra-side");
+				shot(mc, "15-elytra-side");
 				next(Step.DONE, 10);
 			}
 			case DONE -> {

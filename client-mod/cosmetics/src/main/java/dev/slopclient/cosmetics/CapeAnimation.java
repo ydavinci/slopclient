@@ -41,6 +41,7 @@ public final class CapeAnimation {
 		for (int i = 0; i < count; i++) {
 			NativeImage frame = new NativeImage(w, h, true);
 			sheet.copyRect(frame, 0, i * h, 0, 0, w, h, false, false);
+			if (solidSides(frame, scale)) wrapEdges(frame, scale);
 			if (elytra) shapeElytra(frame, scale);
 			Identifier id = Identifier.fromNamespaceAndPath(Cosmetics.NS, "cape/" + key + "/frame_" + i);
 			Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "slopclient cape " + id, frame));
@@ -48,6 +49,37 @@ public final class CapeAnimation {
 			anim.frames.add(new ClientAsset.ResourceTexture(id, id));
 		}
 		return anim;
+	}
+
+	/**
+	 * Capes saved before the Cape Studio wrapped the picture over the edges have sides
+	 * in one flat colour: true when the left and right side are a single colour.
+	 */
+	static boolean solidSides(NativeImage img, int s) {
+		int first = img.getPixel(0, s);
+		for (int y = s; y < 17 * s; y++) {
+			for (int k = 0; k < s; k++) {
+				if (img.getPixel(k, y) != first || img.getPixel(11 * s + k, y) != first) return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * For those old capes: each side face (one cape pixel thick) repeats the front's
+	 * border, mirrored outwards, so the picture seems to run around the edge.
+	 */
+	static void wrapEdges(NativeImage img, int s) {
+		for (int k = 0; k < s; k++) {
+			for (int y = s; y < 17 * s; y++) {
+				img.setPixel(s - 1 - k, y, img.getPixel(s + k, y));
+				img.setPixel(11 * s + k, y, img.getPixel(11 * s - 1 - k, y));
+			}
+			for (int x = 0; x < 10 * s; x++) {
+				img.setPixel(s + x, s - 1 - k, img.getPixel(s + x, s + k));
+				img.setPixel(11 * s + x, k, img.getPixel(s + x, 17 * s - 1 - k));
+			}
+		}
 	}
 
 	/**
