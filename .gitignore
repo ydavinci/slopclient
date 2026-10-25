@@ -15,3 +15,8 @@
 cosmetics.env
 *.env
 *.tgz
+
+# Local leftovers that must never be committed
+/client-mod/src/karambit/
+/removed-karambit/
+/.impeccable/questions/
