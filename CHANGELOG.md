@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.3
 
 ### Fixes
 - **Capes als Elytra** (im Spiel, in der Kosmetik-Mod, im Launcher und im Webinterface): Die Flügel erschienen als hohle Kästen mit großem Loch, weil Vorder-, Rück- und Seitenflächen der Flügel bemalt blieben. Die Flügelform ist jetzt genau die der Vanilla-Elytra: nur eine Fläche pro Flügel, der Rest durchsichtig. Das gilt auch für schon hochgeladene Capes.
