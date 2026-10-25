@@ -257,6 +257,46 @@ function shapeElytra(ctx: CanvasRenderingContext2D, s: number) {
 }
 
 /**
+ * A stored cape frame as the mod shows it (CapeAnimation.fromSheet): old capes with
+ * flat-coloured sides get the front's border wrapped over them, and the elytra part is
+ * cut into wings, so capes not made in the Cape Studio do not show as two slabs.
+ */
+export function asWorn(frame: HTMLCanvasElement, elytra: boolean): HTMLCanvasElement {
+  const s = Math.max(1, Math.round(frame.width / 64));
+  const out = document.createElement("canvas");
+  out.width = frame.width;
+  out.height = frame.height;
+  const ctx = out.getContext("2d", { willReadFrequently: true })!;
+  ctx.drawImage(frame, 0, 0);
+  if (out.width < 46 * s || out.height < 22 * s) return out;
+  const img = ctx.getImageData(0, 0, out.width, out.height);
+  const px = new Uint32Array(img.data.buffer);
+  const w = out.width;
+  const at = (x: number, y: number) => px[y * w + x];
+  let solid = true;
+  for (let y = s; y < 17 * s && solid; y++) {
+    for (let k = 0; k < s; k++) {
+      if (at(k, y) !== at(0, s) || at(11 * s + k, y) !== at(0, s)) solid = false;
+    }
+  }
+  if (solid) {
+    for (let k = 0; k < s; k++) {
+      for (let y = s; y < 17 * s; y++) {
+        px[y * w + s - 1 - k] = at(s + k, y);
+        px[y * w + 11 * s + k] = at(11 * s - 1 - k, y);
+      }
+      for (let x = 0; x < 10 * s; x++) {
+        px[(s - 1 - k) * w + s + x] = at(s + x, s + k);
+        px[k * w + 11 * s + x] = at(s + x, 17 * s - 1 - k);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  if (elytra) shapeElytra(ctx, s);
+  return out;
+}
+
+/**
  * Frames between trimStart and trimEnd, thinned out evenly when the resolution
  * allows fewer (each kept frame then lasts longer, so the animation keeps its length).
  */

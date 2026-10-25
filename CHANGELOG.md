@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
+## Unveröffentlicht
+
+### Zubehör
+- **Katana (schwarz-rot)** von dragonKnight127 (Cosmetica, mit Erlaubnis): ein schwarzes Katana mit rot-schwarzem Griff an der linken Hüfte.
+
+### Fixes
+- **Elytra in der 3D-Vorschau** (Launcher und Webinterface): Capes, die nicht im Cape-Studio entstanden sind, zeigten die Flügel als zwei Platten. Die Vorschau formt sie jetzt wie die Mod im Spiel und zieht bei alten Capes das Motiv über die Ränder.
+
 ## 0.5.1
 
 ### Cosmetics-Server

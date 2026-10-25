@@ -6,7 +6,7 @@ import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "sk
 import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, setTextureSource, thumbnail, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
 import { fallbackSkin } from "../lib/skin";
 import { buildAccessory, type AccessoryModel } from "../lib/accessory";
-import { SCALES, activeFrames, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame } from "../lib/cape";
+import { SCALES, activeFrames, asWorn, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame } from "../lib/cape";
 
 export type Pose = "walk" | "fly" | "idle";
 
@@ -125,7 +125,7 @@ export class Preview {
 
   /** `null` takes the cape off. */
   setCape(frames: HTMLCanvasElement[] | null, frameTimeMs = 100, elytra = true) {
-    this.cape = frames && frames.length ? { frames, frameTimeMs, elytra } : null;
+    this.cape = frames && frames.length ? { frames: frames.map((f) => asWorn(f, elytra)), frameTimeMs, elytra } : null;
     this.applyCape();
   }
 

@@ -3,6 +3,7 @@ import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "sk
 import { fallbackSkin } from "../lib/skin";
 import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
 import { buildAccessory, type AccessoryModel } from "../lib/accessory";
+import { asWorn } from "../lib/cape";
 
 export { fallbackSkin };
 
@@ -50,14 +51,15 @@ export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, slim, pose, h
   useEffect(() => {
     const v = viewer.current;
     if (!v || frames.length === 0) return;
-    v.loadCape(frames[0], { backEquipment: elytra ? "elytra" : "cape" });
-    if (frames.length < 2) return;
+    const worn = frames.map((f) => asWorn(f, elytra));
+    v.loadCape(worn[0], { backEquipment: elytra ? "elytra" : "cape" });
+    if (worn.length < 2) return;
     let i = 0;
     const timer = setInterval(() => {
-      i = (i + 1) % frames.length;
+      i = (i + 1) % worn.length;
       const ctx = v.capeCanvas.getContext("2d")!;
       ctx.clearRect(0, 0, v.capeCanvas.width, v.capeCanvas.height);
-      ctx.drawImage(frames[i], 0, 0, v.capeCanvas.width, v.capeCanvas.height);
+      ctx.drawImage(worn[i], 0, 0, v.capeCanvas.width, v.capeCanvas.height);
       // capeTexture is internal to skinview3d; flag it so three.js re-uploads the canvas.
       const tex = (v as unknown as { capeTexture: { needsUpdate: boolean } | null }).capeTexture;
       if (tex) tex.needsUpdate = true;
