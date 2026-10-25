@@ -6,9 +6,11 @@
 const TIERS = { shoulder: "Schulter", flying: "fliegend", walking: "laufend" };
 
 let mine = { activeId: null, capes: [] };
-let catalogue = null; // { hats, pets } with the models
-let saved = { hat: null, pet: null };
-let chosen = { hat: null, pet: null };
+let catalogue = null; // { hats, pets, accessories } with the models
+let saved = { hat: null, pet: null, accessory: null };
+let chosen = { hat: null, pet: null, accessory: null };
+/** Catalogue list and page element of each kind. */
+const KINDS = { hat: ["hats", "hats", "Kein Hut"], pet: ["pets", "pets", "Kein Begleiter"], accessory: ["accessories", "accessories", "Kein Zubehör"] };
 let previewCape = null; // cape id, "upload" or null (none)
 let preview = null;
 let skinCanvas = null;
@@ -51,7 +53,7 @@ async function loadSkin() {
 
 function modelOf(kind, id) {
   if (!catalogue || !id) return null;
-  return (kind === "hat" ? catalogue.hats : catalogue.pets).find((m) => m.id === id) || null;
+  return (catalogue[KINDS[kind][0]] || []).find((m) => m.id === id) || null;
 }
 
 function updateCaption() {
@@ -59,9 +61,10 @@ function updateCaption() {
   if (previewCape === "upload") cape = "neue Cape (noch nicht hochgeladen)";
   else if (previewCape) cape = mine.capes.find((c) => c.id === previewCape)?.name ?? cape;
   const parts = [cape];
-  const hat = modelOf("hat", chosen.hat), pet = modelOf("pet", chosen.pet);
-  if (hat) parts.push(hat.name);
-  if (pet) parts.push(pet.name);
+  for (const kind of Object.keys(KINDS)) {
+    const m = modelOf(kind, chosen[kind]);
+    if (m) parts.push(m.name);
+  }
   $("preview-caption").textContent = parts.join(" · ");
 }
 
@@ -240,9 +243,12 @@ async function removeCape(cape) {
 // ---------- hat and pet ----------
 
 function extrasTiles(kind) {
-  const list = $(kind === "hat" ? "hats" : "pets");
+  const [key, element, none] = KINDS[kind];
+  const list = $(element);
   list.replaceChildren();
-  const models = kind === "hat" ? catalogue.hats : catalogue.pets;
+  const models = catalogue[key] || [];
+  // Older servers have no accessories: hide the section.
+  list.closest(".extras-group").hidden = models.length === 0;
   for (const model of [null, ...models]) {
     const tile = el("button", "tile");
     tile.type = "button";
@@ -253,8 +259,9 @@ function extrasTiles(kind) {
       SlopViewer.thumbnail(model, kind, skinCanvas ? () => skinCanvas : undefined).then((url) => (img.src = url), () => {});
       tile.append(img, el("div", "name", model.name));
       if (model.tier) tile.append(el("div", "meta", TIERS[model.tier] || model.tier));
+      if (model.credit) tile.append(el("div", "meta", `von ${model.credit}`));
     } else {
-      tile.append(el("div", "none", "∅"), el("div", "name", kind === "hat" ? "Kein Hut" : "Kein Begleiter"));
+      tile.append(el("div", "none", "∅"), el("div", "name", none));
     }
     tile.onclick = () => {
       chosen = { ...chosen, [kind]: model ? model.id : null };
@@ -265,11 +272,11 @@ function extrasTiles(kind) {
 }
 
 function applyExtras() {
-  for (const [kind, list] of [["hat", $("hats")], ["pet", $("pets")]]) {
-    for (const t of list.children) t.classList.toggle("selected", t.dataset.id === (chosen[kind] ?? ""));
+  for (const [kind, [, element]] of Object.entries(KINDS)) {
+    for (const t of $(element).children) t.classList.toggle("selected", t.dataset.id === (chosen[kind] ?? ""));
   }
-  preview.setExtras(modelOf("hat", chosen.hat), modelOf("pet", chosen.pet));
-  const dirty = chosen.hat !== saved.hat || chosen.pet !== saved.pet;
+  preview.setExtras(modelOf("hat", chosen.hat), modelOf("pet", chosen.pet), modelOf("accessory", chosen.accessory));
+  const dirty = Object.keys(KINDS).some((k) => chosen[k] !== saved[k]);
   $("save-extras").disabled = !dirty;
   $("reset-extras").disabled = !dirty;
   $("extras-state").textContent = dirty ? "Nur in der Vorschau, noch nicht gespeichert" : "Gespeichert";
@@ -280,18 +287,17 @@ function applyExtras() {
 async function loadExtras() {
   const [cat, me] = await Promise.all([catalogue || api("GET", "v1/extras/catalogue"), api("GET", `v1/cosmetics/${session.uuid}`)]);
   catalogue = cat;
-  saved = { hat: me.hat ?? null, pet: me.pet ?? null };
+  saved = { hat: me.hat ?? null, pet: me.pet ?? null, accessory: me.accessory ?? null };
   chosen = { ...saved };
-  extrasTiles("hat");
-  extrasTiles("pet");
+  for (const kind of Object.keys(KINDS)) extrasTiles(kind);
   applyExtras();
 }
 
 async function saveExtras() {
   try {
-    await api("PUT", "v1/extras", { hat: chosen.hat, pet: chosen.pet });
+    await api("PUT", "v1/extras", { hat: chosen.hat, pet: chosen.pet, accessory: chosen.accessory });
     saved = { ...chosen };
-    toast("Hut und Begleiter gespeichert");
+    toast("Gespeichert");
     applyExtras();
   } catch (e) {
     toast(e.message, "err");

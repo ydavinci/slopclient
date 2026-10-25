@@ -1,13 +1,13 @@
-import { Bird, Check, Crown, Footprints, PawPrint } from "lucide-react";
+import { Bird, Check, Crown, Footprints, PawPrint, Sword } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
-import { thumbnail, type ExtraModel, type ExtrasCatalogue, type ExtrasChoice, type PetTier } from "../lib/extras";
+import { thumbnail, type ExtraKind, type ExtraModel, type ExtrasCatalogue, type ExtrasChoice, type PetTier } from "../lib/extras";
 import { api } from "../lib/ipc";
 import { useStore } from "../lib/store";
 import { CapeViewer, fallbackSkin } from "../ui/CapeViewer";
 import { Spinner, rise, stagger } from "../ui/kit";
 
-function Tile({ model, kind, active, onClick }: { model: ExtraModel; kind: "hat" | "pet"; active: boolean; onClick: () => void }) {
+function Tile({ model, kind, active, onClick }: { model: ExtraModel; kind: ExtraKind; active: boolean; onClick: () => void }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
@@ -32,6 +32,7 @@ function Tile({ model, kind, active, onClick }: { model: ExtraModel; kind: "hat"
         {model.name}
         {active && <Check className="size-3.5 text-on" />}
       </span>
+      {"credit" in model && model.credit && <span className="text-[11px] text-muted">von {model.credit}</span>}
     </motion.button>
   );
 }
@@ -57,12 +58,12 @@ const TIERS: { tier: PetTier; title: string; hint: string; icon: ReactNode }[] =
 
 const grid = "grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3";
 
-/** Hats and pets: pick one of each, see it on your player, other client players see it too. */
+/** Hats, pets and accessories: pick one of each, see it on your player, other client players see it too. */
 export function ExtrasView() {
   const { toast, overview } = useStore();
   const account = overview?.accounts.find((a) => a.uuid === overview.activeAccount) ?? overview?.accounts[0];
   const [catalogue, setCatalogue] = useState<ExtrasCatalogue | null>(null);
-  const [choice, setChoice] = useState<ExtrasChoice>({ hat: null, pet: null });
+  const [choice, setChoice] = useState<ExtrasChoice>({ hat: null, pet: null, accessory: null });
 
   useEffect(() => {
     Promise.all([api.extrasCatalogue(), api.extrasCurrent()])
@@ -76,7 +77,7 @@ export function ExtrasView() {
   async function pick(next: ExtrasChoice) {
     setChoice(next);
     try {
-      const onlineError = await api.extrasSet(next.hat, next.pet);
+      const onlineError = await api.extrasSet(next.hat, next.pet, next.accessory ?? null);
       if (onlineError) toast(`Lokal gespeichert, online nicht: ${onlineError}`, "error");
     } catch (e) {
       toast(String(e), "error");
@@ -93,13 +94,15 @@ export function ExtrasView() {
 
   const hat = catalogue.hats.find((h) => h.id === choice.hat) ?? null;
   const pet = catalogue.pets.find((p) => p.id === choice.pet) ?? null;
+  const accessories = catalogue.accessories ?? [];
+  const accessory = accessories.find((a) => a.id === choice.accessory) ?? null;
 
   return (
     <div className="flex min-h-0 flex-1 gap-4 px-8 pb-6">
       <motion.div variants={rise} initial="hidden" animate="show" className="glass flex w-[300px] shrink-0 flex-col items-center gap-3 self-start rounded-[18px] p-4">
-        <CapeViewer frames={[]} frameTimeMs={100} elytra={false} skinUrl={account?.skinUrl} pose={pet?.tier === "walking" ? "walk" : "idle"} hat={hat} pet={pet} width={260} height={330} />
+        <CapeViewer frames={[]} frameTimeMs={100} elytra={false} skinUrl={account?.skinUrl} pose={pet?.tier === "walking" ? "walk" : "idle"} hat={hat} pet={pet} accessory={accessory} width={260} height={330} />
         <div className="w-full text-center">
-          <div className="text-[14px] font-semibold">{[hat?.name, pet?.name].filter(Boolean).join(" + ") || "Nichts ausgewählt"}</div>
+          <div className="text-[14px] font-semibold">{[hat?.name, pet?.name, accessory?.name].filter(Boolean).join(" + ") || "Nichts ausgewählt"}</div>
           <div className="text-[12px] text-muted">Gilt ab dem nächsten Start. Mit Cosmetics-Konto sehen es auch andere Spieler.</div>
         </div>
       </motion.div>
@@ -125,6 +128,15 @@ export function ExtrasView() {
             </Section>
           );
         })}
+        {accessories.length > 0 && (
+          <Section icon={<Sword className="size-4" />} title="Zubehör" hint="Am Körper getragen, zusätzlich zu Hut und Begleiter.">
+            <motion.div variants={stagger} initial="hidden" animate="show" className={grid}>
+              {accessories.map((a) => (
+                <Tile key={a.id} model={a} kind="accessory" active={a.id === choice.accessory} onClick={() => pick({ ...choice, accessory: a.id === choice.accessory ? null : a.id })} />
+              ))}
+            </motion.div>
+          </Section>
+        )}
       </div>
     </div>
   );

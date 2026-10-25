@@ -35,6 +35,11 @@ public interface CosmeticsSettings {
 		return null;
 	}
 
+	/** Your own accessory chosen in the launcher; null takes it from the cosmetics server. */
+	default String ownAccessory() {
+		return null;
+	}
+
 	/** Accent colours (ARGB) for hats and pets painted "accent" and "accent2". */
 	default int accent() {
 		return 0xFF8B5CF6;

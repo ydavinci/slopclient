@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { PlayerObject } from "skinview3d";
+import { buildAccessory, type AccessoryModel } from "./accessory";
 
 /** One box of a hat: corners in pixels, colour spec, glow. See cosmetics/extras.json. */
 export type ExtraBox = [number, number, number, number, number, number, string, boolean?];
@@ -43,16 +44,20 @@ export interface PetModel {
 }
 
 /** Older catalogues and the hats still use plain box lists. */
-export type ExtraModel = HatModel | PetModel;
+export type ExtraModel = HatModel | PetModel | AccessoryModel;
+export type ExtraKind = "hat" | "pet" | "accessory";
 
 export interface ExtrasCatalogue {
   hats: HatModel[];
   pets: PetModel[];
+  /** Older catalogues have none. */
+  accessories?: AccessoryModel[];
 }
 
 export interface ExtrasChoice {
   hat: string | null;
   pet: string | null;
+  accessory?: string | null;
 }
 
 /** Where a pet texture comes from: the launcher's copy of the server's catalogue (lib/petTextures.ts), or the server itself on the web page. */
@@ -67,7 +72,8 @@ export function setTextureSource(source: TextureSource) {
 
 const textures = new Map<string, Promise<THREE.Texture>>();
 
-function loadTexture(file: string): Promise<THREE.Texture> {
+/** A texture named in the catalogue (pets and accessories), loaded once. */
+export function loadPetTexture(file: string): Promise<THREE.Texture> {
   let t = textures.get(file);
   if (!t) {
     t = Promise.resolve(textureSource(file)).then((url) => {
@@ -260,7 +266,7 @@ export async function buildPet(model: PetModel, skin?: THREE.Texture | null, sli
   }
 
   const texSize = model.textureSize ?? [64, 64];
-  const texture = model.texture ? await loadTexture(model.texture) : null;
+  const texture = model.texture ? await loadPetTexture(model.texture) : null;
   const parts: { obj: THREE.Group; anim?: string; pivot: V3 }[] = [];
   for (const part of model.parts) {
     const pivot = new THREE.Group();
@@ -336,7 +342,7 @@ let thumbRenderer: THREE.WebGLRenderer | null = null;
 const thumbs = new Map<string, Promise<string>>();
 
 /** A small picture of the model, rendered once with a shared offscreen renderer. */
-export function thumbnail(model: ExtraModel, kind: "hat" | "pet", skin?: () => HTMLCanvasElement): Promise<string> {
+export function thumbnail(model: ExtraModel, kind: ExtraKind, skin?: () => HTMLCanvasElement): Promise<string> {
   const key = `${kind}:${model.id}`;
   let cached = thumbs.get(key);
   if (cached) return cached;
@@ -358,6 +364,8 @@ export function thumbnail(model: ExtraModel, kind: "hat" | "pet", skin?: () => H
       const head = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), new THREE.MeshLambertMaterial({ color: 0xc9a68a }));
       head.position.set(0, 4, 0);
       group.add(head);
+    } else if (kind === "accessory") {
+      group = await buildAccessory(model as AccessoryModel, false);
     } else {
       const pet = model as PetModel;
       const skinTex = pet.special === "minime" && skin ? new THREE.CanvasTexture(skin()) : null;

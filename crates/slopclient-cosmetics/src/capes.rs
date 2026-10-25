@@ -54,13 +54,16 @@ pub(crate) struct Cosmetics {
     cape: Option<CapeDto>,
     hat: Option<String>,
     pet: Option<String>,
+    accessory: Option<String>,
 }
 
-fn extras_of(db: &Connection, uuid: &str) -> rusqlite::Result<(Option<String>, Option<String>)> {
+type Extras = (Option<String>, Option<String>, Option<String>);
+
+fn extras_of(db: &Connection, uuid: &str) -> rusqlite::Result<Extras> {
     Ok(db
-        .query_row("SELECT hat, pet FROM accounts WHERE uuid = ?1", params![uuid], |r| Ok((r.get(0)?, r.get(1)?)))
+        .query_row("SELECT hat, pet, accessory FROM accounts WHERE uuid = ?1", params![uuid], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
         .optional()?
-        .unwrap_or((None, None)))
+        .unwrap_or((None, None, None)))
 }
 
 fn active_cape(s: &AppState, db: &Connection, uuid: &str) -> rusqlite::Result<Option<CapeDto>> {
@@ -75,8 +78,8 @@ fn active_cape(s: &AppState, db: &Connection, uuid: &str) -> rusqlite::Result<Op
 
 fn cosmetics(s: &AppState, db: &Connection, uuid: String) -> rusqlite::Result<Cosmetics> {
     let cape = active_cape(s, db, &uuid)?;
-    let (hat, pet) = extras_of(db, &uuid)?;
-    Ok(Cosmetics { uuid, cape, hat, pet })
+    let (hat, pet, accessory) = extras_of(db, &uuid)?;
+    Ok(Cosmetics { uuid, cape, hat, pet, accessory })
 }
 
 pub(crate) async fn cosmetics_of(State(s): State<Shared>, Path(uuid): Path<String>) -> ApiResult<Response> {
@@ -234,14 +237,36 @@ pub(crate) struct SetActive {
     id: Option<String>,
 }
 
-/// Which hat and pet the signed-in player wears (ids from the shared catalogue).
-pub(crate) async fn set_extras(State(s): State<Shared>, headers: HeaderMap, Json(req): Json<slopclient_core::extras::Choice>) -> ApiResult<StatusCode> {
+#[derive(Deserialize)]
+pub(crate) struct ExtrasRequest {
+    hat: Option<String>,
+    pet: Option<String>,
+    /// Absent from clients before accessories existed: then the accessory stays as it is.
+    #[serde(default, deserialize_with = "present")]
+    accessory: Option<Option<String>>,
+}
+
+/// Tells a field sent as `null` (Some(None)) from one left out (None).
+fn present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<Option<String>>, D::Error> {
+    Option::<String>::deserialize(d).map(Some)
+}
+
+/// Which hat, pet and accessory the signed-in player wears (ids from the shared catalogue).
+pub(crate) async fn set_extras(State(s): State<Shared>, headers: HeaderMap, Json(req): Json<ExtrasRequest>) -> ApiResult<StatusCode> {
+    use slopclient_core::extras::{is_accessory, is_hat, is_pet};
     let uuid = account(&s, &headers)?;
-    let checked = req.clone().checked();
-    if checked != req {
-        return Err(ApiError::new(StatusCode::BAD_REQUEST, "unknown hat or pet"));
+    let accessory_ok = req.accessory.as_ref().and_then(Option::as_deref).is_none_or(is_accessory);
+    if req.hat.as_deref().is_some_and(|h| !is_hat(h)) || req.pet.as_deref().is_some_and(|p| !is_pet(p)) || !accessory_ok {
+        return Err(ApiError::new(StatusCode::BAD_REQUEST, "unknown hat, pet or accessory"));
     }
-    s.db().execute("UPDATE accounts SET hat = ?1, pet = ?2 WHERE uuid = ?3", params![checked.hat, checked.pet, uuid])?;
+    let db = s.db();
+    match req.accessory {
+        Some(accessory) => db.execute(
+            "UPDATE accounts SET hat = ?1, pet = ?2, accessory = ?3 WHERE uuid = ?4",
+            params![req.hat, req.pet, accessory, uuid],
+        )?,
+        None => db.execute("UPDATE accounts SET hat = ?1, pet = ?2 WHERE uuid = ?3", params![req.hat, req.pet, uuid])?,
+    };
     Ok(StatusCode::NO_CONTENT)
 }
 

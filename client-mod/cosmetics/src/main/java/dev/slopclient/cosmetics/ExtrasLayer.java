@@ -38,7 +38,8 @@ public final class ExtrasLayer extends RenderLayer<AvatarRenderState, PlayerMode
 		if (!self && !settings.extrasOfOthers()) return;
 		Extras.Model hat = Extras.hatOf(player, self);
 		Pets.Pet pet = Extras.petOf(player, self);
-		if (hat == null && pet == null) return;
+		Accessories.Accessory accessory = Extras.accessoryOf(player, self);
+		if (hat == null && pet == null && accessory == null) return;
 
 		int overlay = LivingEntityRenderer.getOverlayCoords(state, 0);
 		double phase = state.ageInTicks / 60.0;
@@ -49,6 +50,22 @@ public final class ExtrasLayer extends RenderLayer<AvatarRenderState, PlayerMode
 			getParentModel().head.translateAndRotate(pose);
 			if (!state.headEquipment.isEmpty()) pose.scale(1.15f, 1.15f, 1.15f);
 			collector.submitCustomGeometry(pose, RenderTypes.entityCutout(Extras.TEXTURE), (p, out) -> Extras.emit(hat, p, out, light, overlay, phase));
+			pose.popPose();
+		}
+		if (accessory != null) {
+			pose.pushPose();
+			(accessory.onHead() ? getParentModel().head : getParentModel().body).translateAndRotate(pose);
+			// Model space has y down and the face towards -z; accessories are laid out with y up
+			// and the face towards +z (like the launcher's preview): turning about X maps one to the other.
+			pose.rotateDegrees(Axis.XP, 180);
+			float[] p = accessory.position(), r = accessory.rotation(), c = accessory.pivot();
+			pose.translate(p[0] / 16f, p[1] / 16f, p[2] / 16f);
+			pose.rotateDegrees(Axis.XP, r[0]);
+			pose.rotateDegrees(Axis.YP, r[1]);
+			pose.rotateDegrees(Axis.ZP, r[2]);
+			pose.scale(accessory.scale(), accessory.scale(), accessory.scale());
+			pose.translate(-c[0] / 16f, -c[1] / 16f, -c[2] / 16f);
+			collector.submitCustomGeometry(pose, RenderTypes.entityCutout(accessory.texture()), (pp, out) -> Accessories.emit(accessory, pp, out, light, overlay));
 			pose.popPose();
 		}
 		if (pet == null) return;

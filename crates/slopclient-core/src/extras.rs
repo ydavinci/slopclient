@@ -1,4 +1,5 @@
-//! Hats and pets. The models live in `cosmetics/extras.json` at the repository root;
+//! Hats, pets and accessories (worn on the body, e.g. a katana at the hip). The models
+//! live in `cosmetics/extras.json` at the repository root;
 //! the client mod renders them, the launcher previews them, and the cosmetics
 //! server stores which ones a player wears (checked against its list).
 //!
@@ -35,10 +36,13 @@ struct Entry {
 struct Catalogue {
     hats: Vec<Entry>,
     pets: Vec<Entry>,
+    /// Came later: older catalogues have none.
+    #[serde(default)]
+    accessories: Vec<Entry>,
 }
 
 fn parse(json: &str) -> Catalogue {
-    serde_json::from_str(json).unwrap_or(Catalogue { hats: Vec::new(), pets: Vec::new() })
+    serde_json::from_str(json).unwrap_or(Catalogue { hats: Vec::new(), pets: Vec::new(), accessories: Vec::new() })
 }
 
 fn shipped() -> Catalogue {
@@ -54,12 +58,18 @@ pub fn is_pet(id: &str) -> bool {
     shipped().pets.iter().any(|p| p.id == id)
 }
 
+pub fn is_accessory(id: &str) -> bool {
+    shipped().accessories.iter().any(|a| a.id == id)
+}
+
 /// What the player wears; none means nothing.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Choice {
     pub hat: Option<String>,
     pub pet: Option<String>,
+    #[serde(default)]
+    pub accessory: Option<String>,
 }
 
 impl Choice {
@@ -68,25 +78,31 @@ impl Choice {
         Self {
             hat: self.hat.filter(|h| is_hat(h)),
             pet: self.pet.filter(|p| is_pet(p)),
+            accessory: self.accessory.filter(|a| is_accessory(a)),
         }
     }
 }
 
 pub fn current(paths: &Paths) -> Result<Choice> {
     let s = Settings::load(paths)?;
-    Ok(Choice { hat: s.hat, pet: s.pet })
+    Ok(Choice { hat: s.hat, pet: s.pet, accessory: s.accessory })
 }
 
 pub fn set(paths: &Paths, choice: &Choice) -> Result<()> {
     let c = parse(&catalogue_json(paths));
     let known_hat = |h: &str| c.hats.iter().any(|e| e.id == h);
     let known_pet = |p: &str| c.pets.iter().any(|e| e.id == p);
-    if choice.hat.as_deref().is_some_and(|h| !known_hat(h)) || choice.pet.as_deref().is_some_and(|p| !known_pet(p)) {
-        return Err(Error::Other("unbekannter Hut oder Begleiter".into()));
+    let known_accessory = |a: &str| c.accessories.iter().any(|e| e.id == a);
+    if choice.hat.as_deref().is_some_and(|h| !known_hat(h))
+        || choice.pet.as_deref().is_some_and(|p| !known_pet(p))
+        || choice.accessory.as_deref().is_some_and(|a| !known_accessory(a))
+    {
+        return Err(Error::Other("unbekannter Hut, Begleiter oder unbekanntes Zubehör".into()));
     }
     let mut s = Settings::load(paths)?;
     s.hat = choice.hat.clone();
     s.pet = choice.pet.clone();
+    s.accessory = choice.accessory.clone();
     s.save(paths)
 }
 
@@ -116,12 +132,13 @@ pub fn validate(json: &str) -> Result<Vec<String>> {
     let root: Value = serde_json::from_str(json).map_err(|_| bad("not JSON"))?;
     let list = |key: &str| root[key].as_array().cloned().ok_or_else(|| bad(&format!("{key} missing")));
     let (hats, pets) = (list("hats")?, list("pets")?);
-    if hats.len() > MAX_ITEMS || pets.len() > MAX_ITEMS {
-        return Err(bad("too many hats or pets"));
+    let accessories = if root.get("accessories").is_some() { list("accessories")? } else { Vec::new() };
+    if hats.len() > MAX_ITEMS || pets.len() > MAX_ITEMS || accessories.len() > MAX_ITEMS {
+        return Err(bad("too many hats, pets or accessories"));
     }
     let mut ids = std::collections::HashSet::new();
     let mut textures = Vec::new();
-    for item in hats.iter().chain(&pets) {
+    for item in hats.iter().chain(&pets).chain(&accessories) {
         let id = item["id"].as_str().filter(|i| id_ok(i)).ok_or_else(|| bad("invalid id"))?;
         if !ids.insert(id.to_owned()) {
             return Err(bad(&format!("{id} twice")));
@@ -170,7 +187,80 @@ pub fn validate(json: &str) -> Result<Vec<String>> {
             return Err(bad(&format!("{id}: invalid parts")));
         }
     }
+    for acc in &accessories {
+        let texture = validate_accessory(acc).map_err(|m| bad(&format!("{}: {m}", acc["id"])))?;
+        if !textures.contains(&texture) {
+            textures.push(texture);
+        }
+    }
     Ok(textures)
+}
+
+const FACES: [&str; 6] = ["north", "south", "east", "west", "up", "down"];
+
+/// An accessory: Java block model elements (per-face UVs, rotated elements) placed on the
+/// body or head. Returns its texture file.
+fn validate_accessory(acc: &Value) -> std::result::Result<String, &'static str> {
+    if !matches!(acc["attach"].as_str(), Some("body" | "head")) {
+        return Err("attach must be body or head");
+    }
+    let texture = acc["texture"].as_str().filter(|t| texture_name_ok(t)).ok_or("invalid texture name")?;
+    let uv_max = match acc.get("uvSize") {
+        None => 16.0,
+        Some(v) => {
+            let n: Vec<f64> = v
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_f64)
+                .filter(|n| (1.0..=f64::from(MAX_TEXTURE_SIZE)).contains(n))
+                .collect();
+            if n.len() != 2 {
+                return Err("invalid uvSize");
+            }
+            n[0].max(n[1])
+        }
+    };
+    for key in ["pivot", "position"] {
+        if acc.get(key).is_some_and(|v| !coords_ok(v, 3)) {
+            return Err("invalid pivot or position");
+        }
+    }
+    let angle_ok = |d: &Value| d.as_f64().is_some_and(|d| d.abs() <= 360.0);
+    if acc.get("rotation").is_some_and(|v| !v.as_array().is_some_and(|a| a.len() == 3 && a.iter().all(angle_ok))) {
+        return Err("invalid rotation");
+    }
+    if acc.get("scale").is_some_and(|s| !s.as_f64().is_some_and(|s| s > 0.0 && s <= 4.0)) {
+        return Err("invalid scale");
+    }
+    let elements = acc["elements"].as_array().ok_or("elements missing")?;
+    if elements.len() > MAX_BOXES {
+        return Err("too many elements");
+    }
+    for e in elements {
+        if !coords_ok(&e["from"], 3) || !coords_ok(&e["to"], 3) {
+            return Err("element out of range");
+        }
+        if let Some(r) = e.get("rotation") {
+            let ok = coords_ok(&r["origin"], 3)
+                && matches!(r["axis"].as_str(), Some("x" | "y" | "z"))
+                && r["angle"].as_f64().is_some_and(|a| a.abs() <= 45.0);
+            if !ok {
+                return Err("invalid element rotation");
+            }
+        }
+        let faces = e["faces"].as_object().ok_or("element without faces")?;
+        for (name, face) in faces {
+            let uv_ok = face["uv"]
+                .as_array()
+                .is_some_and(|a| a.len() == 4 && a.iter().all(|u| u.as_f64().is_some_and(|u| (0.0..=uv_max).contains(&u))));
+            let rot_ok = face.get("rotation").is_none_or(|r| matches!(r.as_u64(), Some(0 | 90 | 180 | 270)));
+            if !FACES.contains(&name.as_str()) || !uv_ok || !rot_ok {
+                return Err("invalid face");
+            }
+        }
+    }
+    Ok(texture.to_owned())
 }
 
 // ---------- the copy from the server ----------
@@ -291,6 +381,25 @@ mod tests {
     fn shipped_catalogue_is_within_the_limits() {
         let textures = validate(CATALOGUE_JSON).unwrap();
         assert!(textures.iter().any(|t| t == "fuchs.png"));
+        assert!(textures.iter().any(|t| t == "zenin_katana.png"));
+        assert!(is_accessory("zenin_katana") && !is_accessory("fuchs"));
+    }
+
+    #[test]
+    fn bad_accessories_are_refused() {
+        let with = |acc: &str| format!(r#"{{"hats":[],"pets":[],"accessories":[{acc}]}}"#);
+        let ok = r#"{"id":"a","name":"A","attach":"body","texture":"a.png","elements":[{"from":[0,0,0],"to":[1,1,1],"faces":{"north":{"uv":[0,0,16,16],"rotation":90}}}]}"#;
+        assert_eq!(validate(&with(ok)).unwrap(), vec!["a.png".to_owned()]);
+        for bad in [
+            ok.replace("\"body\"", "\"feet\""),
+            ok.replace("a.png", "../a.png"),
+            ok.replace("\"north\"", "\"inside\""),
+            ok.replace("16,16]", "16,99]"),
+            ok.replace("\"rotation\":90", "\"rotation\":45"),
+            ok.replace("[1,1,1]", "[1,1,999]"),
+        ] {
+            assert!(validate(&with(&bad)).is_err(), "{bad}");
+        }
     }
 
     #[test]

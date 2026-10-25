@@ -56,6 +56,8 @@ pub struct Settings {
     pub hat: Option<String>,
     /// Pet from `cosmetics/extras.json`.
     pub pet: Option<String>,
+    /// Accessory from `cosmetics/extras.json` (worn on the body, e.g. a katana).
+    pub accessory: Option<String>,
 }
 
 impl Settings {

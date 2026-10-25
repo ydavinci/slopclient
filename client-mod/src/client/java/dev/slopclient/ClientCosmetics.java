@@ -54,6 +54,10 @@ final class ClientCosmetics implements CosmeticsSettings {
 		return System.getProperty("slopclient.pet", "");
 	}
 
+	public String ownAccessory() {
+		return System.getProperty("slopclient.accessory", "");
+	}
+
 	public int accent() {
 		return Theme.ACCENT;
 	}

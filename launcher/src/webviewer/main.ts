@@ -5,6 +5,7 @@
 import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
 import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, setTextureSource, thumbnail, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
 import { fallbackSkin } from "../lib/skin";
+import { buildAccessory, type AccessoryModel } from "../lib/accessory";
 import { SCALES, activeFrames, decode, defaultState, edgeColor, exportCape, frameTime, maxFramesFor, renderFrame } from "../lib/cape";
 
 export type Pose = "walk" | "fly" | "idle";
@@ -32,7 +33,9 @@ export class Preview {
   private capeTimer: ReturnType<typeof setInterval> | undefined;
   private hat: HatModel | null = null;
   private pet: PetModel | null = null;
+  private accessory: AccessoryModel | null = null;
   private hatGroup: ReturnType<typeof buildHat> | null = null;
+  private accessoryGroup: Awaited<ReturnType<typeof buildAccessory>> | null = null;
   private built: BuiltPet | null = null;
   private extrasVersion = 0;
   private baseZoom = 0.82;
@@ -75,7 +78,7 @@ export class Preview {
       await this.v.loadSkin(url, slim === undefined ? undefined : { model: slim ? "slim" : "default" });
     }
     // The mini-me follows the arm model: rebuild it.
-    if (this.pet?.special === "minime") this.setExtras(this.hat, this.pet);
+    if (this.pet?.special === "minime") this.setExtras(this.hat, this.pet, this.accessory);
   }
 
   setPose(pose: Pose) {
@@ -115,11 +118,28 @@ export class Preview {
     }, Math.max(40, cape.frameTimeMs));
   }
 
-  /** Hat on the head; the pet on the shoulder, beside the head or walking beside the player. */
-  setExtras(hat: HatModel | null, pet: PetModel | null) {
+  /** Hat on the head; the pet on the shoulder, beside the head or walking beside the player; the accessory where it is worn. */
+  setExtras(hat: HatModel | null, pet: PetModel | null, accessory: AccessoryModel | null = null) {
     const version = ++this.extrasVersion;
+    if (this.accessoryGroup) {
+      this.accessoryGroup.removeFromParent();
+      disposeExtra(this.accessoryGroup);
+      this.accessoryGroup = null;
+    }
+    if (accessory) {
+      buildAccessory(accessory)
+        .then((g) => {
+          if (version !== this.extrasVersion) return disposeExtra(g);
+          (accessory.attach === "head" ? this.v.playerObject.skin.head : this.v.playerObject.skin).add(g);
+          this.accessoryGroup = g;
+        })
+        .catch(() => {
+          // A missing texture only hides it in the preview.
+        });
+    }
     this.hat = hat;
     this.pet = pet;
+    this.accessory = accessory;
     if (this.hatGroup) {
       this.hatGroup.removeFromParent();
       disposeExtra(this.hatGroup);

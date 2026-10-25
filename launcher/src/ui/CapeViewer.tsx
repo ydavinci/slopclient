@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { FlyingAnimation, IdleAnimation, SkinViewer, WalkingAnimation } from "skinview3d";
 import { fallbackSkin } from "../lib/skin";
 import { PET_PLACE, animateChroma, buildHat, buildPet, disposeExtra, type BuiltPet, type HatModel, type PetModel } from "../lib/extras";
+import { buildAccessory, type AccessoryModel } from "../lib/accessory";
 
 export { fallbackSkin };
 
@@ -11,7 +12,7 @@ export type Pose = "walk" | "fly" | "idle";
  * 3D player with the cape (skinview3d, MIT). `frames` are rendered cape textures;
  * they cycle every `frameTimeMs` by redrawing the viewer's cape canvas in place.
  */
-export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, slim, pose, hat, pet, width = 260, height = 340 }: { frames: HTMLCanvasElement[]; frameTimeMs: number; elytra: boolean; skinUrl?: string | null; slim?: boolean; pose: Pose; hat?: HatModel | null; pet?: PetModel | null; width?: number; height?: number }) {
+export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, slim, pose, hat, pet, accessory, width = 260, height = 340 }: { frames: HTMLCanvasElement[]; frameTimeMs: number; elytra: boolean; skinUrl?: string | null; slim?: boolean; pose: Pose; hat?: HatModel | null; pet?: PetModel | null; accessory?: AccessoryModel | null; width?: number; height?: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const viewer = useRef<SkinViewer | null>(null);
 
@@ -63,6 +64,30 @@ export function CapeViewer({ frames, frameTimeMs, elytra, skinUrl, slim, pose, h
     }, Math.max(40, frameTimeMs));
     return () => clearInterval(timer);
   }, [frames, frameTimeMs, elytra]);
+
+  // The accessory on the body or head, where its catalogue entry places it.
+  useEffect(() => {
+    const v = viewer.current;
+    if (!v || !accessory) return;
+    let group: Awaited<ReturnType<typeof buildAccessory>> | null = null;
+    let cancelled = false;
+    buildAccessory(accessory)
+      .then((g) => {
+        if (cancelled || !viewer.current) return disposeExtra(g);
+        group = g;
+        (accessory.attach === "head" ? v.playerObject.skin.head : v.playerObject.skin).add(g);
+      })
+      .catch(() => {
+        // A missing texture only hides it in the preview.
+      });
+    return () => {
+      cancelled = true;
+      if (group) {
+        group.removeFromParent();
+        disposeExtra(group);
+      }
+    };
+  }, [accessory, width, height]);
 
   // Hat on the head; the pet on the shoulder, beside the head or walking beside the player.
   useEffect(() => {

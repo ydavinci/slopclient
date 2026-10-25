@@ -78,6 +78,11 @@ public final class RemoteCapes {
 		return e == null ? null : e[0];
 	}
 
+	public static String accessory(UUID uuid) {
+		String[] e = extras.get(key(uuid));
+		return e == null || e.length < 3 ? null : e[2];
+	}
+
 	public static String pet(UUID uuid) {
 		String[] e = extras.get(key(uuid));
 		return e == null ? null : e[1];
@@ -134,7 +139,7 @@ public final class RemoteCapes {
 			try {
 				for (JsonElement el : JsonParser.parseString(resp.body()).getAsJsonArray()) {
 					JsonObject o = el.getAsJsonObject();
-					extras.put(o.get("uuid").getAsString(), new String[] {text(o, "hat"), text(o, "pet")});
+					extras.put(o.get("uuid").getAsString(), new String[] {text(o, "hat"), text(o, "pet"), text(o, "accessory")});
 					JsonElement cape = o.get("cape");
 					if (cape == null || cape.isJsonNull()) {
 						players.put(o.get("uuid").getAsString(), new Entry(null, null, null, now));

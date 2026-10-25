@@ -116,7 +116,7 @@ let mockCapes: { info: CapeInfo; png: string; source: string; ext: string; edito
 let mockActiveCape: string | null = null;
 let mockOnline: { server: string | null; uuid: string | null; name: string | null } = { server: "https://cosmetics.slopclient.example", uuid: null, name: null };
 
-let mockExtras: { hat: string | null; pet: string | null } = { hat: "zylinder", pet: "drache" };
+let mockExtras: { hat: string | null; pet: string | null; accessory: string | null } = { hat: "zylinder", pet: "drache", accessory: null };
 
 /** 64×64 stand-in skin: a dark outfit with a light face, drawn once. */
 function mockSkinTexture(): string {
@@ -196,7 +196,7 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
     case "extras_current":
       return delay(mockExtras);
     case "extras_set":
-      mockExtras = { hat: (args.hat as string) ?? null, pet: (args.pet as string) ?? null };
+      mockExtras = { hat: (args.hat as string) ?? null, pet: (args.pet as string) ?? null, accessory: (args.accessory as string) ?? null };
       return delay(null);
     case "skins_list":
       return delay(mockSkins);

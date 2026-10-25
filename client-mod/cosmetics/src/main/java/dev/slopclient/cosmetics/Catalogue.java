@@ -86,13 +86,15 @@ final class Catalogue {
 	/** Checks a catalogue against the limits and returns the texture files it names. */
 	static Set<String> validate(JsonObject root) {
 		JsonArray hats = root.getAsJsonArray("hats"), pets = root.getAsJsonArray("pets");
+		JsonArray accessories = root.has("accessories") ? root.getAsJsonArray("accessories") : new JsonArray();
 		require(hats != null && pets != null, "hats or pets missing");
-		require(hats.size() <= MAX_ITEMS && pets.size() <= MAX_ITEMS, "too many hats or pets");
+		require(hats.size() <= MAX_ITEMS && pets.size() <= MAX_ITEMS && accessories.size() <= MAX_ITEMS, "too many hats, pets or accessories");
 		Set<String> ids = new HashSet<>();
 		Set<String> textures = new LinkedHashSet<>();
 		List<JsonElement> all = new ArrayList<>();
 		hats.forEach(all::add);
 		pets.forEach(all::add);
+		accessories.forEach(all::add);
 		for (JsonElement el : all) {
 			JsonObject o = el.getAsJsonObject();
 			require(shortString(o.get("id"), 40) && ID.matcher(o.get("id").getAsString()).matches(), "invalid id");
@@ -139,7 +141,53 @@ final class Catalogue {
 			}
 			require(total <= MAX_BOXES, "too many pet boxes");
 		}
+		for (JsonElement el : accessories) textures.add(validateAccessory(el.getAsJsonObject()));
 		return textures;
+	}
+
+	private static final Set<String> FACES = Set.of("north", "south", "east", "west", "up", "down");
+
+	/** Same rules as validate_accessory in slopclient-core extras.rs; returns the texture file. */
+	private static String validateAccessory(JsonObject a) {
+		require(a.has("attach") && Set.of("body", "head").contains(a.get("attach").getAsString()), "attach must be body or head");
+		String texture = a.has("texture") ? a.get("texture").getAsString() : "";
+		require(textureNameOk(texture), "invalid accessory texture");
+		double uvMax = 16;
+		if (a.has("uvSize")) {
+			JsonArray size = a.getAsJsonArray("uvSize");
+			require(size.size() == 2, "invalid uvSize");
+			for (JsonElement v : size) require(v.getAsDouble() >= 1 && v.getAsDouble() <= MAX_TEXTURE_SIZE, "invalid uvSize");
+			uvMax = Math.max(size.get(0).getAsDouble(), size.get(1).getAsDouble());
+		}
+		for (String key : List.of("pivot", "position")) require(!a.has(key) || coords(a.get(key), 3), "invalid pivot or position");
+		if (a.has("rotation")) {
+			JsonArray r = a.getAsJsonArray("rotation");
+			require(r.size() == 3, "invalid rotation");
+			for (JsonElement d : r) require(Double.isFinite(d.getAsDouble()) && Math.abs(d.getAsDouble()) <= 360, "invalid rotation");
+		}
+		if (a.has("scale")) require(a.get("scale").getAsDouble() > 0 && a.get("scale").getAsDouble() <= 4, "invalid scale");
+		JsonArray elements = a.getAsJsonArray("elements");
+		require(elements != null && elements.size() <= MAX_BOXES, "invalid elements");
+		for (JsonElement el : elements) {
+			JsonObject e = el.getAsJsonObject();
+			require(coords(e.get("from"), 3) && coords(e.get("to"), 3), "element out of range");
+			if (e.has("rotation")) {
+				JsonObject r = e.getAsJsonObject("rotation");
+				require(coords(r.get("origin"), 3) && Set.of("x", "y", "z").contains(r.get("axis").getAsString()) && Math.abs(r.get("angle").getAsDouble()) <= 45,
+					"invalid element rotation");
+			}
+			JsonObject faces = e.getAsJsonObject("faces");
+			require(faces != null, "element without faces");
+			for (var face : faces.entrySet()) {
+				require(FACES.contains(face.getKey()), "unknown face");
+				JsonObject f = face.getValue().getAsJsonObject();
+				JsonArray uv = f.getAsJsonArray("uv");
+				require(uv != null && uv.size() == 4, "invalid uv");
+				for (JsonElement u : uv) require(u.getAsDouble() >= 0 && u.getAsDouble() <= uvMax, "uv out of range");
+				require(!f.has("rotation") || Set.of(0, 90, 180, 270).contains(f.get("rotation").getAsInt()), "invalid uv rotation");
+			}
+		}
+		return texture;
 	}
 
 	/** Width and height from a PNG header, without decoding; null if it is no PNG. */

@@ -227,8 +227,8 @@ pub fn open(config: Config) -> std::io::Result<Shared> {
          CREATE UNIQUE INDEX IF NOT EXISTS reports_once ON reports(reporter, cape_id);",
     )
     .map_err(std::io::Error::other)?;
-    // Hats and pets came later: add their columns to existing databases.
-    for column in ["hat", "pet"] {
+    // Hats, pets and accessories came later: add their columns to existing databases.
+    for column in ["hat", "pet", "accessory"] {
         let has: bool = db
             .prepare("SELECT 1 FROM pragma_table_info('accounts') WHERE name = ?1")
             .and_then(|mut q| q.exists(params![column]))

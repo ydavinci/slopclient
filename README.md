@@ -123,6 +123,8 @@ Die 3D-Vorschau im Webinterface des Cosmetics-Servers ist der Viewer des Launche
 
 **Neue Hüte und Begleiter** kommen nach `cosmetics/extras.json` (Begleiter-Texturen nach `cosmetics/pets/`) und
 brauchen nur ein neues Server-Release: Mod, Launcher und Webinterface holen den Katalog vom Cosmetics-Server.
+**Zubehör** aus einem Java-Blockmodell (z. B. ein Blockbench-Export) übernimmt `tools/accessories/import_java_model.py`
+in den Katalog, mit Ersteller (`--credit`) und Platzierung am Körper. Nur Modelle mit Erlaubnis des Erstellers.
 
 ### Projektstruktur
 

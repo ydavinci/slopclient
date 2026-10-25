@@ -1085,11 +1085,11 @@ async fn extras_current(state: State<'_, AppState>) -> CmdResult<slopclient_core
     slopclient_core::extras::current(&state.paths).map_err(err)
 }
 
-/// Wears a hat and pet (none clears) locally and, when signed in, online. Returns an
-/// error text when only the online part failed.
+/// Wears a hat, pet and accessory (none clears) locally and, when signed in, online.
+/// Returns an error text when only the online part failed.
 #[tauri::command]
-async fn extras_set(state: State<'_, AppState>, hat: Option<String>, pet: Option<String>) -> CmdResult<Option<String>> {
-    slopclient_core::extras::set(&state.paths, &slopclient_core::extras::Choice { hat, pet }).map_err(err)?;
+async fn extras_set(state: State<'_, AppState>, hat: Option<String>, pet: Option<String>, accessory: Option<String>) -> CmdResult<Option<String>> {
+    slopclient_core::extras::set(&state.paths, &slopclient_core::extras::Choice { hat, pet, accessory }).map_err(err)?;
     Ok(cosmetics_online::publish_extras(&state.paths).await.err().map(|e| e.to_string()))
 }
 

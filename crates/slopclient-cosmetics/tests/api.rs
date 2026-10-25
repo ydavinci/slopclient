@@ -390,6 +390,28 @@ fn dev_auth_only_on_loopback() {
     assert!(!slopclient_cosmetics::is_loopback_bind("192.168.1.5:8787"));
 }
 
+// ---------- accessories ----------
+
+#[tokio::test]
+async fn accessory_is_worn_and_kept_by_old_clients() {
+    let env = start().await;
+    let (alice, uuid) = env.sign_in("Alice").await;
+    let put = |body: Value| env.http.put(format!("{}/v1/extras", env.base)).bearer_auth(alice.clone()).json(&body).send();
+    let get = || async { env.http.get(format!("{}/v1/cosmetics/{uuid}", env.base)).send().await.unwrap().json::<Value>().await.unwrap() };
+    assert_eq!(put(json!({ "hat": "krone", "pet": null, "accessory": "zenin_katana" })).await.unwrap().status(), 204);
+    let c = get().await;
+    assert_eq!(c["accessory"], "zenin_katana");
+    assert_eq!(c["hat"], "krone");
+    // A launcher from before accessories sends only hat and pet: the katana stays.
+    assert_eq!(put(json!({ "hat": null, "pet": "fuchs" })).await.unwrap().status(), 204);
+    let c = get().await;
+    assert_eq!((c["accessory"].as_str(), c["pet"].as_str(), c["hat"].is_null()), (Some("zenin_katana"), Some("fuchs"), true));
+    // null takes it off; unknown ids are refused.
+    put(json!({ "hat": null, "pet": null, "accessory": null })).await.unwrap();
+    assert!(get().await["accessory"].is_null());
+    assert_eq!(put(json!({ "hat": null, "pet": null, "accessory": "nope" })).await.unwrap().status(), 400);
+}
+
 // ---------- catalogue for clients ----------
 
 #[tokio::test]

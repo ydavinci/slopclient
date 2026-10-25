@@ -35,6 +35,7 @@ public final class Extras {
 
 	private static volatile Map<String, Model> hats;
 	private static volatile Map<String, Pets.Pet> pets;
+	private static volatile Map<String, Accessories.Accessory> accessories = Map.of();
 
 	private Extras() {
 	}
@@ -64,11 +65,19 @@ public final class Extras {
 	static void install(JsonObject root, java.util.function.Function<String, Identifier> textures) {
 		Map<String, Model> newHats = new HashMap<>();
 		Map<String, Pets.Pet> newPets = new HashMap<>();
+		Map<String, Accessories.Accessory> newAccessories = new HashMap<>();
 		read(root.getAsJsonArray("hats"), newHats);
 		for (JsonElement el : root.getAsJsonArray("pets")) {
 			Pets.Pet pet = Pets.read(el.getAsJsonObject(), textures);
 			newPets.put(pet.id(), pet);
 		}
+		if (root.has("accessories")) {
+			for (JsonElement el : root.getAsJsonArray("accessories")) {
+				Accessories.Accessory a = Accessories.read(el.getAsJsonObject(), textures);
+				newAccessories.put(a.id(), a);
+			}
+		}
+		accessories = newAccessories;
 		pets = newPets;
 		hats = newHats;
 	}
@@ -103,6 +112,17 @@ public final class Extras {
 	static Model hatOf(AbstractClientPlayer player, boolean self) {
 		String own = self ? Cosmetics.settings().ownHat() : null;
 		return hat(own != null ? own : RemoteCapes.hat(player.getUUID()));
+	}
+
+	public static Accessories.Accessory accessory(String id) {
+		if (id == null || id.isEmpty()) return null;
+		load();
+		return accessories.get(id);
+	}
+
+	static Accessories.Accessory accessoryOf(AbstractClientPlayer player, boolean self) {
+		String own = self ? Cosmetics.settings().ownAccessory() : null;
+		return accessory(own != null ? own : RemoteCapes.accessory(player.getUUID()));
 	}
 
 	static Pets.Pet petOf(AbstractClientPlayer player, boolean self) {

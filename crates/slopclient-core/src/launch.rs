@@ -258,6 +258,7 @@ pub async fn prepare(
             // Hat and pet the client mod draws on your player.
             .chain(settings.hat.as_ref().map(|h| format!("-Dslopclient.hat={h}")))
             .chain(settings.pet.as_ref().map(|p| format!("-Dslopclient.pet={p}")))
+            .chain(settings.accessory.as_ref().map(|a| format!("-Dslopclient.accessory={a}")))
             .chain(instance.java.jvm_args.iter().cloned())
             .collect(),
         resolution: None,
