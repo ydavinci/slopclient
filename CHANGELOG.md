@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.4
 
 ### Fixes
 - **Elytra zu dünn, Stück fehlte**: Das Cape-Studio hat bisher eine falsche Flügelform fest in die Cape eingebrannt, gerade dort fehlte der Elytra die Fläche. Passt die Flügelfläche einer Cape nicht zur Vanilla-Form, erzeugen Mod, Launcher und Webinterface den Flügel jetzt neu aus der Vorderseite der Cape, auch bei schon hochgeladenen Capes. Das Studio macht die Flügel gleich so.
