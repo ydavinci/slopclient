@@ -94,14 +94,11 @@ export async function decode(file: Blob): Promise<Source> {
   return { frames: [bitmap], durations: [100], width: bitmap.width, height: bitmap.height, sampled: false };
 }
 
-/** Faces of the 64 × 32 cape texture (Minecraft's box UV for 10 × 16 × 1 and the elytra wing). */
+/** Faces of the 64 × 32 cape texture (Minecraft's box UV for 10 × 16 × 1; the elytra wing see shapeElytra). */
 export const FACES = {
   front: { x: 1, y: 1, w: 10, h: 16 },
   back: { x: 12, y: 1, w: 10, h: 16 },
   capeArea: { x: 0, y: 0, w: 22, h: 17 },
-  elytraFront: { x: 24, y: 2, w: 10, h: 20 },
-  elytraBack: { x: 36, y: 2, w: 10, h: 20 },
-  elytraArea: { x: 22, y: 0, w: 24, h: 22 },
 };
 
 /** Average colour of the image border, for the cape's sides and edges. */
@@ -214,13 +211,8 @@ export function renderFrame(frame: ImageBitmap, st: EditorState, edge: string, t
   if (st.back === "color") fill(FACES.back, st.backColor);
   else drawFace(ctx, frame, FACES.back, s, st, st.back === "mirror", wrap ? 1 : 0);
 
-  if (st.elytra) {
-    fill(FACES.elytraArea, edgeFill);
-    if (wrap) drawWrapped(ctx, frame, FACES.elytraFront, 2, s, st);
-    else drawFace(ctx, frame, FACES.elytraFront, s, st, false);
-    drawFace(ctx, frame, FACES.elytraBack, s, st, true, wrap ? 2 : 0);
-    shapeElytra(ctx, s);
-  }
+  // The wings show the cape's front, like the mod makes of capes without them.
+  if (st.elytra) shapeElytra(ctx, s, true);
   return canvas;
 }
 
@@ -262,18 +254,48 @@ function keepElytra(px: number, py: number): boolean {
 }
 
 /**
- * The elytra model is two plain boxes; vanilla gets the wing shape from transparent
- * pixels, so the painted area is cut into a wing silhouette here.
+ * Turns the elytra part of a cape texture into vanilla-shaped wings. The visible wing is
+ * the box's back face (x 36..45, y 2..21). When that face does not cover the wing (capes
+ * saved with an older, wrong silhouette, or with nothing there), it is drawn anew from
+ * the cape's front, `force` always does so. The few edge pixels vanilla paints take the
+ * neighbouring colour of the wing, and everything outside the silhouette is cleared.
+ * Same as CapeAnimation.shapeElytra in the mod.
  */
-function shapeElytra(ctx: CanvasRenderingContext2D, s: number) {
-  const x0 = 22 * s, w = 24 * s, h = 22 * s;
-  const img = ctx.getImageData(x0, 0, w, h);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (!keepElytra((x0 + x + 0.5) / s, (y + 0.5) / s)) img.data[(y * w + x) * 4 + 3] = 0;
+function shapeElytra(ctx: CanvasRenderingContext2D, s: number, force = false) {
+  const W = 64 * s;
+  const img = ctx.getImageData(0, 0, W, 22 * s);
+  const px = new Uint32Array(img.data.buffer);
+  const alpha = (v: number) => v >>> 24 > 0; // little-endian RGBA: alpha is the top byte
+  let wing = 0, covered = 0;
+  for (let y = 2 * s; y < 22 * s; y++) {
+    for (let x = 36 * s; x < 46 * s; x++) {
+      if (!keepElytra((x + 0.5) / s, (y + 0.5) / s)) continue;
+      wing++;
+      if (alpha(px[y * W + x])) covered++;
     }
   }
-  ctx.putImageData(img, x0, 0);
+  if (force || covered < wing * 0.95) {
+    // The cape's front (10 × 16) stretched over the wing face (10 × 20).
+    for (let y = 0; y < 20 * s; y++) {
+      const fy = s + Math.floor((y * 16) / 20);
+      for (let x = 0; x < 10 * s; x++) px[(2 * s + y) * W + 36 * s + x] = px[fy * W + s + x];
+    }
+  }
+  for (let y = 0; y < 22 * s; y++) {
+    for (let x = 22 * s; x < 46 * s; x++) {
+      const i = y * W + x;
+      if (!keepElytra((x + 0.5) / s, (y + 0.5) / s)) {
+        px[i] = 0;
+      } else if (x < 36 * s || y < 2 * s) {
+        // Edge pixels: the outer side (x 22) wraps round to the face's right edge, the rest
+        // touches its left edge or top row.
+        const sx = x < 24 * s ? 46 * s - 1 : Math.max(36 * s, Math.min(46 * s - 1, x));
+        const sy = Math.max(2 * s, Math.min(22 * s - 1, y));
+        if (force || !alpha(px[i])) px[i] = px[sy * W + sx];
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
 }
 
 /**

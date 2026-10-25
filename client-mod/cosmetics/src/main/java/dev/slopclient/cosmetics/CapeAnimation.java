@@ -83,16 +83,47 @@ public final class CapeAnimation {
 	}
 
 	/**
-	 * Cuts the wing silhouette into the elytra part of the texture. The elytra model is
+	 * Turns the elytra part of the texture into vanilla-shaped wings. The elytra model is
 	 * two plain boxes; vanilla gets the wing shape from transparent pixels, so a fully
-	 * painted area would show as hollow slabs. Same shape as cape.ts in the launcher.
+	 * painted area would show as hollow slabs. The visible wing is the box's back face
+	 * (x 36..45, y 2..21): when that does not cover the wing (capes saved with an older,
+	 * wrong silhouette, or with nothing there), it is drawn anew from the cape's front.
+	 * The few edge pixels vanilla paints take the neighbouring colour of the wing.
+	 * Same as shapeElytra in the launcher's cape.ts.
 	 */
-	static void shapeElytra(NativeImage img, int scale) {
-		for (int y = 0; y < 22 * scale; y++) {
-			for (int x = 22 * scale; x < 46 * scale; x++) {
-				if (!keepElytra((x + 0.5f) / scale, (y + 0.5f) / scale)) img.setPixel(x, y, 0);
+	static void shapeElytra(NativeImage img, int s) {
+		int wing = 0, covered = 0;
+		for (int y = 2 * s; y < 22 * s; y++) {
+			for (int x = 36 * s; x < 46 * s; x++) {
+				if (!keepElytra((x + 0.5f) / s, (y + 0.5f) / s)) continue;
+				wing++;
+				if (opaque(img.getPixel(x, y))) covered++;
 			}
 		}
+		if (covered < wing * 0.95f) {
+			// The cape's front (10 × 16) stretched over the wing face (10 × 20).
+			for (int y = 0; y < 20 * s; y++) {
+				int fy = s + y * 16 / 20;
+				for (int x = 0; x < 10 * s; x++) img.setPixel(36 * s + x, 2 * s + y, img.getPixel(s + x, fy));
+			}
+		}
+		for (int y = 0; y < 22 * s; y++) {
+			for (int x = 22 * s; x < 46 * s; x++) {
+				if (!keepElytra((x + 0.5f) / s, (y + 0.5f) / s)) {
+					img.setPixel(x, y, 0);
+				} else if ((x < 36 * s || y < 2 * s) && !opaque(img.getPixel(x, y))) {
+					// The outer side (x 22) wraps round to the face's right edge, the rest
+					// touches its left edge or top row.
+					int sx = x < 24 * s ? 46 * s - 1 : Math.max(36 * s, Math.min(46 * s - 1, x));
+					int sy = Math.max(2 * s, Math.min(22 * s - 1, y));
+					img.setPixel(x, y, img.getPixel(sx, sy));
+				}
+			}
+		}
+	}
+
+	private static boolean opaque(int abgr) {
+		return (abgr >>> 24) != 0;
 	}
 
 	/**
