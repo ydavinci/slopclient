@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.1
 
 ### Cosmetics-Server
 - **Neues Webinterface im Stil des Launchers**: Dein Spieler steht groß auf einer Drehbühne vor dem Launcher-Shader, alles andere sitzt in einem Liquid-Glass-Dock mit den Reitern Capes, Studio, Hut, Begleiter, Zubehör und Konto. Studio und Konto klappen am Rechner als Blatt auf. Beim Wählen einer Cape dreht sich der Spieler, damit sie zu sehen ist. Die getragene Cape hat einen Chroma-Rand, Speichern erscheint als schwebende Pille. Sora und JetBrains Mono werden vom Server selbst ausgeliefert.
