@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.4.2
 
 ### Hüte & Begleiter vom Server
 - **Neue Hüte und Begleiter brauchen nur noch ein Server-Update**: Mod, Launcher und Webinterface holen Katalog und Begleiter-Texturen vom Cosmetics-Server (mit ETag, unverändert nur ein kurzer Abgleich) und merken sie sich für den nächsten Start und offline. Ohne Server gilt der mitgelieferte Katalog. Kataloge vom Server werden auf Größen und Anzahlen geprüft und sonst verworfen.
