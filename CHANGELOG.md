@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.5
 
 ### Client-Mod
 - **Trail**: Eine funkelnde Spur aus winzigen leuchtenden Sternen hinter dir, in Chroma, Gold oder einer festen Farbe, mit einstellbarer Dichte. Mehr Funken beim Laufen, wenige im Stehen. Nur du siehst sie, und sie funktioniert auf jedem Server.
