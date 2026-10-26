@@ -66,6 +66,7 @@ public final class SlopClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		MenuShader.register();
+		dev.slopclient.render.SlopSky.register();
 		modules = new ModuleManager();
 		config = new Config();
 		config.load(modules);

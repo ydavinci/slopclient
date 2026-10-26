@@ -23,6 +23,8 @@ public final class Theme {
 	public static int ACCENT = 0xFF8B5CF6;
 	public static int ACCENT_2 = 0xFFC084FC;
 	public static int ACCENT_3 = 0xFFE879F9;
+	/** Fog under the shader sky (skybox module): the horizon's average violet. */
+	public static int SKY_FOG = 0xFF231741;
 	public static final int ON = 0xFF4ADE80;
 	public static final int ERR = 0xFFF87171;
 
@@ -53,6 +55,7 @@ public final class Theme {
 			ACCENT = turn(ACCENT, shift);
 			ACCENT_2 = turn(ACCENT_2, shift);
 			ACCENT_3 = turn(ACCENT_3, shift);
+			SKY_FOG = turn(SKY_FOG, shift);
 		}
 		STOPS = new int[] {ACCENT, ACCENT_2, ACCENT_3, ACCENT_2, ACCENT};
 	}

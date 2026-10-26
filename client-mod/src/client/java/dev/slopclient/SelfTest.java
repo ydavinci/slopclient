@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -96,6 +96,14 @@ final class SelfTest {
 				}
 				mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
 				mc.player.setXRot(10);
+				// -Dslopclient.selftest.focus=sky: only the skybox and trail shots.
+				if ("sky".equals(System.getProperty("slopclient.selftest.focus"))) {
+					SlopClient.modules().skybox.setEnabled(true);
+					mc.options.setCameraType(CameraType.FIRST_PERSON);
+					mc.player.setXRot(-8);
+					next(Step.SKY, 100);
+					return;
+				}
 				next(Step.CAPE, 100); // chunks and the cape texture settle
 			}
 			case CAPE -> {
@@ -227,6 +235,34 @@ final class SelfTest {
 			}
 			case ELYTRA_SIDE -> {
 				shot(mc, "15-elytra-side");
+				next(Step.DONE, 10);
+			}
+			case SKY -> {
+				shot(mc, "16-skybox");
+				mc.player.setXRot(-55);
+				next(Step.SKY_UP, 10);
+			}
+			case SKY_UP -> {
+				shot(mc, "17-skybox-up");
+				// Strafe past the camera so the trail streams sideways through the picture.
+				var trail = SlopClient.modules().trail;
+				trail.color.set("Chroma");
+				trail.setEnabled(true);
+				mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+				mc.player.setXRot(12);
+				mc.options.keyLeft.setDown(true);
+				next(Step.TRAIL, 30);
+			}
+			case TRAIL -> {
+				shot(mc, "18-trail-chroma");
+				SlopClient.modules().trail.color.set("Gold");
+				mc.options.keyLeft.setDown(false);
+				mc.options.keyRight.setDown(true);
+				next(Step.TRAIL_GOLD, 30);
+			}
+			case TRAIL_GOLD -> {
+				shot(mc, "19-trail-gold");
+				mc.options.keyRight.setDown(false);
 				next(Step.DONE, 10);
 			}
 			case DONE -> {

@@ -86,6 +86,89 @@ public final class Visuals {
 		}
 	}
 
+	/**
+	 * Glittering sparks behind you, like a cosmetic trail: a stream of tiny glowing stars
+	 * at body height that drift and fade. Only you see it.
+	 */
+	public static final class Trail extends Module {
+		public final ModeSetting color = add(new ModeSetting("Farbe", "Chroma", "Chroma", "Gold", "Lila", "Weiß", "Rot", "Grün", "Blau"));
+		public final NumberSetting density = add(new NumberSetting("Dichte", 1, 0.25, 2, 0.25, v -> String.format(Locale.GERMAN, "%.2fx", v)));
+		public final BoolSetting firstPerson = add(new BoolSetting("In der Ich-Ansicht", true));
+		private net.minecraft.world.phys.Vec3 last;
+		private double owed;
+
+		public Trail() {
+			super("Trail", "Funkelnde Spur hinter dir", Category.COSMETICS, false);
+		}
+
+		@Override
+		protected void onDisable() {
+			last = null;
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			var player = mc.player;
+			if (player == null || mc.level == null) {
+				last = null;
+				return;
+			}
+			var now = player.position();
+			var from = last == null ? now : last;
+			last = now;
+			if (player.isInvisible() || player.isSpectator()) return;
+			if (!firstPerson.on() && mc.options.getCameraType().isFirstPerson()) return;
+			// A few sparks while standing, a stream while running.
+			double moved = Math.min(1.5, Math.hypot(now.x - from.x, now.z - from.z) + Math.abs(now.y - from.y) * 0.5);
+			owed += (1.2 + moved * 42) * density.get();
+			var random = mc.level.getRandom();
+			double width = player.getBbWidth() * 0.6;
+			while (owed >= 1) {
+				owed -= 1;
+				double t = random.nextDouble();
+				// Mostly around the legs, thinning out towards the shoulders.
+				double y = from.y + (now.y - from.y) * t + Math.pow(random.nextDouble(), 1.6) * player.getBbHeight() * 0.85;
+				double x = from.x + (now.x - from.x) * t + (random.nextDouble() - 0.5) * width;
+				double z = from.z + (now.z - from.z) * t + (random.nextDouble() - 0.5) * width;
+				double vx = (random.nextDouble() - 0.5) * 0.02 - (now.x - from.x) * 0.04;
+				double vz = (random.nextDouble() - 0.5) * 0.02 - (now.z - from.z) * 0.04;
+				double vy = random.nextDouble() * 0.015;
+				dev.slopclient.render.TrailParticle.spawn(mc, x, y, z, vx, vy, vz, sparkColor(random), random.nextInt(4) == 0);
+			}
+		}
+
+		private int sparkColor(net.minecraft.util.RandomSource random) {
+			return switch (color.get()) {
+				case "Chroma" -> Theme.chroma(random.nextDouble()) & 0xFFFFFF;
+				// Warm gold from deep amber to pale champagne, as in the reference.
+				case "Gold" -> Theme.lerp(0xFFE0A22E, 0xFFFFF0B8, random.nextDouble()) & 0xFFFFFF;
+				default -> Theme.lerp(0xFF000000 | rgb(color, 0), 0xFFFFFFFF, random.nextDouble() * 0.35) & 0xFFFFFF;
+			};
+		}
+	}
+
+	/** The launcher's flowing shader as the sky, with fog to match. */
+	public static final class Skybox extends Module {
+		public final BoolSetting end = add(new BoolSetting("Auch im End", false));
+		public final BoolSetting fog = add(new BoolSetting("Nebel anpassen", true));
+		public final BoolSetting hideClouds = add(new BoolSetting("Wolken ausblenden", true));
+
+		public Skybox() {
+			super("Skybox", "Der Shader des Launchers als Himmel", Category.RENDER, false);
+		}
+
+		/** Overworld skies, and the End's when chosen; the Nether has no sky. */
+		public boolean replaces(net.minecraft.world.level.dimension.DimensionType.Skybox sky) {
+			return active() && (sky == net.minecraft.world.level.dimension.DimensionType.Skybox.OVERWORLD
+				|| sky == net.minecraft.world.level.dimension.DimensionType.Skybox.END && end.on());
+		}
+
+		public org.joml.Vector3fc fogColor() {
+			int c = Theme.SKY_FOG;
+			return new org.joml.Vector3f((c >> 16 & 255) / 255f, (c >> 8 & 255) / 255f, (c & 255) / 255f);
+		}
+	}
+
 	/** Colour and thickness of the outline around the targeted block. */
 	public static final class BlockOutline extends Module {
 		public final ModeSetting color = add(new ModeSetting("Farbe", "Lila", COLORS));

@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
+## Unveröffentlicht
+
+### Client-Mod
+- **Trail**: Eine funkelnde Spur aus winzigen leuchtenden Sternen hinter dir, in Chroma, Gold oder einer festen Farbe, mit einstellbarer Dichte. Mehr Funken beim Laufen, wenige im Stehen. Nur du siehst sie, und sie funktioniert auf jedem Server.
+- **Skybox**: Der fließende Shader des Launchers als Himmel, nahtlos rundum und in deiner Akzentfarbe. Der Nebel passt sich an, Wolken lassen sich ausblenden, auf Wunsch auch im End.
+
 ## 0.5.4
 
 ### Fixes

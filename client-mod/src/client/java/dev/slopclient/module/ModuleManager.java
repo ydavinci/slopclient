@@ -21,6 +21,8 @@ public final class ModuleManager {
 	public final Visuals.BlockOutline blockOutline = add(new Visuals.BlockOutline());
 	public final Visuals.HitColor hitColor = add(new Visuals.HitColor());
 	public final Visuals.Glow glow = add(new Visuals.Glow());
+	public final Visuals.Trail trail = add(new Visuals.Trail());
+	public final Visuals.Skybox skybox = add(new Visuals.Skybox());
 	public final Visuals.LowFire lowFire = add(new Visuals.LowFire());
 	public final Visuals.Nametags nametags = add(new Visuals.Nametags());
 	public final Visuals.ChatPlus chat = add(new Visuals.ChatPlus());
