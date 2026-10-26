@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -102,6 +102,14 @@ final class SelfTest {
 					mc.options.setCameraType(CameraType.FIRST_PERSON);
 					mc.player.setXRot(-8);
 					next(Step.SKY, 100);
+					return;
+				}
+				// -Dslopclient.selftest.focus=glass: only the glass figure.
+				if ("glass".equals(System.getProperty("slopclient.selftest.focus"))) {
+					SlopClient.modules().glass.setEnabled(true);
+					mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+					mc.player.setXRot(5);
+					next(Step.GLASS_FRONT, 100);
 					return;
 				}
 				next(Step.CAPE, 100); // chunks and the cape texture settle
@@ -259,6 +267,15 @@ final class SelfTest {
 				mc.options.keyLeft.setDown(false);
 				mc.options.keyRight.setDown(true);
 				next(Step.TRAIL_GOLD, 30);
+			}
+			case GLASS_FRONT -> {
+				shot(mc, "20-glass-front");
+				mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+				next(Step.GLASS_BACK, 15);
+			}
+			case GLASS_BACK -> {
+				shot(mc, "21-glass-back");
+				next(Step.DONE, 10);
 			}
 			case TRAIL_GOLD -> {
 				shot(mc, "19-trail-gold");

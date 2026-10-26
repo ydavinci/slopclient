@@ -147,6 +147,36 @@ public final class Visuals {
 		}
 	}
 
+	/**
+	 * Players as figures of glass: every part a frosted pane with a bright rim
+	 * (tools/glass/build.py makes the texture), your own figure with a soft white glow.
+	 */
+	public static final class Glass extends Module {
+		public static final net.minecraft.resources.Identifier WIDE = net.minecraft.resources.Identifier.fromNamespaceAndPath(dev.slopclient.SlopClient.ID, "textures/entity/glass_wide.png");
+		public static final net.minecraft.resources.Identifier SLIM = net.minecraft.resources.Identifier.fromNamespaceAndPath(dev.slopclient.SlopClient.ID, "textures/entity/glass_slim.png");
+		/** The glow around your own figure, a cool white like the rims. */
+		public static final int GLOW = 0xF2EEFF;
+		public final BoolSetting self = add(new BoolSetting("Eigener Spieler", true));
+		public final BoolSetting others = add(new BoolSetting("Andere Spieler", false));
+		public final BoolSetting glow = add(new BoolSetting("Leuchtender Rand", true));
+
+		public Glass() {
+			super("Glas", "Spieler aus Glas", Category.COSMETICS, false);
+		}
+
+		/** Whether the player with this entity id is drawn as glass. */
+		public boolean applies(int entityId) {
+			if (!active()) return false;
+			var player = Minecraft.getInstance().player;
+			return player != null && entityId == player.getId() ? self.on() : others.on();
+		}
+
+		/** The glow outline: only your own figure, an outline would show others through walls. */
+		public boolean glows(net.minecraft.world.entity.Entity entity) {
+			return glow.on() && entity == Minecraft.getInstance().player && applies(entity.getId());
+		}
+	}
+
 	/** The launcher's flowing shader as the sky, with fog to match. */
 	public static final class Skybox extends Module {
 		public final BoolSetting end = add(new BoolSetting("Auch im End", false));
