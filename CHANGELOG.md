@@ -6,6 +6,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 
 ### Client-Mod
 - **Glas**: Spieler als Figuren aus Glas, jedes Körperteil eine klare Scheibe mit hellem Rand und Glanzlicht, die eigene Figur mit weißem Leuchten. Für dich, für andere Spieler oder beide.
+- **Amboss-Planer**: Gegenstand aus dem Inventar oder aus allen verzauberbaren Gegenständen wählen, die gewünschten Verzauberungen anklicken (nur passende, und nur solche, die zueinander passen) und die günstigste Reihenfolge sehen, in der die Bücher untereinander und mit dem Gegenstand im Amboss kombiniert werden: mit Leveln pro Schritt, Gesamt-Level und XP. Öffnet über den Knopf „Planer“ am Amboss oder eine eigene Taste.
 
 ## 0.5.5
 

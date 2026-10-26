@@ -361,6 +361,29 @@ public final class Features {
 		}
 	}
 
+	/**
+	 * Anvil planner: the cheapest order to put enchanted books on an item. Opens with its
+	 * key or the "Planer" button next to the anvil.
+	 */
+	public static final class AnvilPlanner extends Module {
+		private KeyMapping key;
+
+		public AnvilPlanner() {
+			super("Amboss-Planer", "Günstigste Reihenfolge für Verzauberungsbücher", Category.COMFORT, true);
+		}
+
+		public void bind(KeyMapping key) {
+			this.key = key;
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			while (key != null && key.consumeClick()) {
+				if (mc.gui.screen() == null && mc.level != null) mc.gui.setScreen(new dev.slopclient.gui.AnvilPlannerScreen(null));
+			}
+		}
+	}
+
 	/** Replaces the vanilla title screen with the SlopClient one. */
 	public static final class TitleScreenModule extends Module {
 		public TitleScreenModule() {

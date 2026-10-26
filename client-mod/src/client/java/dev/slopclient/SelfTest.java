@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Karambit in first person, mid-inspect, from the front and in the inventory.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, ANVIL, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -102,6 +102,15 @@ final class SelfTest {
 					mc.options.setCameraType(CameraType.FIRST_PERSON);
 					mc.player.setXRot(-8);
 					next(Step.SKY, 100);
+					return;
+				}
+				// -Dslopclient.selftest.focus=anvil: the anvil planner with a fully enchanted sword.
+				if ("anvil".equals(System.getProperty("slopclient.selftest.focus"))) {
+					var planner = new dev.slopclient.gui.AnvilPlannerScreen(null);
+					mc.gui.setScreen(planner);
+					planner.preset(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD),
+						"sharpness", "unbreaking", "mending", "looting", "fire_aspect", "knockback", "sweeping_edge", "smite");
+					next(Step.ANVIL, 40);
 					return;
 				}
 				// -Dslopclient.selftest.focus=glass: only the glass figure.
@@ -272,6 +281,10 @@ final class SelfTest {
 				shot(mc, "20-glass-front");
 				mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
 				next(Step.GLASS_BACK, 15);
+			}
+			case ANVIL -> {
+				shot(mc, "22-anvil-planner");
+				next(Step.DONE, 10);
 			}
 			case GLASS_BACK -> {
 				shot(mc, "21-glass-back");

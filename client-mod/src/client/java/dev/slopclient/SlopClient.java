@@ -88,6 +88,16 @@ public final class SlopClient implements ClientModInitializer {
 			new KeyMapping("key.slopclient.screenshot", InputConstants.UNKNOWN.getValue(), category));
 		modules.stopwatch.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.stopwatch", InputConstants.UNKNOWN.getValue(), category)));
+		modules.anvilPlanner.bind(KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.slopclient.anvil", InputConstants.UNKNOWN.getValue(), category)));
+		// The planner's button above the anvil, where the books are combined.
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
+			if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AnvilScreen) || !modules.anvilPlanner.active()) return;
+			int left = (w - 176) / 2, top = (h - 166) / 2;
+			net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen).add(net.minecraft.client.gui.components.Button.builder(
+				net.minecraft.network.chat.Component.literal("Planer"), b -> mc.gui.setScreen(new dev.slopclient.gui.AnvilPlannerScreen(screen)))
+				.bounds(left + 176 - 50, top - 22, 50, 18).build());
+		});
 		// Combo and reach watch the player's own hits.
 		net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) ->
 			level.isClientSide() ? dev.slopclient.hud.InfoHud.Hits.attacked(entity) : net.minecraft.world.InteractionResult.PASS);
