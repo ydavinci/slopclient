@@ -150,6 +150,27 @@ export interface Settings {
   discordHideServer?: boolean;
   /** Look for content updates of all instances at launcher start; null means on. */
   checkUpdatesOnStart?: boolean | null;
+  /** Mods, resource packs and shaders once in the content store, hard linked; null means on. */
+  sharedContent?: boolean | null;
+}
+
+/** Content store (slopclient-core store.rs). */
+export interface StoreStats {
+  files: number;
+  bytes: number;
+  savedBytes: number;
+}
+
+export interface DedupeReport {
+  merged: number;
+  freedBytes: number;
+  /** Names of running instances that were left out. */
+  skipped: string[];
+}
+
+export interface GcReport {
+  removedFiles: number;
+  freedBytes: number;
 }
 
 export interface ManifestEntry {

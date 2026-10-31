@@ -198,6 +198,13 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       mockEmitter.emit("updates-changed", null);
       return done.length;
     }
+    case "store_stats":
+      return delay({ files: 412, bytes: 1_240_000_000, savedBytes: 3_020_000_000 });
+    case "store_dedupe":
+      await delay(null, 900);
+      return { merged: 412, freedBytes: 1_800_000_000, skipped: [] };
+    case "store_gc":
+      return delay({ removedFiles: 3, freedBytes: 24_000_000 });
     case "shared_options_groups":
     case "shared_options_reconcile":
       return delay(sharedStatus());

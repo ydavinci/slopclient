@@ -42,6 +42,12 @@ export function megabytes(bytes: number): string {
   return `${(bytes / 1_000_000).toFixed(bytes > 100_000_000 ? 0 : 1)} MB`;
 }
 
+/** "840 MB" or "1,8 GB", German decimal comma. */
+export function diskSize(bytes: number): string {
+  if (bytes >= 1_000_000_000) return `${(bytes / 1_000_000_000).toFixed(1).replace(".", ",")} GB`;
+  return `${Math.round(bytes / 1_000_000)} MB`;
+}
+
 /** Stable accent pair for an instance tile, derived from its id. */
 export function instanceColors(instance: Pick<Instance, "id">): { bg: string; fg: string } {
   const palette = [
