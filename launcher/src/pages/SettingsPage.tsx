@@ -8,6 +8,8 @@ import { Button, Field, Segmented, Spinner, Toggle, inputClass, rise } from "../
 import { Slider } from "./InstanceDetail";
 import { CosmeticsOnline } from "./Cosmetics";
 import { SharedOptions } from "./SharedOptions";
+import { diskSize } from "../lib/format";
+import type { StoreStats } from "../lib/types";
 import { HueRing } from "../ui/HueRing";
 import { DEFAULT_HUE, applyAccent } from "../lib/accent";
 
@@ -168,6 +170,14 @@ export function SettingsPage() {
               </div>
               <Toggle label="Beim Start nach Updates suchen" checked={settings.checkUpdatesOnStart ?? true} onChange={(v) => setSettings({ ...settings, checkUpdatesOnStart: v })} />
             </div>
+            <div className="flex items-center gap-4 border-t border-line pt-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-semibold">Gleiche Dateien zwischen Instanzen teilen</div>
+                <div className="text-[12px] text-muted">Mods, Resourcepacks und Shader, die mehrere Instanzen nutzen, werden nur einmal heruntergeladen und gespeichert. Windows zeigt die Größe in jedem Instanzordner trotzdem voll an.</div>
+              </div>
+              <Toggle label="Gleiche Dateien zwischen Instanzen teilen" checked={settings.sharedContent ?? true} onChange={(v) => setSettings({ ...settings, sharedContent: v })} />
+            </div>
+            <ContentStore />
           </motion.section>
 
           <div>
@@ -219,6 +229,63 @@ export function SettingsPage() {
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Size of the content store, merging duplicates from before sharing, cleaning up. */
+function ContentStore() {
+  const { runTask, toast } = useStore();
+  const [stats, setStats] = useState<StoreStats | null>(null);
+  const [busy, setBusy] = useState<"dedupe" | "gc" | null>(null);
+  const load = () =>
+    api
+      .storeStats()
+      .then(setStats)
+      .catch(() => setStats(null));
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function dedupe() {
+    setBusy("dedupe");
+    try {
+      const r = await runTask("Doppelte Dateien zusammenführen", (taskId) => api.storeDedupe(taskId));
+      const skipped = r.skipped.length ? ` ${r.skipped.join(", ")} ${r.skipped.length === 1 ? "läuft" : "laufen"} gerade und wurde${r.skipped.length === 1 ? "" : "n"} übersprungen.` : "";
+      toast(`${r.merged} ${r.merged === 1 ? "Datei" : "Dateien"} zusammengeführt, ${diskSize(r.freedBytes)} frei.${skipped}`, "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setBusy(null);
+      load();
+    }
+  }
+
+  async function gc() {
+    setBusy("gc");
+    try {
+      const r = await api.storeGc();
+      toast(r.removedFiles ? `${r.removedFiles} ungenutzte ${r.removedFiles === 1 ? "Datei" : "Dateien"} gelöscht, ${diskSize(r.freedBytes)} frei.` : "Nichts aufzuräumen.", "success");
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setBusy(null);
+      load();
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold">Speicher</div>
+        <div className="text-[12px] text-muted">{stats ? `${diskSize(stats.bytes)} belegt · ${diskSize(stats.savedBytes)} gespart` : "…"}</div>
+      </div>
+      <Button size="sm" loading={busy === "dedupe"} disabled={busy !== null} onClick={dedupe} title="Macht aus Dateien, die schon vor dem Teilen doppelt lagen, eine">
+        Doppelte Dateien zusammenführen
+      </Button>
+      <Button size="sm" loading={busy === "gc"} disabled={busy !== null} onClick={gc} title="Löscht Dateien, die keine Instanz mehr nutzt">
+        Aufräumen
+      </Button>
     </div>
   );
 }

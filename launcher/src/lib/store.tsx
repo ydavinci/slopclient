@@ -322,6 +322,7 @@ export function useLaunch() {
 
 const STAGES: Record<string, string> = {
   "Fetching version metadata": "Versionsdaten laden",
+  "Merging duplicate files": "Doppelte Dateien zusammenführen",
   "Downloading game files": "Spieldateien herunterladen",
   "Extracting natives": "Native Bibliotheken entpacken",
   "Downloading assets": "Assets herunterladen",
