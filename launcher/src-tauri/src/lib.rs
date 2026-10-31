@@ -31,6 +31,7 @@ use slopclient_core::{
     },
     instance::{Instance, Loader, now},
     launch,
+    shared_options::{self, Group, GroupStatus, Keep},
     meta::{
         LoaderKind,
         loaders::{self, LoaderVersion},
@@ -495,6 +496,10 @@ async fn launch_instance(
         .ok_or("Keine Microsoft-Client-ID hinterlegt (Einstellungen).")?;
     let auth = store.launch_auth(&client_id, &account.uuid).await.map_err(err)?;
 
+    // Pick up settings another member of its sync group saved (or a broken link).
+    let running = running_ids(&state).await;
+    let _ = shared_options::reconcile_instance(&paths, &id, &running);
+
     let mut cmd = launch::prepare(&paths, &instance, &auth, join, progress_for(&app, &task_id))
         .await
         .map_err(err)?;
@@ -561,6 +566,9 @@ async fn launch_instance(
         let _ = launch::record_session(&paths, &id, started);
         let state = app2.state::<AppState>();
         state.games.lock().await.remove(&id);
+        // Share what the game saved, or repair links it broke while saving.
+        let running = running_ids(&state).await;
+        let _ = shared_options::reconcile_instance(&paths, &id, &running);
         state.playing.lock().unwrap().retain(|p| p.instance_id != id);
         state.refresh_presence();
         let stopped = state.stopping.lock().await.remove(&id);
@@ -589,6 +597,11 @@ async fn launch_instance(
         }
     });
     Ok(())
+}
+
+/// Ids of the instances whose game is running.
+async fn running_ids(state: &AppState) -> std::collections::HashSet<String> {
+    state.games.lock().await.keys().cloned().collect()
 }
 
 #[tauri::command]
@@ -1262,6 +1275,70 @@ async fn foreign_import(
     .map_err(err)
 }
 
+// ---------- shared game settings ----------
+
+/// Sync groups with the state of every member; checks and repairs the links first.
+#[tauri::command]
+async fn shared_options_groups(state: State<'_, AppState>) -> CmdResult<Vec<GroupStatus>> {
+    let running = running_ids(&state).await;
+    shared_options::reconcile_all(&state.paths, &running).map_err(err)
+}
+
+/// The "Jetzt prüfen" button: same as loading the groups.
+#[tauri::command]
+async fn shared_options_reconcile(state: State<'_, AppState>) -> CmdResult<Vec<GroupStatus>> {
+    shared_options_groups(state).await
+}
+
+async fn refuse_running(state: &AppState, ids: &[String]) -> CmdResult<()> {
+    let games = state.games.lock().await;
+    if ids.iter().any(|id| games.contains_key(id)) {
+        return Err("Schließ zuerst das Spiel. Solange es läuft, schreibt es seine Einstellungen selbst.".into());
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn shared_options_create(state: State<'_, AppState>, name: String, source_instance: String) -> CmdResult<Group> {
+    refuse_running(&state, std::slice::from_ref(&source_instance)).await?;
+    shared_options::create(&state.paths, &name, &source_instance).map_err(err)
+}
+
+#[tauri::command]
+async fn shared_options_rename(state: State<'_, AppState>, group: String, name: String) -> CmdResult<()> {
+    shared_options::rename(&state.paths, &group, &name).map_err(err)
+}
+
+#[tauri::command]
+async fn shared_options_delete(state: State<'_, AppState>, group: String) -> CmdResult<()> {
+    let members = shared_options::groups(&state.paths)
+        .map_err(err)?
+        .into_iter()
+        .find(|g| g.id == group)
+        .map(|g| g.instances)
+        .unwrap_or_default();
+    refuse_running(&state, &members).await?;
+    shared_options::delete(&state.paths, &group).map_err(err)
+}
+
+#[tauri::command]
+async fn shared_options_add(state: State<'_, AppState>, group: String, instance: String, keep: Keep) -> CmdResult<()> {
+    refuse_running(&state, std::slice::from_ref(&instance)).await?;
+    shared_options::add(&state.paths, &group, &instance, keep).map_err(err)
+}
+
+#[tauri::command]
+async fn shared_options_remove(state: State<'_, AppState>, group: String, instance: String) -> CmdResult<()> {
+    refuse_running(&state, std::slice::from_ref(&instance)).await?;
+    shared_options::remove(&state.paths, &group, &instance).map_err(err)
+}
+
+/// The sync group of an instance, for the hint in its settings tab.
+#[tauri::command]
+async fn shared_options_group_of(state: State<'_, AppState>, instance: String) -> CmdResult<Option<Group>> {
+    shared_options::group_of(&state.paths, &instance).map_err(err)
+}
+
 // ---------- modpacks ----------
 
 #[tauri::command]
@@ -1346,6 +1423,11 @@ pub fn run() {
         .setup(|app| {
             let state = app.state::<AppState>();
             state.refresh_presence();
+            // Repair settings links that broke while the launcher was closed.
+            let paths = state.paths.clone();
+            tauri::async_runtime::spawn_blocking(move || {
+                let _ = shared_options::reconcile_all(&paths, &Default::default());
+            });
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 // Let the window come up first.
@@ -1425,6 +1507,14 @@ pub fn run() {
             content_updates,
             content_apply_updates,
             updates_overview,
+            shared_options_groups,
+            shared_options_reconcile,
+            shared_options_create,
+            shared_options_rename,
+            shared_options_delete,
+            shared_options_add,
+            shared_options_remove,
+            shared_options_group_of,
             search,
             project_details,
             version_changelog,

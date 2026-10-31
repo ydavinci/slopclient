@@ -244,6 +244,8 @@ impl Instance {
             return Err(Error::InstanceNotFound(id.to_owned()));
         }
         std::fs::remove_dir_all(dir)?;
+        // Its settings links are gone with the folder; the group keeps its files.
+        let _ = crate::shared_options::forget_instance(paths, id);
         Ok(())
     }
 }
@@ -266,7 +268,7 @@ pub enum CopyPart {
 
 impl CopyPart {
     /// Files and folders in the game directory this part covers.
-    fn entries(self) -> &'static [&'static str] {
+    pub(crate) fn entries(self) -> &'static [&'static str] {
         match self {
             Self::Options => &["options.txt", "optionsof.txt", "optionsshaders.txt"],
             Self::Servers => &["servers.dat"],
@@ -347,7 +349,7 @@ fn copy_tree(from: &std::path::Path, to: &std::path::Path, top: bool) -> std::io
     Ok(())
 }
 
-fn slugify(name: &str) -> String {
+pub(crate) fn slugify(name: &str) -> String {
     let mut slug = String::new();
     for c in name.trim().to_lowercase().chars() {
         if c.is_ascii_alphanumeric() {
