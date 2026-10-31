@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowLeft, ArrowUpCircle, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, MonitorUp, Plus, Puzzle, RefreshCw, Search, Server as ServerIcon, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, ArrowUpCircle, Link2, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, MonitorUp, Plus, Puzzle, RefreshCw, Search, Server as ServerIcon, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, onEvent, openUrl } from "../lib/ipc";
@@ -677,6 +677,13 @@ function SettingsTab({ instance }: { instance: Instance }) {
   const setJava = (patch: Partial<Instance["java"]>) => setDraft({ ...draft, java: { ...java, ...patch } });
 
   const runningGame = overview?.running.includes(instance.id) ?? false;
+  const [sharedGroup, setSharedGroup] = useState<string | null>(null);
+  useEffect(() => {
+    api
+      .sharedOptionsGroupOf(instance.id)
+      .then((g) => setSharedGroup(g?.name ?? null))
+      .catch(() => setSharedGroup(null));
+  }, [instance.id]);
   // The header's quick update changes the loader outside this form: follow it.
   const savedLoader = JSON.stringify(instance.loader);
   useEffect(() => {
@@ -715,6 +722,17 @@ function SettingsTab({ instance }: { instance: Instance }) {
   return (
     <div className="h-full overflow-auto px-8 pt-5 pb-8">
       <motion.div variants={stagger} initial="hidden" animate="show" className="grid max-w-2xl gap-5">
+        {sharedGroup && (
+          <motion.div variants={rise} className="flex items-center gap-3 rounded-[12px] border border-line bg-white/[0.03] px-3.5 py-2.5 text-[12.5px]">
+            <Link2 className="size-4 shrink-0 text-on" />
+            <span className="flex-1">
+              Spieleinstellungen geteilt mit Gruppe <b>„{sharedGroup}“</b>. Grafik, Steuerung und Sound ändern sich für alle Instanzen der Gruppe.
+            </span>
+            <Button size="sm" onClick={() => navigate({ page: "settings", section: "shared-options" })}>
+              Verwalten
+            </Button>
+          </motion.div>
+        )}
         <motion.div variants={rise} className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
           <Field label="Name">
             <input className={inputClass} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
