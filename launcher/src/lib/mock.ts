@@ -79,6 +79,11 @@ const mr = (slug: string, name: string, version: string, kind: ContentEntry["kin
   ...extra,
 });
 
+// Settings sync groups of the preview.
+let mockShared: { id: string; name: string; instances: string[] }[] | null = null;
+const sharedGroups = () => (mockShared ??= [{ id: "survival", name: "Survival", instances: [instances[0].id, instances[1].id] }]);
+const sharedStatus = () => sharedGroups().map((g) => ({ ...g, instances: undefined, members: g.instances.map((instance) => ({ instance, state: "linked" })) }));
+
 // Known updates of the preview instance, filled by the first check.
 let mockUpdates: { entry: ContentEntry; new_version: { id: string; project_id: string; version_number: string; version_type: string } }[] | null = null;
 
@@ -193,6 +198,29 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       mockEmitter.emit("updates-changed", null);
       return done.length;
     }
+    case "shared_options_groups":
+    case "shared_options_reconcile":
+      return delay(sharedStatus());
+    case "shared_options_create": {
+      const name = String(args.name);
+      const group = { id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name, instances: [String(args.sourceInstance)] };
+      sharedGroups().push(group);
+      return delay(group);
+    }
+    case "shared_options_rename":
+      sharedGroups().forEach((g) => g.id === args.group && (g.name = String(args.name)));
+      return delay(null);
+    case "shared_options_delete":
+      mockShared = sharedGroups().filter((g) => g.id !== args.group);
+      return delay(null);
+    case "shared_options_add":
+      sharedGroups().forEach((g) => g.id === args.group && g.instances.push(String(args.instance)));
+      return delay(null);
+    case "shared_options_remove":
+      sharedGroups().forEach((g) => g.id === args.group && (g.instances = g.instances.filter((i) => i !== args.instance)));
+      return delay(null);
+    case "shared_options_group_of":
+      return delay(sharedGroups().find((g) => g.instances.includes(String(args.instance))) ?? null);
     case "updates_overview":
       return delay(mockUpdates?.length ? { [instances[0].id]: mockUpdates.length } : {});
     case "foreign_scan":

@@ -283,6 +283,28 @@ export interface UpdateInfo {
   new_version: RemoteVersion;
 }
 
+/** How a member of a settings sync group is connected (slopclient-core shared_options.rs). */
+export type SharedMemberState = "empty" | "linked" | "repaired" | "waiting" | "copied" | "error";
+
+export interface SharedMember {
+  instance: string;
+  state: SharedMemberState;
+  /** Error text for "error". */
+  message?: string;
+}
+
+export interface SharedGroupStatus {
+  id: string;
+  name: string;
+  members: SharedMember[];
+}
+
+export interface SharedGroup {
+  id: string;
+  name: string;
+  instances: string[];
+}
+
 /** A file to update; the backend picks the new version. */
 export interface UpdateTarget {
   kind: ContentType;

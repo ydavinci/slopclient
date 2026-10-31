@@ -10,6 +10,8 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Updates in der Instanzliste**: Instanzen mit Updates zeigen „N Updates“ (ein Klick öffnet die Inhalte), auf der Startseite einen grünen Punkt am Icon.
 - Solange eine Instanz läuft, sind ihre Update-Knöpfe gesperrt, weil sich geöffnete Dateien nicht ersetzen lassen.
 - CLI: `slopclient content update <instanz> [namen…]` aktualisiert auf Wunsch nur die genannten Inhalte.
+- **Geteilte Spieleinstellungen** (Einstellungen → Geteilte Spieleinstellungen): Instanzen in einer Gruppe teilen sich `options.txt`, `optionsof.txt` und `optionsshaders.txt`, also Grafik, Steuerung, Sound und Tastenbelegung. Eine Änderung in einer Instanz gilt sofort für alle in der Gruppe. Mehrere Gruppen sind möglich, eine Instanz ist in höchstens einer. Beim Hinzufügen wählst du, ob die Einstellungen der Gruppe oder die der Instanz gelten; die überschriebenen werden gesichert. Entfernte Instanzen behalten ihre aktuellen Einstellungen, Kopien einer Instanz sind in keiner Gruppe.
+- Speichert ein Programm die Datei so, dass die Verbindung reißt, repariert der Launcher sie beim Start, vor und nach jedem Spiel und auf der Einstellungsseite (die neueste Änderung gewinnt). Wo Hardlinks nicht gehen (z. B. FAT32 oder Netzlaufwerke), wird nur zu diesen Zeitpunkten abgeglichen. Im Einstellungen-Tab einer Instanz steht, mit welcher Gruppe sie ihre Einstellungen teilt.
 
 ### Client-Mod
 - **Glas**: Spieler als Figuren aus Glas, jedes Körperteil eine klare Scheibe mit hellem Rand und Glanzlicht, die eigene Figur mit weißem Leuchten. Für dich, für andere Spieler oder beide.

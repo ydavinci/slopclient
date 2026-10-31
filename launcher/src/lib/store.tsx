@@ -9,7 +9,7 @@ export type Route =
   | { page: "instance"; id: string; tab?: InstanceTab }
   | { page: "browse"; target?: string }
   | { page: "cosmetics" }
-  | { page: "settings" };
+  | { page: "settings"; section?: "shared-options" };
 
 /** Which project page to show; `target` preselects the instance to install into. */
 export interface ProjectRef {
