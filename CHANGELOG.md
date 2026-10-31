@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.5.6
 
 ### Launcher
 - **Mod-Updates mit einem Klick**: Hat ein Mod, Resourcepack oder Shader ein Update, steht in seiner Zeile ein grüner „Update“-Knopf, der nur diesen einen Inhalt aktualisiert. Beta- und Alpha-Versionen sind gelb markiert. „Alle aktualisieren (N)“ gibt es jetzt auch in der linken Spalte.
