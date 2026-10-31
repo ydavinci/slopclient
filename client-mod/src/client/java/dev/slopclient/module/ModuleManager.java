@@ -17,7 +17,6 @@ public final class ModuleManager {
 	public final Features.UiFont uiFont = add(new Features.UiFont());
 	public final Features.Capes capes = add(new Features.Capes());
 	public final Features.Extras extras = add(new Features.Extras());
-	public final Features.Karambit karambit = add(new Features.Karambit());
 	public final Visuals.BlockOutline blockOutline = add(new Visuals.BlockOutline());
 	public final Visuals.HitColor hitColor = add(new Visuals.HitColor());
 	public final Visuals.Glow glow = add(new Visuals.Glow());
@@ -30,9 +29,11 @@ public final class ModuleManager {
 	public final Visuals.Scoreboard scoreboard = add(new Visuals.Scoreboard());
 	public final dev.slopclient.gui.ScreenshotPreview screenshots = add(new dev.slopclient.gui.ScreenshotPreview());
 	public final Features.AnvilPlanner anvilPlanner = add(new Features.AnvilPlanner());
+	public final Features.AutoTool autoTool = add(new Features.AutoTool());
 	public final Features.TitleScreenModule titleScreen = add(new Features.TitleScreenModule());
 	public final dev.slopclient.hud.InfoHud.BossBar bossBar = new dev.slopclient.hud.InfoHud.BossBar();
 	public final dev.slopclient.hud.InfoHud.Stopwatch stopwatch = new dev.slopclient.hud.InfoHud.Stopwatch();
+	public final dev.slopclient.hud.InfoHud.Librarian librarian = new dev.slopclient.hud.InfoHud.Librarian();
 
 	public ModuleManager() {
 		add(new HudModules.Watermark());
@@ -58,6 +59,7 @@ public final class ModuleManager {
 		add(new dev.slopclient.hud.InfoHud.Day());
 		add(stopwatch);
 		add(new dev.slopclient.hud.InfoHud.Packs());
+		add(librarian);
 	}
 
 	private <M extends Module> M add(M module) {

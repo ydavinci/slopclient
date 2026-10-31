@@ -4,15 +4,14 @@
 	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"AtmosphericFogEnvironmentMixin",
+		"AvatarRendererMixin",
 		"BossHealthOverlayAccessor",
 		"CameraMixin",
 		"ChatComponentMixin",
 		"CloudRendererMixin",
-		"ConditionalItemModelPropertiesAccessor",
 		"EntityMixin",
 		"EntityRendererMixin",
 		"FontProviderMixin",
-		"FirstPersonHandsAndItemsRendererMixin",
 		"GuiMixin",
 		"HudMixin",
 		"LevelRendererMixin",
@@ -21,12 +20,9 @@
 		"OptionInstanceAccessor",
 		"OptionsMixin",
 		"OverlayTextureAccessor",
-		"PunchyConfigMixin",
 		"ScreenEffectRendererMixin",
 		"ScreenshotMixin",
-		"SkyRendererMixin",
-		"SpecialModelRenderersAccessor",
-		"SpecialModelWrapperMixin"
+		"SkyRendererMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }

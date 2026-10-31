@@ -22,8 +22,7 @@ public abstract class LivingEntityRendererMixin {
 		if (!SlopClient.modules().glass.applies(avatar.id)) return;
 		boolean slim = avatar.skin != null && avatar.skin.model() == net.minecraft.world.entity.player.PlayerModelType.SLIM;
 		// Emissive: glass catches light, it does not sit in the shade.
-		cir.setReturnValue(net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(
-			slim ? dev.slopclient.module.Visuals.Glass.SLIM : dev.slopclient.module.Visuals.Glass.WIDE));
+		cir.setReturnValue(net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(SlopClient.modules().glass.texture(slim)));
 	}
 
 	@Inject(method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z", at = @At("RETURN"), cancellable = true)

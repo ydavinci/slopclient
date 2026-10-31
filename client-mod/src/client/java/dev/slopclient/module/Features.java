@@ -317,56 +317,26 @@ public final class Features {
 	}
 
 	/**
-	 * Shows the netherite sword as a 3D CS:GO Karambit, with draw and inspect
-	 * animations in first person. Purely visual: the item stays a netherite sword.
-	 */
-	public static final class Karambit extends Module {
-		public final BoolSetting draw = add(new BoolSetting("Zieh-Animation", true));
-		public final BoolSetting inspect = add(new BoolSetting("Inspect-Animation", true));
-		private KeyMapping inspectKey;
-		private boolean held;
-		private int slot = -1;
-
-		public Karambit() {
-			super("Karambit", "Netherite-Schwert als 3D-Karambit, Inspect mit V", Category.COSMETICS, true);
-		}
-
-		public void bind(KeyMapping key) {
-			inspectKey = key;
-		}
-
-		@Override
-		protected void onDisable() {
-			dev.slopclient.cosmetics.karambit.KarambitAnimation.stop();
-			held = false;
-		}
-
-		@Override
-		public void tick(Minecraft mc) {
-			if (mc.player == null) {
-				held = false;
-				return;
-			}
-			boolean now = mc.player.getMainHandItem().is(net.minecraft.world.item.Items.NETHERITE_SWORD);
-			int selected = mc.player.getInventory().getSelectedSlot();
-			if (now && (!held || selected != slot) && draw.on()) dev.slopclient.cosmetics.karambit.KarambitAnimation.startDraw();
-			if (!now) dev.slopclient.cosmetics.karambit.KarambitAnimation.stop();
-			held = now;
-			slot = selected;
-			while (inspectKey != null && inspectKey.consumeClick()) {
-				if (now && inspect.on() && mc.gui.screen() == null) dev.slopclient.cosmetics.karambit.KarambitAnimation.startInspect();
-			}
-			// Attacking interrupts the inspect, like in CS.
-			if (mc.player.isSwinging()) dev.slopclient.cosmetics.karambit.KarambitAnimation.cancelInspect();
-		}
-	}
-
-	/**
 	 * Anvil planner: the cheapest order to put enchanted books on an item. Opens with its
-	 * key or the "Planer" button next to the anvil.
+	 * key or the "Planer" button next to the anvil. A pinned plan shows beside the anvil.
 	 */
 	public static final class AnvilPlanner extends Module {
+		/** A plan pinned for the anvil: which item it is for and its steps. */
+		public record Pinned(String item, dev.slopclient.anvil.AnvilPlanner.Plan plan) {
+		}
+
 		private KeyMapping key;
+		private Pinned pinned;
+
+		/** The pinned plan, or null. */
+		public Pinned pinned() {
+			return pinned;
+		}
+
+		/** Pins `plan` for `item`; null unpins. */
+		public void pin(String item, dev.slopclient.anvil.AnvilPlanner.Plan plan) {
+			pinned = plan == null ? null : new Pinned(item, plan);
+		}
 
 		public AnvilPlanner() {
 			super("Amboss-Planer", "Günstigste Reihenfolge für Verzauberungsbücher", Category.COMFORT, true);
@@ -381,6 +351,95 @@ public final class Features {
 			while (key != null && key.consumeClick()) {
 				if (mc.gui.screen() == null && mc.level != null) mc.gui.setScreen(new dev.slopclient.gui.AnvilPlannerScreen(null));
 			}
+		}
+	}
+
+	/**
+	 * While you mine, holds the best tool for the block: the fastest one that also gets the
+	 * drop, efficiency counted. From the hotbar, or optionally from the whole inventory
+	 * (swapped into your hand and back). Afterwards it switches back.
+	 */
+	public static final class AutoTool extends Module {
+		public final BoolSetting fromInventory = add(new BoolSetting("Aus dem Inventar", false));
+		public final BoolSetting switchBack = add(new BoolSetting("Zurückwechseln", true));
+		public final BoolSetting spare = add(new BoolSetting("Fast kaputte schonen", true));
+		/** Hotbar slot selected before switching, or -1. */
+		private int previous = -1;
+		/** Inventory slot swapped into the hand, or -1. */
+		private int swapped = -1;
+
+		public AutoTool() {
+			super("Auto-Werkzeug", "Wechselt beim Abbauen zum besten Werkzeug", Category.COMFORT, false);
+		}
+
+		@Override
+		protected void onDisable() {
+			restore(Minecraft.getInstance());
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			var player = mc.player;
+			if (player == null || mc.level == null || mc.gameMode == null || mc.gui.screen() != null) return;
+			boolean mining = mc.options.keyAttack.isDown() && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit
+				&& hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK && !mc.level.getBlockState(hit.getBlockPos()).isAir();
+			if (!mining) {
+				restore(mc);
+				return;
+			}
+			var state = mc.level.getBlockState(((net.minecraft.world.phys.BlockHitResult) mc.hitResult).getBlockPos());
+			var inventory = player.getInventory();
+			int selected = inventory.getSelectedSlot();
+			double current = score(mc, inventory.getItem(selected), state);
+			int best = -1;
+			double bestScore = current;
+			int last = fromInventory.on() && swapped < 0 ? 36 : 9;
+			for (int slot = 0; slot < last; slot++) {
+				double s = score(mc, inventory.getItem(slot), state);
+				if (s > bestScore) {
+					bestScore = s;
+					best = slot;
+				}
+			}
+			if (best < 0) return;
+			if (previous < 0) previous = selected;
+			if (best < 9) {
+				inventory.setSelectedSlot(best);
+			} else {
+				// Swap the tool from the inventory into the hand (inventory menu: slot index, hotbar button).
+				mc.gameMode.handleContainerInput(player.inventoryMenu.containerId, best, selected,
+					net.minecraft.world.inventory.ContainerInput.SWAP, player);
+				swapped = best;
+			}
+		}
+
+		/** Back to the slot (and the item) you had before mining. */
+		private void restore(Minecraft mc) {
+			var player = mc.player;
+			if (player == null || mc.gameMode == null) {
+				previous = swapped = -1;
+				return;
+			}
+			if (swapped >= 0 && switchBack.on()) {
+				mc.gameMode.handleContainerInput(player.inventoryMenu.containerId, swapped, player.getInventory().getSelectedSlot(),
+					net.minecraft.world.inventory.ContainerInput.SWAP, player);
+			}
+			if (previous >= 0 && switchBack.on()) player.getInventory().setSelectedSlot(previous);
+			previous = swapped = -1;
+		}
+
+		/** How well `stack` mines `state`: speed with efficiency, far ahead if it also gets the drop. */
+		private double score(Minecraft mc, net.minecraft.world.item.ItemStack stack, net.minecraft.world.level.block.state.BlockState state) {
+			if (spare.on() && stack.isDamageableItem() && stack.getMaxDamage() - stack.getDamageValue() <= 5) return -1;
+			double speed = stack.getDestroySpeed(state);
+			if (speed > 1) {
+				var efficiency = mc.level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+					.get(net.minecraft.world.item.enchantment.Enchantments.EFFICIENCY);
+				int level = efficiency.map(e -> net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(e, stack)).orElse(0);
+				if (level > 0) speed += level * level + 1;
+			}
+			if (state.requiresCorrectToolForDrops() && stack.isCorrectToolForDrops(state)) speed += 1000;
+			return speed;
 		}
 	}
 

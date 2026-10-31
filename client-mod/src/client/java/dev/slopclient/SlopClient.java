@@ -2,7 +2,6 @@ package dev.slopclient;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.slopclient.cosmetics.Cosmetics;
-import dev.slopclient.cosmetics.karambit.KarambitModels;
 import dev.slopclient.gui.ClickGuiScreen;
 import dev.slopclient.hud.HudModule;
 import dev.slopclient.module.ModuleManager;
@@ -81,9 +80,6 @@ public final class SlopClient implements ClientModInitializer {
 		modules.zoom.bind(zoomKey);
 		modules.freelook.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.freelook", InputConstants.KEY_LALT, category)));
-		modules.karambit.bind(KeyMappingHelper.registerKeyMapping(
-			new KeyMapping("key.slopclient.inspect", InputConstants.KEY_V, category)));
-		KarambitModels.register();
 		KeyMapping screenshotKey = KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.screenshot", InputConstants.UNKNOWN.getValue(), category));
 		modules.stopwatch.bind(KeyMappingHelper.registerKeyMapping(
@@ -97,10 +93,17 @@ public final class SlopClient implements ClientModInitializer {
 			net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen).add(net.minecraft.client.gui.components.Button.builder(
 				net.minecraft.network.chat.Component.literal("Planer"), b -> mc.gui.setScreen(new dev.slopclient.gui.AnvilPlannerScreen(screen)))
 				.bounds(left + 176 - 50, top - 22, 50, 18).build());
+			net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register((s, g, mx, my, delta) ->
+				dev.slopclient.gui.PinnedPlanCard.draw(g, left, top, w, h));
 		});
 		// Combo and reach watch the player's own hits.
 		net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) ->
 			level.isClientSide() ? dev.slopclient.hud.InfoHud.Hits.attacked(entity) : net.minecraft.world.InteractionResult.PASS);
+		// The librarian HUD learns a villager's books from the trade window it opens.
+		net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
+			if (level.isClientSide() && entity instanceof net.minecraft.world.entity.npc.villager.Villager) modules.librarian.interacted(entity);
+			return net.minecraft.world.InteractionResult.PASS;
+		});
 		ServerRules.register();
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {

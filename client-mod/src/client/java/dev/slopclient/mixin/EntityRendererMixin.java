@@ -17,6 +17,6 @@ public abstract class EntityRendererMixin {
 		if (!SlopClient.ready()) return;
 		var glow = SlopClient.modules().glow;
 		if (glow.active() && glow.shouldGlow(entity)) state.outlineColor = glow.color(entity);
-		else if (SlopClient.modules().glass.glows(entity)) state.outlineColor = dev.slopclient.module.Visuals.Glass.GLOW;
+		else if (SlopClient.modules().glass.glows(entity)) state.outlineColor = SlopClient.modules().glass.glowColor();
 	}
 }

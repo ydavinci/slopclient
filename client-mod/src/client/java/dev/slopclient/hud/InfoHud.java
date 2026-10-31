@@ -649,4 +649,104 @@ public final class InfoHud {
 			if (packs.isEmpty() && editing) Draw.shadowText(g, "Resourcepacks", p + 16, y + 2, Theme.MUTED);
 		}
 	}
+
+	/**
+	 * Looking at a lectern: the enchanted books its librarian sells. The game only tells the
+	 * client a villager's trades when its trade window opens, so each librarian's books are
+	 * remembered from the last time you opened its trades; the lectern belongs to the
+	 * nearest librarian (the server never says which villager owns which lectern).
+	 */
+	public static final class Librarian extends HudModule {
+		private record Book(String name, int price) {
+		}
+
+		private final Map<java.util.UUID, List<Book>> books = new HashMap<>();
+		private Entity lastVillager;
+
+		public Librarian() {
+			super("Bibliothekar", "Bücher des Bibliothekars am Lesepult, auf das du schaust", true, 0.62, 0.5, true);
+		}
+
+		/** A villager was right-clicked; its trades come with the window that opens next. */
+		public void interacted(Entity villager) {
+			lastVillager = villager;
+		}
+
+		@Override
+		public void tick(Minecraft mc) {
+			if (lastVillager == null || !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.MerchantScreen screen)) return;
+			var offers = screen.getMenu().getOffers();
+			if (offers.isEmpty()) return;
+			List<Book> list = new ArrayList<>();
+			for (var offer : offers) {
+				var stored = offer.getResult().get(net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS);
+				if (stored == null) continue;
+				for (var e : stored.entrySet()) {
+					list.add(new Book(net.minecraft.world.item.enchantment.Enchantment.getFullname(e.getKey(), e.getIntValue()).getString(), offer.getCostA().getCount()));
+				}
+			}
+			books.put(lastVillager.getUUID(), list);
+			lastVillager = null;
+		}
+
+		/** The lectern under the crosshair, or null. */
+		private static net.minecraft.core.BlockPos lectern(Minecraft mc) {
+			if (mc.level == null || !(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit)
+				|| hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) return null;
+			return mc.level.getBlockState(hit.getBlockPos()).is(net.minecraft.world.level.block.Blocks.LECTERN) ? hit.getBlockPos() : null;
+		}
+
+		/** The librarian nearest to `lectern`, within the 48 blocks a villager may walk from its job site. */
+		private static net.minecraft.world.entity.npc.villager.Villager owner(Minecraft mc, net.minecraft.core.BlockPos lectern) {
+			var centre = net.minecraft.world.phys.Vec3.atCenterOf(lectern);
+			return mc.level.getEntitiesOfClass(net.minecraft.world.entity.npc.villager.Villager.class,
+					new net.minecraft.world.phys.AABB(lectern).inflate(48),
+					v -> v.getVillagerData().profession().is(net.minecraft.world.entity.npc.villager.VillagerProfession.LIBRARIAN))
+				.stream().min(java.util.Comparator.comparingDouble(v -> v.distanceToSqr(centre))).orElse(null);
+		}
+
+		/** Title and lines for the lectern under the crosshair; null when not looking at one. */
+		private List<String> lines(Minecraft mc, boolean editing) {
+			var pos = lectern(mc);
+			if (pos == null) return editing ? List.of("Bibliothekar", "Reparatur · 24 Smaragde") : null;
+			var villager = owner(mc, pos);
+			if (villager == null) return List.of("Lesepult", "Kein Bibliothekar in der Nähe");
+			List<Book> list = books.get(villager.getUUID());
+			if (list == null) return List.of("Bibliothekar", "Handel einmal öffnen, dann", "stehen seine Bücher hier");
+			if (list.isEmpty()) return List.of("Bibliothekar", "Verkauft keine Bücher");
+			List<String> out = new ArrayList<>();
+			out.add("Bibliothekar");
+			for (Book b : list) out.add(b.name() + " · " + b.price() + " Smaragde");
+			return out;
+		}
+
+		@Override
+		public boolean hasContent(Minecraft mc) {
+			return lines(mc, false) != null;
+		}
+
+		@Override
+		public int width(Minecraft mc) {
+			List<String> lines = lines(mc, true);
+			int w = 0;
+			for (String l : lines) w = Math.max(w, Draw.width(l));
+			return w + (background.on() ? 10 : 0);
+		}
+
+		@Override
+		public int height(Minecraft mc) {
+			return lines(mc, true).size() * 10 + (background.on() ? 6 : 0);
+		}
+
+		@Override
+		protected void draw(GuiGraphicsExtractor g, Minecraft mc, boolean editing) {
+			List<String> lines = lines(mc, editing);
+			if (lines == null) lines = lines(mc, true);
+			box(g, width(mc), height(mc));
+			int px = background.on() ? 5 : 0, py = background.on() ? 4 : 0;
+			for (int i = 0; i < lines.size(); i++) {
+				Draw.shadowText(g, lines.get(i), px, py + i * 10, i == 0 ? Theme.ACCENT_2 : Theme.TEXT);
+			}
+		}
+	}
 }

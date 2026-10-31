@@ -286,9 +286,30 @@ public final class AnvilPlannerScreen extends Screen {
 		if (list.isEmpty()) Draw.scaledText(g, "Keine Verzauberung passt.", x + 7, top + 2, 0.85f, Theme.DIM, false);
 	}
 
+	/** The pin toggle in the plan panel's header. */
+	private int[] pinButton() {
+		String label = pinnedHere() ? "Angeheftet" : "Anheften";
+		int w = Draw.width(label) + 12;
+		return new int[] {rightX() + rightW() - 7 - w, TOP + 5, w, 14};
+	}
+
+	private boolean pinnedHere() {
+		var pinned = dev.slopclient.SlopClient.modules().anvilPlanner.pinned();
+		return pinned != null && plan != null && pinned.plan() == plan;
+	}
+
 	private void drawPlan(GuiGraphicsExtractor g, int mx, int my) {
 		int x = rightX(), w = rightW();
-		panel(g, x, w, "Reihenfolge im Amboss", 2);
+		panel(g, x, w, "Reihenfolge", 2);
+		if (plan != null) {
+			int[] b = pinButton();
+			boolean hover = Draw.inside(mx, my, b[0], b[1], b[2], b[3]);
+			if (pinnedHere()) Draw.chromaFill(g, b[0], b[1], b[2], b[3], 5, 0.9, 0);
+			else Draw.round(g, b[0], b[1], b[2], b[3], 5, hover ? 0x2CFFFFFF : 0x16FFFFFF);
+			String label = pinnedHere() ? "Angeheftet" : "Anheften";
+			Draw.text(g, label, b[0] + 6, b[1] + 3, pinnedHere() ? 0xFFFFFFFF : Theme.TEXT);
+			if (hover) hint = pinnedHere() ? "Klick: Plan wieder lösen" : "Zeigt diese Reihenfolge links neben dem Amboss";
+		}
 		if (plan == null) {
 			String text = item == null ? "Erst einen Gegenstand wählen." : "Wähle die Verzauberungen, die drauf sollen.";
 			Draw.scaledText(g, text, x + 7, TOP + 26, 0.85f, Theme.DIM, false);
@@ -337,6 +358,14 @@ public final class AnvilPlannerScreen extends Screen {
 		int button = raw == 3 ? 1 : raw == 0 || raw == 1 ? 0 : -1;
 		if (button < 0) return super.mouseClicked(event, doubleClick);
 
+		if (plan != null) {
+			int[] b = pinButton();
+			if (Draw.inside(mx, my, b[0], b[1], b[2], b[3])) {
+				var planner = dev.slopclient.SlopClient.modules().anvilPlanner;
+				planner.pin(item.getHoverName().getString(), pinnedHere() ? null : plan);
+				return true;
+			}
+		}
 		int x = x0(), w = leftW(), tabW = (w - 18) / 2;
 		if (Draw.inside(mx, my, x + 6, TOP + 22, tabW, 16)) return tab(false);
 		if (Draw.inside(mx, my, x + 12 + tabW, TOP + 22, tabW, 16)) return tab(true);
@@ -420,6 +449,11 @@ public final class AnvilPlannerScreen extends Screen {
 		int end = s.length();
 		while (end > 0 && Draw.width(s.substring(0, end) + dots) > maxWidth) end--;
 		return s.substring(0, end) + dots;
+	}
+
+	/** Self-test: pins the current plan. */
+	public void pinForTest() {
+		if (plan != null) dev.slopclient.SlopClient.modules().anvilPlanner.pin(item.getHoverName().getString(), plan);
 	}
 
 	/** Self-test: picks an item and ticks enchantments by id path, e.g. "sharpness". */

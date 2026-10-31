@@ -87,18 +87,25 @@ public final class Visuals {
 	}
 
 	/**
-	 * Glittering sparks behind you, like a cosmetic trail: a stream of tiny glowing stars
-	 * at body height that drift and fade. Only you see it.
+	 * A cosmetic trail: glittering sparks (or petals, souls, notes, hearts) behind you,
+	 * or sparks spiralling round you. Only you see it.
 	 */
 	public static final class Trail extends Module {
+		public final ModeSetting style = add(new ModeSetting("Stil", "Funken", "Funken", "Spirale", "Komet", "Blüten", "Seelen", "Noten", "Herzen"));
 		public final ModeSetting color = add(new ModeSetting("Farbe", "Chroma", "Chroma", "Gold", "Lila", "Weiß", "Rot", "Grün", "Blau"));
 		public final NumberSetting density = add(new NumberSetting("Dichte", 1, 0.25, 2, 0.25, v -> String.format(Locale.GERMAN, "%.2fx", v)));
 		public final BoolSetting firstPerson = add(new BoolSetting("In der Ich-Ansicht", true));
 		private net.minecraft.world.phys.Vec3 last;
 		private double owed;
+		private int age;
 
 		public Trail() {
-			super("Trail", "Funkelnde Spur hinter dir", Category.COSMETICS, false);
+			super("Trail", "Funkelnde Spur hinter dir, in mehreren Stilen", Category.COSMETICS, false);
+		}
+
+		@Override
+		public String suffix() {
+			return style.get();
 		}
 
 		@Override
@@ -113,15 +120,26 @@ public final class Visuals {
 				last = null;
 				return;
 			}
+			age++;
 			var now = player.position();
 			var from = last == null ? now : last;
 			last = now;
 			if (player.isInvisible() || player.isSpectator()) return;
 			if (!firstPerson.on() && mc.options.getCameraType().isFirstPerson()) return;
-			// A few sparks while standing, a stream while running.
-			double moved = Math.min(1.5, Math.hypot(now.x - from.x, now.z - from.z) + Math.abs(now.y - from.y) * 0.5);
-			owed += (1.2 + moved * 42) * density.get();
 			var random = mc.level.getRandom();
+			double moved = Math.min(1.5, Math.hypot(now.x - from.x, now.z - from.z) + Math.abs(now.y - from.y) * 0.5);
+			if (style.is("Spirale")) {
+				spiral(mc, player, now, random);
+				return;
+			}
+			// A few particles while standing, a stream while running; petals and symbols are bigger, so fewer.
+			double rate = switch (style.get()) {
+				case "Funken" -> 1.2 + moved * 42;
+				case "Komet" -> 1.5 + moved * 34;
+				case "Seelen" -> 0.5 + moved * 14;
+				default -> 0.25 + moved * 7;
+			};
+			owed += rate * density.get();
 			double width = player.getBbWidth() * 0.6;
 			while (owed >= 1) {
 				owed -= 1;
@@ -133,14 +151,47 @@ public final class Visuals {
 				double vx = (random.nextDouble() - 0.5) * 0.02 - (now.x - from.x) * 0.04;
 				double vz = (random.nextDouble() - 0.5) * 0.02 - (now.z - from.z) * 0.04;
 				double vy = random.nextDouble() * 0.015;
-				dev.slopclient.render.TrailParticle.spawn(mc, x, y, z, vx, vy, vz, sparkColor(random), random.nextInt(4) == 0);
+				var look = switch (style.get()) {
+					case "Komet" -> random.nextInt(3) == 0 ? dev.slopclient.render.TrailParticle.Look.SPARK : dev.slopclient.render.TrailParticle.Look.HAZE;
+					case "Blüten" -> dev.slopclient.render.TrailParticle.Look.PETAL;
+					case "Seelen" -> dev.slopclient.render.TrailParticle.Look.SOUL;
+					case "Noten" -> dev.slopclient.render.TrailParticle.Look.NOTE;
+					case "Herzen" -> dev.slopclient.render.TrailParticle.Look.HEART;
+					default -> random.nextInt(4) == 0 ? dev.slopclient.render.TrailParticle.Look.HAZE : dev.slopclient.render.TrailParticle.Look.SPARK;
+				};
+				dev.slopclient.render.TrailParticle.spawn(mc, look, x, y, z, vx, vy, vz, tint(look, random));
 			}
+		}
+
+		/** Two strands of sparks winding up around you. */
+		private void spiral(Minecraft mc, net.minecraft.world.entity.player.Player player, net.minecraft.world.phys.Vec3 at, net.minecraft.util.RandomSource random) {
+			owed += 3 * density.get();
+			while (owed >= 1) {
+				owed -= 1;
+				double turn = age * 0.35 + random.nextDouble() * 0.3;
+				for (int strand = 0; strand < 2; strand++) {
+					double a = turn + strand * Math.PI;
+					double r = player.getBbWidth() * 0.9;
+					double y = at.y + (age * 0.06 + strand * 0.9) % player.getBbHeight();
+					double x = at.x + Math.cos(a) * r, z = at.z + Math.sin(a) * r;
+					var look = random.nextInt(4) == 0 ? dev.slopclient.render.TrailParticle.Look.HAZE : dev.slopclient.render.TrailParticle.Look.SPARK;
+					dev.slopclient.render.TrailParticle.spawn(mc, look, x, y, z, -Math.sin(a) * 0.01, 0.004, Math.cos(a) * 0.01, tint(look, random));
+				}
+			}
+		}
+
+		/** Petals, souls and hearts keep their own colours; the rest take the chosen colour. */
+		private int tint(dev.slopclient.render.TrailParticle.Look look, net.minecraft.util.RandomSource random) {
+			return switch (look) {
+				case PETAL, SOUL, HEART -> 0xFFFFFF;
+				default -> sparkColor(random);
+			};
 		}
 
 		private int sparkColor(net.minecraft.util.RandomSource random) {
 			return switch (color.get()) {
 				case "Chroma" -> Theme.chroma(random.nextDouble()) & 0xFFFFFF;
-				// Warm gold from deep amber to pale champagne, as in the reference.
+				// Warm gold from deep amber to pale champagne.
 				case "Gold" -> Theme.lerp(0xFFE0A22E, 0xFFFFF0B8, random.nextDouble()) & 0xFFFFFF;
 				default -> Theme.lerp(0xFF000000 | rgb(color, 0), 0xFFFFFFFF, random.nextDouble() * 0.35) & 0xFFFFFF;
 			};
@@ -148,20 +199,54 @@ public final class Visuals {
 	}
 
 	/**
-	 * Players as figures of glass: every part a frosted pane with a bright rim
-	 * (tools/glass/build.py makes the texture), your own figure with a soft white glow.
+	 * Players as figures of glass: every part a pane with a bright rim, in one of several
+	 * glasses (tools/glass/build.py makes the textures), your own figure with a soft glow
+	 * in the glass's colour and your arms of glass in first person too.
 	 */
 	public static final class Glass extends Module {
-		public static final net.minecraft.resources.Identifier WIDE = net.minecraft.resources.Identifier.fromNamespaceAndPath(dev.slopclient.SlopClient.ID, "textures/entity/glass_wide.png");
-		public static final net.minecraft.resources.Identifier SLIM = net.minecraft.resources.Identifier.fromNamespaceAndPath(dev.slopclient.SlopClient.ID, "textures/entity/glass_slim.png");
-		/** The glow around your own figure, a cool white like the rims. */
-		public static final int GLOW = 0xF2EEFF;
+		/** Menu names and texture names of the glasses. */
+		private static final String[][] VARIANTS = {
+			{"Klar", "klar"}, {"Frost", "frost"}, {"Rauch", "rauch"}, {"Bernstein", "bernstein"}, {"Prisma", "prisma"}, {"Abgrund", "abgrund"},
+		};
+		public final ModeSetting variant = add(new ModeSetting("Glas", "Klar", "Klar", "Frost", "Rauch", "Bernstein", "Prisma", "Abgrund"));
 		public final BoolSetting self = add(new BoolSetting("Eigener Spieler", true));
 		public final BoolSetting others = add(new BoolSetting("Andere Spieler", false));
 		public final BoolSetting glow = add(new BoolSetting("Leuchtender Rand", true));
+		public final BoolSetting firstPerson = add(new BoolSetting("Arme in der Ich-Ansicht", true));
 
 		public Glass() {
 			super("Glas", "Spieler aus Glas", Category.COSMETICS, false);
+		}
+
+		@Override
+		public String suffix() {
+			return variant.get();
+		}
+
+		/** The skin texture of the chosen glass for wide or slim arms. */
+		public net.minecraft.resources.Identifier texture(boolean slim) {
+			String name = "klar";
+			for (String[] v : VARIANTS) if (v[0].equals(variant.get())) name = v[1];
+			return net.minecraft.resources.Identifier.fromNamespaceAndPath(dev.slopclient.SlopClient.ID,
+				"textures/entity/glass_" + name + "_" + (slim ? "slim" : "wide") + ".png");
+		}
+
+		/** Colour of the glow around your figure, matching the glass's rims. */
+		public int glowColor() {
+			return switch (variant.get()) {
+				case "Frost" -> 0xCDEBFF;
+				case "Rauch" -> 0xC8C8D4;
+				case "Bernstein" -> 0xFFC864;
+				case "Prisma" -> Theme.chroma(0) & 0xFFFFFF;
+				case "Abgrund" -> 0xC04CFF;
+				default -> 0xF2EEFF;
+			};
+		}
+
+		/** Your own arms in first person. */
+		public boolean firstPersonArms() {
+			var player = Minecraft.getInstance().player;
+			return firstPerson.on() && player != null && applies(player.getId());
 		}
 
 		/** Whether the player with this entity id is drawn as glass. */

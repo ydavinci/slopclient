@@ -17,30 +17,28 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * Development aid, only active with `-Dslopclient.selftest=true`: walks through the
  * title screen, ClickGUI and HUD editor, then creates a flat test world and looks
  * at the player from behind (cape), saving a screenshot of each step to
- * `screenshots/` before quitting. With the netherite sword in hand it then shows the
- * Karambit in first person, mid-inspect, from the front and in the inventory.
+ * `screenshots/` before quitting. Then it shows the modules, pets, cape and elytra.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, KARAMBIT, GRIP_SWEEP, INSPECT, KARAMBIT_FRONT, KARAMBIT_GUI, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, ANVIL, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, ANVIL, SPIRAL, PETALS, ABGRUND, GLASS_ARM, ANVIL_OPEN, PINNED, TRADE, LECTERN, COLLECTION, DONE }
 
 	private static Step step;
 	private static int wait;
 	private static SlopTitleScreen title;
-	/**
-	 * Candidate hand grips (x, y, z degrees, then x, y, z pixels) photographed with the
-	 * arm visible when -Dslopclient.gripsweep=true.
-	 */
-	private static final float[][] GRIPS = {
-		{35, 0.7f, 0, -0.03f, 0}, {50, 0.7f, 0, -0.03f, 0}, {65, 0.7f, 0, -0.03f, 0}, {50, 0.85f, 0, -0.03f, 0},
-		{50, 0.7f, 0, -0.06f, 0}, {50, 0.7f, 0.04f, -0.03f, 0}, {50, 0.7f, 0, -0.03f, -0.05f}, {-50, 0.7f, 0, -0.03f, 0},
-	};
-	private static int grip;
 	private static boolean infoShot;
 	/** Pets photographed in the PETS step: id and camera (front or back). */
 	private static final String[][] PET_SHOTS = {
 		{"igel", "front"}, {"minime", "front"}, {"katze", "back"}, {"drache", "front"}, {"biene", "back"}, {"fuchs", "back"}, {"panda", "front"},
 	};
 	private static int petShot = -1;
+	/** Collection 2, photographed with -Dslopclient.selftest.focus=kosmetik: property, id, camera. */
+	private static final String[][] COLLECTION = {
+		{"pet", "axolotl", "front"}, {"pet", "eule", "front"}, {"pet", "phoenix", "front"}, {"pet", "qualle", "front"},
+		{"pet", "kitsune", "front"}, {"pet", "golem", "front"},
+		{"hat", "zauberhut", "front"}, {"hat", "bluetenkranz", "front"}, {"hat", "kopfhoerer", "front"}, {"hat", "fliegenpilz", "front"},
+		{"accessory", "engelsfluegel", "back"}, {"accessory", "drachenfluegel", "back"},
+	};
+	private static int collectionShot = -1;
 
 	private SelfTest() {
 	}
@@ -104,6 +102,33 @@ final class SelfTest {
 					next(Step.SKY, 100);
 					return;
 				}
+				if ("kosmetik".equals(System.getProperty("slopclient.selftest.focus"))) {
+					mc.player.connection.sendCommand("time set noon");
+					// The own nametag would cover the hats.
+					SlopClient.modules().nametags.setEnabled(false);
+					next(Step.COLLECTION, 60);
+					return;
+				}
+				// -Dslopclient.selftest.focus=neu: trail styles, glass variants, pinned plan, lectern.
+				if ("neu".equals(System.getProperty("slopclient.selftest.focus"))) {
+					var p = mc.player.blockPosition();
+					var c = mc.player.connection;
+					c.sendCommand("time set noon");
+					c.sendCommand("setblock " + p.getX() + " " + p.getY() + " " + (p.getZ() + 3) + " minecraft:anvil");
+					c.sendCommand("setblock " + (p.getX() + 3) + " " + p.getY() + " " + (p.getZ() + 3) + " minecraft:lectern");
+					c.sendCommand("summon minecraft:villager " + (p.getX() + 4.5) + " " + p.getY() + " " + (p.getZ() + 4.5)
+						+ " {NoAI:1b,VillagerData:{profession:\"minecraft:librarian\",level:2,type:\"minecraft:plains\"},Offers:{Recipes:["
+						+ "{buy:{id:\"minecraft:emerald\",count:24},sell:{id:\"minecraft:enchanted_book\",count:1,components:{\"minecraft:stored_enchantments\":{\"minecraft:mending\":1}}},maxUses:12},"
+						+ "{buy:{id:\"minecraft:emerald\",count:31},sell:{id:\"minecraft:enchanted_book\",count:1,components:{\"minecraft:stored_enchantments\":{\"minecraft:sharpness\":4}}},maxUses:12}]}}");
+					var trail = SlopClient.modules().trail;
+					trail.style.set("Spirale");
+					trail.color.set("Chroma");
+					trail.setEnabled(true);
+					mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+					mc.player.setXRot(10);
+					next(Step.SPIRAL, 100);
+					return;
+				}
 				// -Dslopclient.selftest.focus=anvil: the anvil planner with a fully enchanted sword.
 				if ("anvil".equals(System.getProperty("slopclient.selftest.focus"))) {
 					var planner = new dev.slopclient.gui.AnvilPlannerScreen(null);
@@ -125,48 +150,6 @@ final class SelfTest {
 			}
 			case CAPE -> {
 				shot(mc, "4-cape");
-				mc.player.connection.sendCommand("give @s netherite_sword");
-				mc.options.setCameraType(CameraType.FIRST_PERSON);
-				mc.player.setXRot(0);
-				next(Step.KARAMBIT, 40); // the draw animation finishes
-			}
-			case KARAMBIT -> {
-				shot(mc, "5-karambit");
-				if (Boolean.getBoolean("slopclient.gripsweep")) {
-					grip = 0;
-					setGrip();
-					next(Step.GRIP_SWEEP, 10);
-					return;
-				}
-				dev.slopclient.cosmetics.karambit.KarambitAnimation.startInspect();
-				next(Step.INSPECT, 22); // halfway through the double spin
-			}
-			case GRIP_SWEEP -> {
-				float[] g = GRIPS[grip];
-				shot(mc, "grip-" + String.format("%02d", grip) + "_tilt" + (int) g[0] + "_size" + (int) (g[1] * 100) + "_x" + (int) (g[2] * 100) + "_y" + (int) (g[3] * 100));
-				if (++grip < GRIPS.length) {
-					setGrip();
-					next(Step.GRIP_SWEEP, 10);
-					return;
-				}
-				dev.slopclient.cosmetics.karambit.KarambitHands.overrideGrip(null);
-				dev.slopclient.cosmetics.karambit.KarambitAnimation.startInspect();
-				next(Step.INSPECT, 22);
-			}
-			case INSPECT -> {
-				shot(mc, "6-karambit-inspect");
-				mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
-				next(Step.KARAMBIT_FRONT, 50);
-			}
-			case KARAMBIT_FRONT -> {
-				shot(mc, "7-karambit-front");
-				mc.options.setCameraType(CameraType.FIRST_PERSON);
-				mc.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
-				next(Step.KARAMBIT_GUI, 20);
-			}
-			case KARAMBIT_GUI -> {
-				shot(mc, "8-karambit-gui");
-				mc.gui.setScreen(null);
 				// M12 modules: outline, own nametag, chat stacking, scoreboard.
 				var m = SlopClient.modules();
 				for (var module : java.util.List.of(m.blockOutline, m.hitColor, m.lowFire, m.nametags, m.chat, m.scoreboard)) module.setEnabled(true);
@@ -286,6 +269,90 @@ final class SelfTest {
 				shot(mc, "22-anvil-planner");
 				next(Step.DONE, 10);
 			}
+			case SPIRAL -> {
+				shot(mc, "23-trail-spiral");
+				SlopClient.modules().trail.style.set("Blüten");
+				mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+				mc.options.keyLeft.setDown(true);
+				next(Step.PETALS, 30);
+			}
+			case PETALS -> {
+				shot(mc, "24-trail-petals");
+				mc.options.keyLeft.setDown(false);
+				SlopClient.modules().trail.setEnabled(false);
+				var glass = SlopClient.modules().glass;
+				glass.variant.set("Abgrund");
+				glass.setEnabled(true);
+				mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+				next(Step.ABGRUND, 30);
+			}
+			case ABGRUND -> {
+				shot(mc, "25-glass-abgrund");
+				SlopClient.modules().glass.variant.set("Prisma");
+				mc.options.setCameraType(CameraType.FIRST_PERSON);
+				mc.player.getInventory().setSelectedSlot(8);
+				mc.player.setXRot(20);
+				next(Step.GLASS_ARM, 20);
+			}
+			case GLASS_ARM -> {
+				shot(mc, "26-glass-arm");
+				SlopClient.modules().glass.setEnabled(false);
+				// Pin a plan, then open the anvil placed three blocks ahead.
+				var planner = new dev.slopclient.gui.AnvilPlannerScreen(null);
+				mc.gui.setScreen(planner);
+				planner.preset(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE),
+					"efficiency", "unbreaking", "mending", "fortune");
+				planner.pinForTest();
+				mc.gui.setScreen(null);
+				// Strafing moved the player away: stand two blocks in front of the anvil.
+				var anvil = findBlock(mc, net.minecraft.world.level.block.Blocks.ANVIL, 12);
+				if (anvil != null) mc.player.connection.sendCommand("tp @s " + (anvil.getX() + 0.5) + " " + anvil.getY() + " " + (anvil.getZ() - 1.5));
+				next(Step.ANVIL_OPEN, 15);
+			}
+			case ANVIL_OPEN -> {
+				var anvil = findBlock(mc, net.minecraft.world.level.block.Blocks.ANVIL, 6);
+				if (anvil != null) {
+					lookAt(mc, net.minecraft.world.phys.Vec3.atCenterOf(anvil));
+					mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+						new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(anvil), net.minecraft.core.Direction.UP, anvil, false));
+				}
+				next(Step.PINNED, 20);
+			}
+			case PINNED -> {
+				shot(mc, "27-anvil-pinned");
+				mc.player.closeContainer();
+				var villager = mc.level.getEntitiesOfClass(net.minecraft.world.entity.npc.villager.Villager.class, mc.player.getBoundingBox().inflate(12)).stream().findFirst().orElse(null);
+				if (villager != null) {
+					SlopClient.modules().librarian.interacted(villager);
+					mc.gameMode.interact(mc.player, villager, new net.minecraft.world.phys.EntityHitResult(villager), net.minecraft.world.InteractionHand.MAIN_HAND);
+				}
+				next(Step.TRADE, 20);
+			}
+			case TRADE -> {
+				mc.player.closeContainer();
+				var lectern = findBlock(mc, net.minecraft.world.level.block.Blocks.LECTERN, 8);
+				if (lectern != null) lookAt(mc, net.minecraft.world.phys.Vec3.atCenterOf(lectern));
+				next(Step.LECTERN, 10);
+			}
+			case COLLECTION -> {
+				if (collectionShot >= 0) shot(mc, "30-" + COLLECTION[collectionShot][1]);
+				collectionShot++;
+				for (String kind : new String[] {"pet", "hat", "accessory"}) System.setProperty("slopclient." + kind, "");
+				if (collectionShot >= COLLECTION.length) {
+					next(Step.DONE, 10);
+					return;
+				}
+				String[] item = COLLECTION[collectionShot];
+				System.setProperty("slopclient." + item[0], item[1]);
+				mc.options.setCameraType(item[2].equals("front") ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
+				mc.player.setXRot(item[0].equals("hat") ? 8 : 12);
+				// Walking pets need a moment to catch up and settle beside the player.
+				next(Step.COLLECTION, item[0].equals("pet") ? 50 : 25);
+			}
+			case LECTERN -> {
+				shot(mc, "28-lectern");
+				next(Step.DONE, 10);
+			}
 			case GLASS_BACK -> {
 				shot(mc, "21-glass-back");
 				next(Step.DONE, 10);
@@ -302,9 +369,20 @@ final class SelfTest {
 		}
 	}
 
-	private static void setGrip() {
-		float[] g = GRIPS[grip];
-		dev.slopclient.cosmetics.karambit.KarambitHands.overrideGrip(GRIPS[grip]);
+	/** The nearest block of `block` within `range` blocks of the player, or null. */
+	private static net.minecraft.core.BlockPos findBlock(Minecraft mc, net.minecraft.world.level.block.Block block, int range) {
+		var at = mc.player.blockPosition();
+		for (var pos : net.minecraft.core.BlockPos.withinManhattan(at, range)) {
+			if (mc.level.getBlockState(pos).is(block)) return pos.immutable();
+		}
+		return null;
+	}
+
+	private static void lookAt(Minecraft mc, net.minecraft.world.phys.Vec3 target) {
+		var eye = mc.player.getEyePosition();
+		double dx = target.x - eye.x, dy = target.y - eye.y, dz = target.z - eye.z;
+		mc.player.setYRot((float) Math.toDegrees(Math.atan2(-dx, dz)));
+		mc.player.setXRot((float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz))));
 	}
 
 	private static void next(Step s, int ticks) {
