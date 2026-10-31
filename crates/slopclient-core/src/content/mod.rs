@@ -10,6 +10,7 @@ pub mod cfpack;
 mod manager;
 pub mod modrinth;
 pub mod mrpack;
+pub mod update_cache;
 
 use std::{fmt, str::FromStr};
 
