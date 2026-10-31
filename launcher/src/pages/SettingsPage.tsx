@@ -154,6 +154,13 @@ export function SettingsPage() {
           <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.10 }} className="glass grid gap-4 rounded-[18px] p-5">
             <h2 className="text-[15px] font-bold">Downloads</h2>
             <Slider label="Parallele Downloads" value={settings.downloadConcurrency ?? 16} min={1} max={64} step={1} unit="" onChange={(v) => setSettings({ ...settings, downloadConcurrency: v })} hint="Mehr ist bei schneller Leitung flotter. Bei Abbrüchen verringern." />
+            <div className="flex items-center gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-semibold">Beim Start nach Updates suchen</div>
+                <div className="text-[12px] text-muted">Sucht nach dem Start für alle Instanzen nach neuen Versionen von Mods, Resourcepacks und Shadern. Installiert wird nichts, die Instanzliste zeigt nur, wo Updates warten.</div>
+              </div>
+              <Toggle label="Beim Start nach Updates suchen" checked={settings.checkUpdatesOnStart ?? true} onChange={(v) => setSettings({ ...settings, checkUpdatesOnStart: v })} />
+            </div>
           </motion.section>
 
           <div>

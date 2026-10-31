@@ -57,6 +57,8 @@ export interface LogLine {
 interface Store {
   overview: Overview | null;
   refresh: () => Promise<void>;
+  /** Known content updates per instance id, from the backend's update cache. */
+  updateCounts: Record<string, number>;
   route: Route;
   navigate: (route: Route) => void;
   /** Instance highlighted on the start page (remembered across restarts). */
@@ -119,6 +121,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [logs, setLogs] = useState<Record<string, LogLine[]>>({});
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [launching, setLaunching] = useState<Set<string>>(new Set());
+  const [updateCounts, setUpdateCounts] = useState<Record<string, number>>({});
   const toastId = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -159,7 +162,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setHomeLayoutState(s.homeLayout ?? null);
       })
       .catch(() => {});
+    const loadUpdateCounts = () =>
+      api
+        .updatesOverview()
+        .then(setUpdateCounts)
+        .catch(() => {});
+    loadUpdateCounts();
     const subs = [
+      onEvent<null>("updates-changed", loadUpdateCounts),
       onEvent<{ taskId: string; event: Progress }>("task-progress", ({ taskId, event }) => {
         setTasks((t) =>
           t.map((x) => {
@@ -216,6 +226,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => ({
       overview,
       refresh,
+      updateCounts,
       route,
       navigate: setRoute,
       selectedId,
@@ -264,7 +275,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       openModal: setModal,
       closeModal,
     }),
-    [overview, refresh, route, selectedId, tasks, runTask, launching, logs, toasts, toast, modal, closeModal, centered, homeLayout, arranging, project, closeProject],
+    [overview, refresh, updateCounts, route, selectedId, tasks, runTask, launching, logs, toasts, toast, modal, closeModal, centered, homeLayout, arranging, project, closeProject],
   );
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;

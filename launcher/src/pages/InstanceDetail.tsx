@@ -1,7 +1,7 @@
-import { ArrowDownToLine, ArrowLeft, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, MonitorUp, Plus, Puzzle, RefreshCw, Search, Server as ServerIcon, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, ArrowUpCircle, Camera, ChevronDown, CopyPlus, ExternalLink, FilePlus2, FileWarning, FolderOpen, Gauge, Globe2, Image, MonitorUp, Plus, Puzzle, RefreshCw, Search, Server as ServerIcon, Sparkles, Terminal, Trash2, Upload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { api, openUrl } from "../lib/ipc";
+import { api, onEvent, openUrl } from "../lib/ipc";
 import { pendingIcon } from "../lib/icons";
 import { loaderLabel, loaderName, playTime, relativeTime } from "../lib/format";
 import { useLaunch, useStore, type InstanceTab } from "../lib/store";
@@ -186,9 +186,36 @@ function sourceLabel(source: Source): string {
   }
 }
 
+/** Green one-click update in a content row; does not open the project page. */
+function UpdateButton({ update, busy, disabled, blockedHint, onClick }: { update: UpdateInfo; busy: boolean; disabled: boolean; blockedHint?: string; onClick: () => void }) {
+  const { entry, new_version: next } = update;
+  const label = `${entry.name} auf ${next.version_number} aktualisieren (jetzt: ${entry.version ?? "unbekannt"})`;
+  return (
+    // The wrapper keeps clicks on a disabled button from opening the project page.
+    <span className="inline-flex items-center gap-1.5" onClick={(ev) => ev.stopPropagation()}>
+      {next.version_type !== "release" && <Chip tone="warn">{next.version_type}</Chip>}
+      <button
+        aria-label={label}
+        title={blockedHint ?? label}
+        disabled={disabled}
+        onClick={(ev) => {
+          ev.stopPropagation();
+          onClick();
+        }}
+        onKeyDown={(ev) => ev.stopPropagation()}
+        className="inline-flex w-fit items-center gap-1.5 rounded-md bg-on/12 px-2 py-0.5 text-[11.5px] font-semibold text-on transition-colors duration-200 hover:bg-on/25 disabled:opacity-45"
+      >
+        {busy ? <Spinner className="size-3" /> : <ArrowUpCircle className="size-3" />}
+        Update
+      </button>
+    </span>
+  );
+}
+
 /** Content as ClickGUI modules: toggle to enable, click to expand details. */
 function ContentTab({ instance }: { instance: Instance }) {
-  const { navigate, runTask, toast, openProject } = useStore();
+  const { navigate, runTask, toast, openProject, overview } = useStore();
+  const running = overview?.running.includes(instance.id) ?? false;
   const [entries, setEntries] = useState<ContentEntry[] | null>(null);
   const [kind, setKind] = useState<ContentType>(instance.loader.type === "vanilla" ? "resourcepack" : "mod");
   const [query, setQuery] = useState("");
@@ -196,6 +223,8 @@ function ContentTab({ instance }: { instance: Instance }) {
   const [updates, setUpdates] = useState<UpdateInfo[] | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [checking, setChecking] = useState(false);
+  /** `kind:fileName` of the update being installed, "all" for all of them. */
+  const [updating, setUpdating] = useState<string | null>(null);
   const [missing, setMissing] = useState<BlockedFile[]>([]);
   const [showMissing, setShowMissing] = useState(false);
   const [resolving, setResolving] = useState(false);
@@ -234,20 +263,42 @@ function ContentTab({ instance }: { instance: Instance }) {
     }
     return c;
   }, [entries]);
-  const updateFor = useMemo(() => new Map((updates ?? []).map((u) => [u.entry.fileName, u])), [updates]);
+  const updateKey = (e: { kind: ContentType; fileName: string }) => `${e.kind}:${e.fileName}`;
+  const updateFor = useMemo(() => new Map((updates ?? []).map((u) => [updateKey(u.entry), u])), [updates]);
 
-  async function checkUpdates() {
-    setChecking(true);
-    try {
-      setUpdates(await api.contentUpdates(instance.id));
-    } catch (e) {
-      toast(String(e), "error");
-    } finally {
-      setChecking(false);
-    }
-  }
+  /** `force` asks Modrinth/CurseForge again; otherwise a check younger than 30 minutes is reused. */
+  const checkUpdates = useCallback(
+    async (force: boolean, quiet = false) => {
+      setChecking(true);
+      try {
+        setUpdates(await api.contentUpdates(instance.id, force));
+      } catch (e) {
+        if (!quiet) toast(String(e), "error");
+      } finally {
+        setChecking(false);
+      }
+    },
+    [instance.id, toast],
+  );
+
+  // Look for updates when the tab opens, and pick up results of the start-up check
+  // or changes to the content (a new mod means a new check).
+  const checkingRef = useRef(false);
+  checkingRef.current = checking;
+  useEffect(() => {
+    checkUpdates(false, true);
+    const sub = onEvent<null>("updates-changed", () => {
+      if (!checkingRef.current) checkUpdates(false, true);
+    });
+    return () => {
+      sub.then((un) => un());
+    };
+  }, [checkUpdates]);
+
+  const updateBlocked = running ? "Schließ zuerst das Spiel" : undefined;
 
   async function applyUpdates() {
+    setUpdating("all");
     try {
       const n = await runTask(`Updates für ${instance.name}`, (taskId) => api.contentApplyUpdates(instance.id, taskId));
       toast(`${n} ${n === 1 ? "Datei" : "Dateien"} aktualisiert`, "success");
@@ -255,6 +306,23 @@ function ContentTab({ instance }: { instance: Instance }) {
       load();
     } catch (e) {
       toast(String(e), "error");
+    } finally {
+      setUpdating(null);
+    }
+  }
+
+  async function applyOne(u: UpdateInfo) {
+    const key = updateKey(u.entry);
+    setUpdating(key);
+    try {
+      const n = await runTask(`Update für ${u.entry.name}`, (taskId) => api.contentApplyUpdates(instance.id, taskId, [{ kind: u.entry.kind, fileName: u.entry.fileName }]));
+      toast(n > 0 ? `${u.entry.name} aktualisiert` : `${u.entry.name} ist schon aktuell`, n > 0 ? "success" : "info");
+      setUpdates((list) => list?.filter((x) => updateKey(x.entry) !== key) ?? null);
+      load();
+    } catch (e) {
+      toast(String(e), "error");
+    } finally {
+      setUpdating(null);
     }
   }
 
@@ -346,9 +414,20 @@ function ContentTab({ instance }: { instance: Instance }) {
               </Button>
             )}
           </FilePicker>
-          <Button icon={<RefreshCw className={`size-4 ${checking ? "animate-spin" : ""}`} />} disabled={checking} onClick={checkUpdates}>
+          <Button icon={<RefreshCw className={`size-4 ${checking ? "animate-spin" : ""}`} />} disabled={checking} onClick={() => checkUpdates(true)}>
             Updates prüfen
           </Button>
+          {updates && updates.length > 0 && (
+            <button
+              disabled={updating !== null || running}
+              title={updateBlocked}
+              onClick={applyUpdates}
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] bg-on/12 px-4 text-[13px] font-semibold text-on transition duration-200 hover:bg-on/20 active:scale-[0.97] disabled:opacity-45 disabled:active:scale-100"
+            >
+              {updating === "all" ? <Spinner className="size-4" /> : <ArrowUpCircle className="size-4" />}
+              Alle aktualisieren ({updates.length})
+            </button>
+          )}
           {instance.loader.type !== "vanilla" && (
             <Button icon={<Gauge className="size-4" />} onClick={installPreset} title="Sodium, Lithium, FerriteCore und Iris">
               Performance-Paket
@@ -422,7 +501,7 @@ function ContentTab({ instance }: { instance: Instance }) {
                 <Button size="sm" className="ml-auto" onClick={() => setReviewing((r) => !r)} aria-expanded={reviewing}>
                   {reviewing ? "Änderungen ausblenden" : "Änderungen ansehen"}
                 </Button>
-                <Button variant="primary" size="sm" onClick={applyUpdates}>
+                <Button variant="primary" size="sm" loading={updating === "all"} disabled={updating !== null || running} title={updateBlocked} onClick={applyUpdates}>
                   Alle aktualisieren
                 </Button>
               </div>
@@ -454,7 +533,7 @@ function ContentTab({ instance }: { instance: Instance }) {
               {visible.map((e) => {
                 const key = e.kind + e.fileName;
                 const expanded = open === key;
-                const update = updateFor.get(e.fileName);
+                const update = updateFor.get(updateKey(e));
                 return (
                   <motion.div key={key} variants={rise} layout="position" className={`overflow-hidden rounded-xl transition-colors duration-300 ${e.enabled ? "bg-accent/[0.18] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent-2)_18%,transparent)]" : "bg-white/[0.02]"}`}>
                     <div
@@ -475,7 +554,15 @@ function ContentTab({ instance }: { instance: Instance }) {
                         <div className={`truncate text-[13.5px] font-semibold ${e.enabled ? "chroma-text" : "text-muted"}`}>{e.name}</div>
                         <div className="truncate font-mono text-[11.5px] text-muted">{e.version ?? "lokale Datei"}</div>
                       </div>
-                      {update && <Chip tone="accent">Update {update.new_version.version_number}</Chip>}
+                      {update && (
+                        <UpdateButton
+                          update={update}
+                          busy={updating === updateKey(e)}
+                          disabled={updating !== null || running}
+                          blockedHint={updateBlocked}
+                          onClick={() => applyOne(update)}
+                        />
+                      )}
                       {e.dependency && <Chip>Abhängigkeit</Chip>}
                       {e.source.type === "local" && <Chip>Lokal</Chip>}
                       <span onClick={(ev) => ev.stopPropagation()}>

@@ -148,6 +148,8 @@ export interface Settings {
   /** Discord status; null means on. */
   discordPresence?: boolean | null;
   discordHideServer?: boolean;
+  /** Look for content updates of all instances at launcher start; null means on. */
+  checkUpdatesOnStart?: boolean | null;
 }
 
 export interface ManifestEntry {
@@ -279,6 +281,12 @@ export interface RemoteVersion {
 export interface UpdateInfo {
   entry: ContentEntry;
   new_version: RemoteVersion;
+}
+
+/** A file to update; the backend picks the new version. */
+export interface UpdateTarget {
+  kind: ContentType;
+  fileName: string;
 }
 
 export interface DeviceCode {

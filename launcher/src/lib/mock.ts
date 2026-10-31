@@ -79,6 +79,9 @@ const mr = (slug: string, name: string, version: string, kind: ContentEntry["kin
   ...extra,
 });
 
+// Known updates of the preview instance, filled by the first check.
+let mockUpdates: { entry: ContentEntry; new_version: { id: string; project_id: string; version_number: string; version_type: string } }[] | null = null;
+
 let content: ContentEntry[] = [
   mr("sodium", "Sodium", "mc26.3-0.9.3", "mod"),
   mr("iris", "Iris Shaders", "1.10.2+26.3", "mod"),
@@ -177,10 +180,21 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       content = content.filter((c) => c.fileName !== args.fileName);
       return delay(null);
     case "content_updates":
-      return delay([
+      mockUpdates ??= [
         { entry: content[0], new_version: { id: "a", project_id: "sodium", version_number: "mc26.3-0.9.4", version_type: "release" } },
-        { entry: content[1], new_version: { id: "b", project_id: "iris", version_number: "1.10.3+26.3", version_type: "release" } },
-      ]);
+        { entry: content[1], new_version: { id: "b", project_id: "iris", version_number: "1.10.3+26.3", version_type: "beta" } },
+      ];
+      return delay(structuredClone(mockUpdates));
+    case "content_apply_updates": {
+      const only = args.only as { kind: string; fileName: string }[] | null;
+      const done = (mockUpdates ?? []).filter((u) => !only || only.some((o) => o.kind === u.entry.kind && o.fileName === u.entry.fileName));
+      mockUpdates = (mockUpdates ?? []).filter((u) => !done.includes(u));
+      await delay(null, 600);
+      mockEmitter.emit("updates-changed", null);
+      return done.length;
+    }
+    case "updates_overview":
+      return delay(mockUpdates?.length ? { [instances[0].id]: mockUpdates.length } : {});
     case "foreign_scan":
       return delay([
         { launcher: "Prism Launcher", name: "1.21.1", path: "C:\\Users\\you\\AppData\\Roaming\\PrismLauncher\\instances\\1.21.1", mcVersion: "1.21.1", loader: { type: "neoforge", version: "21.1.262" }, mods: 3 },

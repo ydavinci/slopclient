@@ -4,6 +4,13 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 
 ## Unveröffentlicht
 
+### Launcher
+- **Mod-Updates mit einem Klick**: Hat ein Mod, Resourcepack oder Shader ein Update, steht in seiner Zeile ein grüner „Update“-Knopf, der nur diesen einen Inhalt aktualisiert. Beta- und Alpha-Versionen sind gelb markiert. „Alle aktualisieren (N)“ gibt es jetzt auch in der linken Spalte.
+- **Updates ohne Suchen**: Der Inhalte-Tab sucht beim Öffnen selbst nach Updates und merkt sich das Ergebnis 30 Minuten lang, auch beim Wechsel von Tab oder Instanz. Beim Start sucht der Launcher im Hintergrund für alle Instanzen nacheinander (abschaltbar unter Einstellungen → Downloads). Installiert wird nie von allein.
+- **Updates in der Instanzliste**: Instanzen mit Updates zeigen „N Updates“ (ein Klick öffnet die Inhalte), auf der Startseite einen grünen Punkt am Icon.
+- Solange eine Instanz läuft, sind ihre Update-Knöpfe gesperrt, weil sich geöffnete Dateien nicht ersetzen lassen.
+- CLI: `slopclient content update <instanz> [namen…]` aktualisiert auf Wunsch nur die genannten Inhalte.
+
 ### Client-Mod
 - **Glas**: Spieler als Figuren aus Glas, jedes Körperteil eine klare Scheibe mit hellem Rand und Glanzlicht, die eigene Figur mit weißem Leuchten. Für dich, für andere Spieler oder beide.
 - **Amboss-Planer**: Gegenstand aus dem Inventar oder aus allen verzauberbaren Gegenständen wählen, die gewünschten Verzauberungen anklicken (nur passende, und nur solche, die zueinander passen) und die günstigste Reihenfolge sehen, in der die Bücher untereinander und mit dem Gegenstand im Amboss kombiniert werden: mit Leveln pro Schritt, Gesamt-Level und XP. Öffnet über den Knopf „Planer“ am Amboss oder eine eigene Taste.

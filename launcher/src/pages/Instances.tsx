@@ -21,7 +21,7 @@ const COLS = "grid-cols-[minmax(0,1.6fr)_90px_minmax(0,1fr)_110px_120px_88px]";
 
 /** Instances as a dense ClickGUI-style list, not a card grid. */
 export function Instances() {
-  const { overview, navigate, openModal, selectedId, select, launching, toast } = useStore();
+  const { overview, navigate, openModal, selectedId, select, launching, toast, updateCounts } = useStore();
   const launch = useLaunch();
   const [query, setQuery] = useState("");
   const instances = (overview?.instances ?? []).filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
@@ -75,6 +75,22 @@ export function Instances() {
           <InstanceIcon id={i.id} name={i.name} icon={i.icon} size={36} />
           <span className={`truncate text-[14px] font-semibold ${selected ? "chroma-text" : ""}`}>{i.name}</span>
           {running && <Chip tone="accent">läuft</Chip>}
+          {(updateCounts[i.id] ?? 0) > 0 && (
+            <button
+              title={`${updateCounts[i.id]} ${updateCounts[i.id] === 1 ? "Update" : "Updates"} verfügbar`}
+              onClick={(e) => {
+                e.stopPropagation();
+                select(i.id);
+                navigate({ page: "instance", id: i.id, tab: "mods" });
+              }}
+              onKeyDown={(e) => e.stopPropagation()}
+              className="shrink-0 rounded-md transition duration-200 hover:brightness-125"
+            >
+              <Chip tone="on">
+                {updateCounts[i.id]} {updateCounts[i.id] === 1 ? "Update" : "Updates"}
+              </Chip>
+            </button>
+          )}
           {i.modpack && <Chip>Modpack</Chip>}
         </div>
         <span className="font-mono text-[12.5px] text-text">{i.mcVersion}</span>
