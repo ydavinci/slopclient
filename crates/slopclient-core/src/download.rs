@@ -19,6 +19,9 @@ pub struct DownloadTask {
     pub path: PathBuf,
     pub sha1: Option<String>,
     pub size: Option<u64>,
+    /// Check an existing file by hash, not only by size (content store files,
+    /// which every instance shares).
+    pub verify: bool,
 }
 
 impl DownloadTask {
@@ -28,7 +31,13 @@ impl DownloadTask {
             path: path.into(),
             sha1: None,
             size: None,
+            verify: false,
         }
+    }
+
+    pub fn verify_hash(mut self) -> Self {
+        self.verify = true;
+        self
     }
 
     pub fn sha1(mut self, sha1: Option<String>) -> Self {
@@ -59,6 +68,12 @@ async fn is_up_to_date(task: &DownloadTask) -> Result<bool> {
     let Ok(meta) = tokio::fs::metadata(&task.path).await else {
         return Ok(false);
     };
+    if task.verify
+        && let Some(expected) = &task.sha1
+    {
+        return Ok(task.size.is_none_or(|s| s == meta.len())
+            && sha1_file(&task.path).await?.eq_ignore_ascii_case(expected));
+    }
     if let Some(size) = task.size {
         return Ok(meta.len() == size);
     }

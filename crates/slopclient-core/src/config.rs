@@ -54,6 +54,9 @@ pub struct Settings {
     pub discord_hide_server: bool,
     /// Look for content updates of all instances when the launcher starts; none means on.
     pub check_updates_on_start: Option<bool>,
+    /// Keep mods, resource packs and shaders once in the content store and hard link
+    /// them into instances; none means on.
+    pub shared_content: Option<bool>,
     /// Hat from `cosmetics/extras.json`.
     pub hat: Option<String>,
     /// Pet from `cosmetics/extras.json`.
@@ -107,6 +110,10 @@ impl Settings {
 
     /// Discord application id from `SLOPCLIENT_DISCORD_APP_ID`, then the build-time
     /// value, then SlopClient's own app; none while Rich Presence is switched off.
+    pub fn shared_content(&self) -> bool {
+        self.shared_content.unwrap_or(true)
+    }
+
     pub fn check_updates_on_start(&self) -> bool {
         self.check_updates_on_start.unwrap_or(true)
     }

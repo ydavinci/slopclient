@@ -223,7 +223,8 @@ impl Instance {
         let source = Self::load(paths, id)?;
         let mut copy = Self::create(paths, name, &source.mc_version, source.loader.clone())?;
         let (from, to) = (source.dir(paths), copy.dir(paths));
-        let copied = tokio::task::spawn_blocking(move || copy_tree(&from, &to, true)).await?;
+        let link = crate::store::enabled(paths);
+        let copied = tokio::task::spawn_blocking(move || copy_tree(&from, &to, true, link)).await?;
         if let Err(e) = copied {
             let _ = Self::delete(paths, &copy.id);
             return Err(e.into());
@@ -287,6 +288,7 @@ impl Instance {
         let source = Self::load(paths, source_id)?;
         let (from, to) = (source.game_dir(paths), self.game_dir(paths));
         let parts = parts.to_vec();
+        let link = crate::store::enabled(paths);
         Ok(tokio::task::spawn_blocking(move || -> std::io::Result<usize> {
             let mut copied = 0;
             for part in &parts {
@@ -296,7 +298,7 @@ impl Instance {
                     if src.is_dir() {
                         // Mod configs without SlopClient's own folder, which is its own part.
                         let skip_slopclient = *part == CopyPart::ModConfigs;
-                        copy_dir_filtered(&src, &dst, skip_slopclient.then_some("slopclient"))?;
+                        copy_dir_filtered(&src, &dst, skip_slopclient.then_some("slopclient"), link)?;
                         copied += 1;
                     } else if src.is_file() {
                         if let Some(parent) = dst.parent() {
@@ -313,7 +315,19 @@ impl Instance {
     }
 }
 
-fn copy_dir_filtered(from: &std::path::Path, to: &std::path::Path, skip_top: Option<&str>) -> std::io::Result<()> {
+/// Copies a file; mods, resource packs and shaders become hard links instead when
+/// `link` is set (they never change, so the instances can share them).
+fn copy_or_link(from: &std::path::Path, to: &std::path::Path, link: bool) -> std::io::Result<()> {
+    let name = to.file_name().unwrap_or_default().to_string_lossy();
+    if link && crate::store::is_content_path(to) && !crate::client_mod::is_mod_file(&name) {
+        crate::links::link_or_copy(from, to)?;
+    } else {
+        std::fs::copy(from, to)?;
+    }
+    Ok(())
+}
+
+fn copy_dir_filtered(from: &std::path::Path, to: &std::path::Path, skip_top: Option<&str>, link: bool) -> std::io::Result<()> {
     std::fs::create_dir_all(to)?;
     for entry in std::fs::read_dir(from)?.flatten() {
         if skip_top.is_some_and(|s| entry.file_name() == s) {
@@ -322,16 +336,16 @@ fn copy_dir_filtered(from: &std::path::Path, to: &std::path::Path, skip_top: Opt
         let target = to.join(entry.file_name());
         let kind = entry.file_type()?;
         if kind.is_dir() {
-            copy_dir_filtered(&entry.path(), &target, None)?;
+            copy_dir_filtered(&entry.path(), &target, None, link)?;
         } else if kind.is_file() {
-            std::fs::copy(entry.path(), &target)?;
+            copy_or_link(&entry.path(), &target, link)?;
         }
     }
     Ok(())
 }
 
 /// Recursive copy; at the top level the instance's own bookkeeping is left out.
-fn copy_tree(from: &std::path::Path, to: &std::path::Path, top: bool) -> std::io::Result<()> {
+fn copy_tree(from: &std::path::Path, to: &std::path::Path, top: bool, link: bool) -> std::io::Result<()> {
     std::fs::create_dir_all(to)?;
     for entry in std::fs::read_dir(from)?.flatten() {
         let name = entry.file_name();
@@ -341,9 +355,9 @@ fn copy_tree(from: &std::path::Path, to: &std::path::Path, top: bool) -> std::io
         let target = to.join(&name);
         let kind = entry.file_type()?;
         if kind.is_dir() {
-            copy_tree(&entry.path(), &target, false)?;
+            copy_tree(&entry.path(), &target, false, link)?;
         } else if kind.is_file() {
-            std::fs::copy(entry.path(), &target)?;
+            copy_or_link(&entry.path(), &target, link)?;
         }
     }
     Ok(())

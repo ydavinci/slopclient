@@ -82,6 +82,7 @@ impl Paths {
             self.instances(),
             self.cache(),
             self.shared_options(),
+            self.store(),
         ] {
             std::fs::create_dir_all(dir)?;
         }
@@ -105,6 +106,10 @@ impl Paths {
     }
     pub fn cache(&self) -> PathBuf {
         self.root.join("cache")
+    }
+    /// Content store: mods, resource packs and shaders once, by SHA-1.
+    pub fn store(&self) -> PathBuf {
+        self.root.join("store")
     }
     /// Sync groups for game settings (`groups.json` and one folder per group).
     pub fn shared_options(&self) -> PathBuf {

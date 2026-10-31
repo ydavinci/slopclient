@@ -31,6 +31,7 @@ pub mod screenshots;
 pub mod servers;
 pub mod shared_options;
 pub mod skins;
+pub mod store;
 pub mod worlds;
 
 pub use error::{Error, Result};
