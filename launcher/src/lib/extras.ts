@@ -341,13 +341,21 @@ export function disposeExtra(group: THREE.Object3D) {
 let thumbRenderer: THREE.WebGLRenderer | null = null;
 const thumbs = new Map<string, Promise<string>>();
 
-/** A small picture of the model, rendered once with a shared offscreen renderer. */
-export function thumbnail(model: ExtraModel, kind: ExtraKind, skin?: () => HTMLCanvasElement): Promise<string> {
-  const key = `${kind}:${model.id}`;
+/**
+ * A small picture of the model, rendered once with a shared offscreen renderer. `size`
+ * and the camera `direction` default to the shelf tiles' view.
+ */
+export function thumbnail(
+  model: ExtraModel,
+  kind: ExtraKind,
+  skin?: () => HTMLCanvasElement,
+  size = 160,
+  direction: [number, number, number] = [0.9, 0.55, 1.4],
+): Promise<string> {
+  const key = `${kind}:${model.id}:${size}:${direction.join(",")}`;
   let cached = thumbs.get(key);
   if (cached) return cached;
   cached = (async () => {
-    const size = 160;
     thumbRenderer ??= new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     thumbRenderer.setSize(size, size, false);
     thumbRenderer.setClearColor(0x000000, 0);
@@ -383,7 +391,7 @@ export function thumbnail(model: ExtraModel, kind: ExtraKind, skin?: () => HTMLC
     const centre = box.getCenter(new THREE.Vector3());
     const radius = box.getSize(new THREE.Vector3()).length() / 2;
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 1000);
-    const dir = new THREE.Vector3(0.9, 0.55, 1.4).normalize();
+    const dir = new THREE.Vector3(...direction).normalize();
     camera.position.copy(centre).addScaledVector(dir, (radius / Math.sin((15 * Math.PI) / 180)) * 1.02);
     camera.lookAt(centre);
     thumbRenderer.render(scene, camera);

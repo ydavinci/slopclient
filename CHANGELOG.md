@@ -11,9 +11,22 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - Solange eine Instanz läuft, sind ihre Update-Knöpfe gesperrt, weil sich geöffnete Dateien nicht ersetzen lassen.
 - CLI: `slopclient content update <instanz> [namen…]` aktualisiert auf Wunsch nur die genannten Inhalte.
 
+### Kosmetik
+- **Sechs neue Begleiter**: Axolotl und Eule auf der Schulter, Phönix (ein leuchtender Feuervogel) und Qualle im Flug, Kitsune (weißer Fuchs mit drei Geisterflammen-Schweifen) und Mini-Golem (mit Mohnblume) zu Fuß.
+- **Vier neue Hüte**: Zauberhut mit leuchtenden Sternen, Blütenkranz, Kopfhörer mit Chroma-Ringen und Fliegenpilz.
+- **Flügel als Zubehör**: Engelsflügel und Drachenflügel.
+
 ### Client-Mod
 - **Glas**: Spieler als Figuren aus Glas, jedes Körperteil eine klare Scheibe mit hellem Rand und Glanzlicht, die eigene Figur mit weißem Leuchten. Für dich, für andere Spieler oder beide.
 - **Amboss-Planer**: Gegenstand aus dem Inventar oder aus allen verzauberbaren Gegenständen wählen, die gewünschten Verzauberungen anklicken (nur passende, und nur solche, die zueinander passen) und die günstigste Reihenfolge sehen, in der die Bücher untereinander und mit dem Gegenstand im Amboss kombiniert werden: mit Leveln pro Schritt, Gesamt-Level und XP. Öffnet über den Knopf „Planer“ am Amboss oder eine eigene Taste.
+- **Plan anheften**: Im Amboss-Planer lässt sich eine Reihenfolge anheften; sie steht dann als Karte links neben dem Amboss.
+- **Trail-Stile**: Funken, Spirale, Komet, Blüten, Seelen, Noten und Herzen.
+- **Glas-Varianten**: Klar, Frost, Rauch, Bernstein, Prisma und Abgrund (ein Sternenhimmel hinter violetten Kanten). Die eigenen Arme sind in der Ich-Ansicht jetzt auch aus Glas.
+- **Bibliothekar** (HUD): Schaust du auf ein Lesepult, stehen dort die Bücher des Bibliothekars daneben samt Preis. Das Spiel verrät die Angebote erst, wenn sein Handel einmal geöffnet war; das Lesepult gehört dem nächsten Bibliothekar.
+- **Auto-Werkzeug**: Wechselt beim Abbauen zum besten Werkzeug für den Block (schnellstes, das auch den Drop bringt, Effizienz mitgerechnet), auf Wunsch auch aus dem Inventar, und danach zurück.
+
+### Entfernt
+- **Karambit**: Das 3D-Karambit-Modell fürs Netherite-Schwert ist vorerst raus.
 
 ## 0.5.5
 
