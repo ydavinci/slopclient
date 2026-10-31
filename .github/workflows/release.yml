@@ -105,6 +105,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
+          # Neither value contains whitespace; drop what pasting into the secret form adds.
+          export TAURI_SIGNING_PRIVATE_KEY="$(printf %s "$TAURI_SIGNING_PRIVATE_KEY" | tr -d '[:space:]')"
+          export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(printf %s "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" | tr -d '[:space:]')"
           if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
             npx tauri build
           elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
