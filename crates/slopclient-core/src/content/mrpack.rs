@@ -242,7 +242,7 @@ async fn install_files(
         );
     }
     stage(progress, "Downloading modpack files");
-    download_all(tasks, concurrency, progress).await?;
+    crate::store::download(paths, tasks, concurrency, progress).await?;
 
     stage(progress, "Applying overrides");
     let (pack, dir) = (pack_path.to_path_buf(), game_dir.clone());

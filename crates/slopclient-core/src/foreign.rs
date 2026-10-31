@@ -194,6 +194,8 @@ pub async fn import(
         let _ = Instance::delete(paths, &instance.id);
         return Err(e.into());
     }
+    // Mods the other instances already have are stored only once.
+    let _ = crate::store::adopt_instance(paths, &instance).await;
 
     // Prism keeps custom icons in <data>/icons/<iconKey>.*; built-in keys have no file.
     let icons = dir.parent().and_then(Path::parent).map(|data| data.join("icons"));

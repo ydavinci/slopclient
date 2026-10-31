@@ -12,7 +12,8 @@ use super::{
 };
 use crate::{
     Error, Paths, ProgressFn, Result,
-    download::{DownloadTask, download_all, sha1_file},
+    download::{DownloadTask, sha1_file},
+    store,
     instance::Instance,
     meta::LoaderKind,
     progress::stage,
@@ -483,7 +484,7 @@ impl<'a> ContentManager<'a> {
         }
 
         stage(progress, "Downloading");
-        download_all(tasks, self.concurrency, progress).await?;
+        store::download(self.paths, tasks, self.concurrency, progress).await?;
         self.write_lock(&lock)?;
         self.warn_missing_shader_mod(&lock, &mut report);
         Ok(report)
@@ -594,7 +595,7 @@ impl<'a> ContentManager<'a> {
         }
 
         stage(progress, "Downloading");
-        download_all(tasks, self.concurrency, progress).await?;
+        store::download(self.paths, tasks, self.concurrency, progress).await?;
         self.write_lock(&lock)?;
         self.add_blocked(&report.blocked)?;
         self.warn_missing_shader_mod(&lock, &mut report);
@@ -646,9 +647,13 @@ impl<'a> ContentManager<'a> {
             };
             let target = self.file_path(item.kind, &item.file_name, true);
             std::fs::create_dir_all(self.folder(item.kind))?;
-            std::fs::copy(&source, &target)?;
             let mut entry = item.entry();
-            entry.sha1 = sha1_file(&target).await?;
+            entry.sha1 = if store::enabled(self.paths) {
+                store::import(self.paths, &source, &target).await?
+            } else {
+                std::fs::copy(&source, &target)?;
+                sha1_file(&target).await?
+            };
             lock.entries.retain(|e| !(e.kind == item.kind && e.file_name == item.file_name));
             lock.entries.push(entry);
             resolved += 1;
@@ -785,7 +790,7 @@ impl<'a> ContentManager<'a> {
             );
         }
         stage(progress, "Downloading updates");
-        download_all(tasks, self.concurrency, progress).await?;
+        store::download(self.paths, tasks, self.concurrency, progress).await?;
 
         let mut lock = self.read_lock()?;
         for u in updates {
@@ -857,7 +862,11 @@ impl<'a> ContentManager<'a> {
             return Err(Error::Other(format!("{name} ist schon installiert")));
         }
         std::fs::create_dir_all(self.folder(kind))?;
-        std::fs::write(&target, bytes)?;
+        if store::enabled(self.paths) {
+            store::write(self.paths, bytes, &target)?;
+        } else {
+            std::fs::write(&target, bytes)?;
+        }
         // Recognizing it is a bonus; offline the file simply stays local.
         let _ = self.identify().await;
         Ok(kind)

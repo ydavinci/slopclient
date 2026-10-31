@@ -32,6 +32,7 @@ use slopclient_core::{
     instance::{Instance, Loader, now},
     launch,
     shared_options::{self, Group, GroupStatus, Keep},
+    store::{self, DedupeReport, GcReport, StoreStats},
     meta::{
         LoaderKind,
         loaders::{self, LoaderVersion},
@@ -430,6 +431,7 @@ async fn delete_instance(app: AppHandle, state: State<'_, AppState>, id: String)
     }
     Instance::delete(&state.paths, &id).map_err(err)?;
     invalidate_updates(&app, &state, &id);
+    clean_store(&state.paths);
     Ok(())
 }
 
@@ -986,6 +988,8 @@ async fn content_apply_updates(
     }
     state.updates.remove_done(&id, &chosen);
     let _ = app.emit("updates-changed", ());
+    // Old versions nobody uses any more.
+    clean_store(&state.paths);
     Ok(chosen.len())
 }
 
@@ -1339,6 +1343,35 @@ async fn shared_options_group_of(state: State<'_, AppState>, instance: String) -
     shared_options::group_of(&state.paths, &instance).map_err(err)
 }
 
+// ---------- content store ----------
+
+/// Removes unused store files in the background.
+fn clean_store(paths: &Paths) {
+    let paths = paths.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _ = store::gc(&paths);
+    });
+}
+
+#[tauri::command]
+async fn store_stats(state: State<'_, AppState>) -> CmdResult<StoreStats> {
+    let paths = state.paths.clone();
+    tauri::async_runtime::spawn_blocking(move || store::stats(&paths)).await.map_err(err)?.map_err(err)
+}
+
+/// "Doppelte Dateien zusammenführen": running instances are left out.
+#[tauri::command]
+async fn store_dedupe(app: AppHandle, state: State<'_, AppState>, task_id: String) -> CmdResult<DedupeReport> {
+    let running = running_ids(&state).await;
+    store::dedupe(&state.paths, &running, &progress_for(&app, &task_id)).await.map_err(err)
+}
+
+#[tauri::command]
+async fn store_gc(state: State<'_, AppState>) -> CmdResult<GcReport> {
+    let paths = state.paths.clone();
+    tauri::async_runtime::spawn_blocking(move || store::gc(&paths)).await.map_err(err)?.map_err(err)
+}
+
 // ---------- modpacks ----------
 
 #[tauri::command]
@@ -1427,6 +1460,7 @@ pub fn run() {
             let paths = state.paths.clone();
             tauri::async_runtime::spawn_blocking(move || {
                 let _ = shared_options::reconcile_all(&paths, &Default::default());
+                let _ = store::gc(&paths);
             });
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -1515,6 +1549,9 @@ pub fn run() {
             shared_options_add,
             shared_options_remove,
             shared_options_group_of,
+            store_stats,
+            store_dedupe,
+            store_gc,
             search,
             project_details,
             version_changelog,
