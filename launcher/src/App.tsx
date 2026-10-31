@@ -11,6 +11,7 @@ import { Modals } from "./ui/Modals";
 import { ProjectView } from "./ui/ProjectView";
 import { Shader } from "./ui/Shader";
 import { NavRail, Notifications, TitleBar } from "./ui/Shell";
+import { LauncherUpdateBanner } from "./ui/LauncherUpdateBanner";
 
 function Page() {
   const { route } = useStore();
@@ -65,6 +66,7 @@ function Shell() {
     <div className="relative flex h-full flex-col">
       <Shader paused={gameRunning} />
       <TitleBar />
+      <LauncherUpdateBanner />
       <div className="relative flex min-h-0 flex-1 gap-2 pb-4">
         <NavRail />
         <main className="relative min-w-0 flex-1">

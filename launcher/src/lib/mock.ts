@@ -228,6 +228,19 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       return delay(null);
     case "shared_options_group_of":
       return delay(sharedGroups().find((g) => g.instances.includes(String(args.instance))) ?? null);
+    case "launcher_update_check":
+      return delay(
+        {
+          version: "0.6.0",
+          currentVersion: "0.5.5",
+          notes: "### Launcher\n- **Mods nur einmal laden**: Instanzen teilen gleiche Dateien.\n- Launcher aktualisiert sich selbst.\n\n### Client-Mod\n- **Lichtlevel-Overlay** ([Details](https://github.com/ydavinci/slopclient))",
+          date: "2026-11-02T12:00:00Z",
+        },
+        600,
+      );
+    case "launcher_update_install":
+      await fakeTask(args.taskId as string, ["SlopClient 0.6.0 herunterladen"]);
+      throw "Vorschau: hier würde sich der Launcher schließen und der Installer starten.";
     case "updates_overview":
       return delay(mockUpdates?.length ? { [instances[0].id]: mockUpdates.length } : {});
     case "foreign_scan":
