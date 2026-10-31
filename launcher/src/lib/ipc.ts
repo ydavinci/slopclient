@@ -34,6 +34,7 @@ import type {
   SearchResult,
   Settings,
   UpdateInfo,
+  UpdateTarget,
   VersionList,
   World,
 } from "./types";
@@ -125,8 +126,12 @@ export const api = {
   contentSetEnabled: (id: string, fileName: string, enabled: boolean) =>
     call<void>("content_set_enabled", { id, fileName, enabled }),
   versionChangelog: (source: string, projectId: string, versionId: string) => call<string>("version_changelog", { source, projectId, versionId }),
-  contentUpdates: (id: string) => call<UpdateInfo[]>("content_updates", { id }),
-  contentApplyUpdates: (id: string, taskId: string) => call<number>("content_apply_updates", { id, taskId }),
+  /** `force: false` reuses a check younger than 30 minutes. */
+  contentUpdates: (id: string, force: boolean) => call<UpdateInfo[]>("content_updates", { id, force }),
+  /** Without `only` all known updates of the instance are installed. */
+  contentApplyUpdates: (id: string, taskId: string, only?: UpdateTarget[]) => call<number>("content_apply_updates", { id, taskId, only: only ?? null }),
+  /** Known update count per instance id (instances without updates are missing). */
+  updatesOverview: () => call<Record<string, number>>("updates_overview"),
 
   search: (args: SearchArgs) => call<SearchResult>("search", { args }),
   projectDetails: (source: Platform, id: string) => call<ProjectDetails>("project_details", { source, id }),

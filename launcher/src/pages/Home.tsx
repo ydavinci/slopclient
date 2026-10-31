@@ -35,7 +35,7 @@ function BigName({ text }: { text: string }) {
 }
 
 export function Home() {
-  const { overview, navigate, openModal, selectedId, select, launching, tasks, toast, centered, setCentered, homeLayout, setHomeLayout, arranging, setArranging } = useStore();
+  const { overview, navigate, openModal, selectedId, select, launching, tasks, toast, centered, setCentered, homeLayout, setHomeLayout, arranging, setArranging, updateCounts } = useStore();
   const launch = useLaunch();
   const instances = overview?.instances ?? [];
   const selected = instances.find((i) => i.id === selectedId) ?? instances[0];
@@ -111,7 +111,7 @@ export function Home() {
       </Button>
     </div>
   );
-  const strip = <InstanceStrip free={!!homeLayout || arranging} centered={centered} instances={instances} selectedId={selected.id} running={overview.running} onSelect={select} onNew={() => openModal({ kind: "new-instance" })} />;
+  const strip = <InstanceStrip free={!!homeLayout || arranging} centered={centered} instances={instances} selectedId={selected.id} running={overview.running} updates={updateCounts} onSelect={select} onNew={() => openModal({ kind: "new-instance" })} />;
 
   return (
     <div className="relative flex h-full flex-col">
@@ -170,7 +170,7 @@ export function Home() {
  * The instance cards in one row. With more cards than fit, the mouse wheel scrolls it
  * sideways and arrows appear at the ends.
  */
-function InstanceStrip({ free, centered, instances, selectedId, running, onSelect, onNew }: { free: boolean; centered: boolean; instances: Instance[]; selectedId: string; running: string[]; onSelect: (id: string) => void; onNew: () => void }) {
+function InstanceStrip({ free, centered, instances, selectedId, running, updates, onSelect, onNew }: { free: boolean; centered: boolean; instances: Instance[]; selectedId: string; running: string[]; updates: Record<string, number>; onSelect: (id: string) => void; onNew: () => void }) {
   const row = useRef<HTMLDivElement>(null);
   const [ends, setEnds] = useState({ left: false, right: false });
 
@@ -219,7 +219,15 @@ function InstanceStrip({ free, centered, instances, selectedId, running, onSelec
             aria-pressed={active}
             className={`group relative flex w-[220px] shrink-0 items-center gap-3 rounded-2xl p-3 text-left transition-colors duration-200 ${active ? "chroma-ring" : "glass hover:border-line-2"}`}
           >
-            <InstanceIcon id={inst.id} name={inst.name} icon={inst.icon} size={40} />
+            <span className="relative shrink-0">
+              <InstanceIcon id={inst.id} name={inst.name} icon={inst.icon} size={40} />
+              {(updates[inst.id] ?? 0) > 0 && (
+                <span
+                  title={`${updates[inst.id]} ${updates[inst.id] === 1 ? "Update" : "Updates"} verfügbar`}
+                  className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full bg-on ring-2 ring-bg"
+                />
+              )}
+            </span>
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-semibold">{inst.name}</span>
               <span className="block truncate text-xs text-muted">
