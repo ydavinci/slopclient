@@ -29,9 +29,9 @@
 Installer starten, mit dem Microsoft-Konto anmelden, Instanz anlegen, spielen. Der Launcher legt den Client-Mod
 automatisch in passende Instanzen (pro Instanz abschaltbar).
 
-Ab Version 0.5.6 aktualisiert sich der Launcher selbst: Gibt es ein neues Release, erscheint oben ein Hinweis mit den
+Ab Version 0.5.7 aktualisiert sich der Launcher selbst: Gibt es ein neues Release, erscheint oben ein Hinweis mit den
 Änderungen und „Jetzt aktualisieren“ (Einstellungen → Updates). Der Client-Mod kommt dabei mit. Wer eine ältere Version hat,
-installiert 0.5.6 einmal von Hand.
+installiert 0.5.7 einmal von Hand.
 
 > Der Installer ist noch nicht signiert; Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
 > Die Update-Signatur ist davon unabhängig: Der Launcher installiert nur Updates, die mit dem SlopClient-Schlüssel signiert sind.
