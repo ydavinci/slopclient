@@ -20,6 +20,7 @@ pub mod install;
 pub mod instance;
 pub mod java;
 pub mod launch;
+pub mod links;
 pub mod mclogs;
 pub mod meta;
 mod nbt;
@@ -28,6 +29,7 @@ pub mod progress;
 pub mod rules;
 pub mod screenshots;
 pub mod servers;
+pub mod shared_options;
 pub mod skins;
 pub mod worlds;
 
