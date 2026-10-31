@@ -33,6 +33,8 @@ import type {
   SearchArgs,
   SearchResult,
   Settings,
+  SharedGroup,
+  SharedGroupStatus,
   UpdateInfo,
   UpdateTarget,
   VersionList,
@@ -132,6 +134,15 @@ export const api = {
   contentApplyUpdates: (id: string, taskId: string, only?: UpdateTarget[]) => call<number>("content_apply_updates", { id, taskId, only: only ?? null }),
   /** Known update count per instance id (instances without updates are missing). */
   updatesOverview: () => call<Record<string, number>>("updates_overview"),
+  /** Checks and repairs all settings sync groups, then returns them. */
+  sharedOptionsGroups: () => call<SharedGroupStatus[]>("shared_options_groups"),
+  sharedOptionsReconcile: () => call<SharedGroupStatus[]>("shared_options_reconcile"),
+  sharedOptionsCreate: (name: string, sourceInstance: string) => call<SharedGroup>("shared_options_create", { name, sourceInstance }),
+  sharedOptionsRename: (group: string, name: string) => call<void>("shared_options_rename", { group, name }),
+  sharedOptionsDelete: (group: string) => call<void>("shared_options_delete", { group }),
+  sharedOptionsAdd: (group: string, instance: string, keep: "group" | "instance") => call<void>("shared_options_add", { group, instance, keep }),
+  sharedOptionsRemove: (group: string, instance: string) => call<void>("shared_options_remove", { group, instance }),
+  sharedOptionsGroupOf: (instance: string) => call<SharedGroup | null>("shared_options_group_of", { instance }),
 
   search: (args: SearchArgs) => call<SearchResult>("search", { args }),
   projectDetails: (source: Platform, id: string) => call<ProjectDetails>("project_details", { source, id }),

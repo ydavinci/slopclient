@@ -7,11 +7,13 @@ import type { Settings } from "../lib/types";
 import { Button, Field, Segmented, Spinner, Toggle, inputClass, rise } from "../ui/kit";
 import { Slider } from "./InstanceDetail";
 import { CosmeticsOnline } from "./Cosmetics";
+import { SharedOptions } from "./SharedOptions";
 import { HueRing } from "../ui/HueRing";
 import { DEFAULT_HUE, applyAccent } from "../lib/accent";
 
 export function SettingsPage() {
-  const { overview, refresh, toast, centered, setCentered, homeLayout, setArranging, navigate } = useStore();
+  const { overview, refresh, toast, centered, setCentered, homeLayout, setArranging, navigate, route } = useStore();
+  const section = route.page === "settings" ? route.section : undefined;
   const openArrange = () => {
     setArranging(true);
     navigate({ page: "home" });
@@ -36,6 +38,11 @@ export function SettingsPage() {
   useEffect(() => {
     api.settings().then(setSettings).catch((e) => toast(String(e), "error"));
   }, [toast]);
+
+  // Opened from an instance ("Verwalten"): jump to that section once it is there.
+  useEffect(() => {
+    if (settings && section) document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [settings, section]);
 
   async function save() {
     if (!settings) return;
@@ -168,6 +175,12 @@ export function SettingsPage() {
               Speichern
             </Button>
           </div>
+
+          {/* Changes apply at once through their own commands, not the Speichern button. */}
+          <motion.section id="shared-options" variants={rise} initial="hidden" animate="show" transition={{ delay: 0.12 }} className="glass grid scroll-mt-4 gap-4 rounded-[18px] p-5">
+            <h2 className="text-[15px] font-bold">Geteilte Spieleinstellungen</h2>
+            <SharedOptions />
+          </motion.section>
 
           <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.15 }} className="glass grid gap-3 rounded-[18px] p-5">
             <h2 className="text-[15px] font-bold">Speicherort</h2>
