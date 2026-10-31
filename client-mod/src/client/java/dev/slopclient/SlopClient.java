@@ -86,6 +86,9 @@ public final class SlopClient implements ClientModInitializer {
 			new KeyMapping("key.slopclient.stopwatch", InputConstants.UNKNOWN.getValue(), category)));
 		modules.anvilPlanner.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.anvil", InputConstants.UNKNOWN.getValue(), category)));
+		modules.lightOverlay.bind(KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.slopclient.light_overlay", InputConstants.UNKNOWN.getValue(), category)));
+		net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(modules.lightOverlay::render);
 		// The planner's button above the anvil, where the books are combined.
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
 			if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AnvilScreen) || !modules.anvilPlanner.active()) return;
@@ -111,6 +114,7 @@ public final class SlopClient implements ClientModInitializer {
 			while (clickGuiKey.consumeClick()) {
 				if (mc.gui.screen() == null) mc.gui.setScreen(new ClickGuiScreen(null));
 			}
+			modules.lightOverlay.pollKey(mc);
 			modules.tick(mc);
 			Presence.tick(mc);
 			dev.slopclient.hud.InfoHud.Hits.tick(mc);
