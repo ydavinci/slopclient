@@ -96,8 +96,24 @@ jobs:
           key: launcher
       - run: npm ci
         working-directory: launcher
-      - run: npx tauri build
+      # The updater only installs files signed with this key (public key in tauri.conf.json).
+      # Releases must be signed; a dry run without the secret builds without updater files.
+      - name: Build launcher
         working-directory: launcher
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            npx tauri build
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            echo "::error::Repository secret TAURI_SIGNING_PRIVATE_KEY is missing. Releases must be signed for the launcher updater (see RELEASING.md)."
+            exit 1
+          else
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY is not set, building without updater signature (dry run only)."
+            npx tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
       - name: Build CLI
         run: cargo build --release --locked -p slopclient-cli
       - name: Collect
@@ -105,6 +121,7 @@ jobs:
         run: |
           mkdir dist
           cp target/release/bundle/nsis/*-setup.exe dist/
+          cp target/release/bundle/nsis/*-setup.exe.sig dist/ 2>/dev/null || [ "$GITHUB_REF_TYPE" != "tag" ]
           cp target/release/slopclient.exe dist/slopclient-cli-windows-x64.exe
       - uses: actions/upload-artifact@v4
         with:
@@ -218,9 +235,6 @@ jobs:
         with:
           path: assets
           merge-multiple: true
-      - name: Checksums
-        working-directory: assets
-        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Release notes from CHANGELOG.md
         run: |
           awk -v v="## ${{ needs.version.outputs.version }}" '
@@ -229,6 +243,25 @@ jobs:
             on {print}
           ' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "Siehe [CHANGELOG.md](CHANGELOG.md)." > notes.md
+      # Update manifest for the launcher updater, read from releases/latest/download/latest.json.
+      - name: Updater manifest
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          exe="SlopClient_${v}_x64-setup.exe"
+          [ -s "assets/$exe.sig" ] || { echo "::error::assets/$exe.sig is missing"; exit 1; }
+          jq -n \
+            --arg version "$v" \
+            --rawfile notes notes.md \
+            --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --rawfile sig "assets/$exe.sig" \
+            --arg url "https://github.com/${{ github.repository }}/releases/download/$GITHUB_REF_NAME/$exe" \
+            '{version: $version, notes: $notes, pub_date: $date,
+              platforms: {"windows-x86_64": {signature: ($sig | rtrimstr("\n")), url: $url}}}' \
+            > assets/latest.json
+          cat assets/latest.json
+      - name: Checksums
+        working-directory: assets
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}

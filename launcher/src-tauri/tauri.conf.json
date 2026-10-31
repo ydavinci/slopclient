@@ -53,6 +53,18 @@
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico"
       }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE1RDUxQkExRDk4NTQ0QkEKUldTNlJJWFpvUnZWcGF6K3Q5K2VMenA3cis3UittQVBOOGxrMERTdDdvWk5NVlZ6UCtSWUNIZWQK",
+      "endpoints": [
+        "https://github.com/ydavinci/slopclient/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }
