@@ -81,6 +81,7 @@ impl Paths {
             self.java(),
             self.instances(),
             self.cache(),
+            self.shared_options(),
         ] {
             std::fs::create_dir_all(dir)?;
         }
@@ -104,6 +105,10 @@ impl Paths {
     }
     pub fn cache(&self) -> PathBuf {
         self.root.join("cache")
+    }
+    /// Sync groups for game settings (`groups.json` and one folder per group).
+    pub fn shared_options(&self) -> PathBuf {
+        self.root.join("shared-options")
     }
     pub fn settings_file(&self) -> PathBuf {
         self.root.join("settings.json")

@@ -897,6 +897,8 @@ fn client_id(paths: &Paths) -> anyhow::Result<String> {
 }
 
 async fn run_game(paths: &Paths, instance: &Instance, auth: &LaunchAuth, join: Option<launch::Join>) -> anyhow::Result<()> {
+    // Settings shared with a sync group: pick up changes before, share them after the game.
+    let _ = slopclient_core::shared_options::reconcile_instance(paths, &instance.id, &Default::default());
     let (progress, bar) = progress_bar();
     let mut cmd = launch::prepare(paths, instance, auth, join, progress).await?;
     bar.finish_and_clear();
@@ -936,6 +938,7 @@ async fn run_game(paths: &Paths, instance: &Instance, auth: &LaunchAuth, join: O
 
     let status = child.wait().await?;
     let _ = tokio::join!(out, err);
+    let _ = slopclient_core::shared_options::reconcile_instance(paths, &instance.id, &Default::default());
     launch::record_session(paths, &instance.id, started)?;
     println!("game exited with {status}");
     let tail: Vec<String> = tail.lock().unwrap().iter().cloned().collect();
