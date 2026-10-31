@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, newTaskId, onEvent } from "./ipc";
-import type { CrashReport, HomeLayout, Join, Overview, Platform, Progress } from "./types";
+import type { CrashReport, HomeLayout, Join, LauncherUpdate, Overview, Platform, Progress } from "./types";
 import { applyAccent } from "./accent";
 
 export type Route =
@@ -91,7 +91,18 @@ interface Store {
   toasts: Toast[];
   toast: (message: string, kind?: Toast["kind"]) => void;
   dismissToast: (id: number) => void;
+  /** Newer launcher version, null when none is known or it was put off with „Später“. */
+  launcherUpdate: LauncherUpdate | null;
+  /** Looks for a launcher update now; `manual` shows the result and errors as toasts. */
+  checkLauncherUpdate: (manual: boolean) => Promise<void>;
+  /** Installs the known update (refused while a game or another task runs). */
+  installLauncherUpdate: () => Promise<void>;
+  /** „Später“: hides the notice until the next start or a newer version. */
+  postponeLauncherUpdate: () => void;
 }
+
+/** How often the open launcher looks for a new version of itself. */
+const LAUNCHER_UPDATE_INTERVAL = 6 * 60 * 60 * 1000;
 
 function storedSelection(): string | null {
   try {
@@ -123,6 +134,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [launching, setLaunching] = useState<Set<string>>(new Set());
   const [updateCounts, setUpdateCounts] = useState<Record<string, number>>({});
   const toastId = useRef(0);
+  const [launcherUpdate, setLauncherUpdate] = useState<LauncherUpdate | null>(null);
+  const postponed = useRef<string | null>(null);
+  // Read by timers and the auto install, which must see the current state.
+  const tasksRef = useRef<Task[]>([]);
+  tasksRef.current = tasks;
+  const overviewRef = useRef<Overview | null>(null);
+  overviewRef.current = overview;
 
   const refresh = useCallback(async () => {
     setOverview(await api.overview());
@@ -150,6 +168,75 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       throw e;
     }
   }, []);
+
+  const installLauncherUpdate = useCallback(async () => {
+    if ((overviewRef.current?.running.length ?? 0) > 0) {
+      toast("Schließ zuerst Minecraft, dann wird das Update installiert.", "error");
+      return;
+    }
+    if (tasksRef.current.some((t) => !t.done)) {
+      toast("Warte, bis die laufenden Downloads fertig sind, dann wird das Update installiert.", "error");
+      return;
+    }
+    try {
+      // On success the installer closes the launcher and starts the new version.
+      await runTask("SlopClient-Update", (taskId) => api.launcherUpdateInstall(taskId));
+    } catch (e) {
+      toast(String(e), "error");
+    }
+  }, [runTask, toast]);
+
+  const checkLauncherUpdate = useCallback(
+    async (manual: boolean) => {
+      try {
+        const update = await api.launcherUpdateCheck();
+        if (!update) {
+          setLauncherUpdate(null);
+          if (manual) toast("SlopClient ist aktuell", "success");
+          return;
+        }
+        if (manual) postponed.current = null;
+        setLauncherUpdate(postponed.current === update.version ? null : update);
+        if (manual) toast(`SlopClient ${update.version} ist da`, "info");
+      } catch (e) {
+        // Offline or GitHub unreachable: only a check the user asked for says so.
+        if (manual) toast(String(e), "error");
+      }
+    },
+    [toast],
+  );
+
+  const postponeLauncherUpdate = useCallback(() => {
+    setLauncherUpdate((u) => {
+      postponed.current = u?.version ?? null;
+      return null;
+    });
+  }, []);
+
+  // A few seconds after start and every 6 hours. An update found at start is installed
+  // right away when the user wants that; later finds are only shown.
+  useEffect(() => {
+    let stopped = false;
+    const check = async (startup: boolean) => {
+      const settings = await api.settings().catch(() => null);
+      if (stopped || settings?.launcherUpdateCheck === false) return;
+      const update = await api.launcherUpdateCheck().catch(() => null);
+      if (stopped || !update) return;
+      if (postponed.current !== update.version) setLauncherUpdate(update);
+      const idle = (overviewRef.current?.running.length ?? 0) === 0 && !tasksRef.current.some((t) => !t.done);
+      if (startup && settings?.launcherAutoInstall && idle) {
+        toast(`SlopClient wird auf ${update.version} aktualisiert …`, "info");
+        installLauncherUpdate();
+      }
+    };
+    const first = setTimeout(() => check(true), 5000);
+    const every = setInterval(() => check(false), LAUNCHER_UPDATE_INTERVAL);
+    return () => {
+      stopped = true;
+      clearTimeout(first);
+      clearInterval(every);
+    };
+  }, [toast, installLauncherUpdate]);
 
   useEffect(() => {
     refresh().catch((e) => toast(String(e), "error"));
@@ -253,6 +340,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toasts,
       toast,
       dismissToast: (id) => setToasts((t) => t.filter((x) => x.id !== id)),
+      launcherUpdate,
+      checkLauncherUpdate,
+      installLauncherUpdate,
+      postponeLauncherUpdate,
       modal,
       centered,
       setCentered: (on: boolean) => {
@@ -275,7 +366,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       openModal: setModal,
       closeModal,
     }),
-    [overview, refresh, updateCounts, route, selectedId, tasks, runTask, launching, logs, toasts, toast, modal, closeModal, centered, homeLayout, arranging, project, closeProject],
+    [overview, refresh, updateCounts, route, selectedId, tasks, runTask, launching, logs, toasts, toast, modal, closeModal, centered, homeLayout, arranging, project, closeProject, launcherUpdate, checkLauncherUpdate, installLauncherUpdate, postponeLauncherUpdate],
   );
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;

@@ -152,6 +152,10 @@ export interface Settings {
   checkUpdatesOnStart?: boolean | null;
   /** Mods, resource packs and shaders once in the content store, hard linked; null means on. */
   sharedContent?: boolean | null;
+  /** Look for a new launcher version at start and every 6 hours; null means on. */
+  launcherUpdateCheck?: boolean | null;
+  /** Install a launcher update found at start without asking. */
+  launcherAutoInstall?: boolean;
 }
 
 /** Content store (slopclient-core store.rs). */
@@ -171,6 +175,15 @@ export interface DedupeReport {
 export interface GcReport {
   removedFiles: number;
   freedBytes: number;
+}
+
+/** A newer SlopClient release. */
+export interface LauncherUpdate {
+  version: string;
+  currentVersion: string;
+  /** Release notes (Markdown). */
+  notes: string | null;
+  date: string | null;
 }
 
 export interface ManifestEntry {

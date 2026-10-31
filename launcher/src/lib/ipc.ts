@@ -7,6 +7,7 @@ import { mockCall, mockEmitter } from "./mock";
 import type { ExtrasCatalogue, ExtrasChoice } from "./extras";
 import type {
   Account,
+  LauncherUpdate,
   BlockedFile,
   CapeInfo,
   ContentEntry,
@@ -149,6 +150,10 @@ export const api = {
   storeStats: () => call<StoreStats>("store_stats"),
   storeDedupe: (taskId: string) => call<DedupeReport>("store_dedupe", { taskId }),
   storeGc: () => call<GcReport>("store_gc"),
+  /** Newer launcher release, null when up to date (always null in dev builds). */
+  launcherUpdateCheck: () => call<LauncherUpdate | null>("launcher_update_check"),
+  /** Downloads, verifies and installs the update; the launcher closes and restarts. */
+  launcherUpdateInstall: (taskId: string) => call<void>("launcher_update_install", { taskId }),
 
   search: (args: SearchArgs) => call<SearchResult>("search", { args }),
   projectDetails: (source: Platform, id: string) => call<ProjectDetails>("project_details", { source, id }),

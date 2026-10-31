@@ -180,6 +180,25 @@ export function SettingsPage() {
             <ContentStore />
           </motion.section>
 
+          <motion.section variants={rise} initial="hidden" animate="show" transition={{ delay: 0.12 }} className="glass grid gap-4 rounded-[18px] p-5">
+            <h2 className="text-[15px] font-bold">Updates</h2>
+            <LauncherVersion />
+            <div className="flex items-center gap-4 border-t border-line pt-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-semibold">Automatisch nach Updates suchen</div>
+                <div className="text-[12px] text-muted">Beim Start und alle 6 Stunden. Ist eine neue Version da, erscheint oben ein Hinweis.</div>
+              </div>
+              <Toggle label="Automatisch nach Updates suchen" checked={settings.launcherUpdateCheck ?? true} onChange={(v) => setSettings({ ...settings, launcherUpdateCheck: v })} />
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-semibold">Updates automatisch installieren</div>
+                <div className="text-[12px] text-muted">Ein beim Start gefundenes Update wird ohne Nachfrage installiert, solange kein Spiel und kein Download läuft. Später gefundene Updates werden nur angezeigt.</div>
+              </div>
+              <Toggle label="Updates automatisch installieren" checked={settings.launcherAutoInstall ?? false} onChange={(v) => setSettings({ ...settings, launcherAutoInstall: v })} />
+            </div>
+          </motion.section>
+
           <div>
             <Button variant="primary" loading={saving} onClick={save}>
               Speichern
@@ -285,6 +304,35 @@ function ContentStore() {
       </Button>
       <Button size="sm" loading={busy === "gc"} disabled={busy !== null} onClick={gc} title="Löscht Dateien, die keine Instanz mehr nutzt">
         Aufräumen
+      </Button>
+    </div>
+  );
+}
+
+/** Installed version and the manual update check. */
+function LauncherVersion() {
+  const { overview, checkLauncherUpdate, launcherUpdate, installLauncherUpdate } = useStore();
+  const [checking, setChecking] = useState(false);
+  async function check() {
+    setChecking(true);
+    await checkLauncherUpdate(true);
+    setChecking(false);
+  }
+  return (
+    <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-semibold">Version {overview?.version ?? "…"}</div>
+        <div className="text-[12px] text-muted">
+          {launcherUpdate ? `Version ${launcherUpdate.version} ist verfügbar.` : "Der Client-Mod wird mit dem Launcher aktualisiert."}
+        </div>
+      </div>
+      {launcherUpdate && (
+        <Button size="sm" variant="primary" onClick={installLauncherUpdate}>
+          Jetzt aktualisieren
+        </Button>
+      )}
+      <Button size="sm" loading={checking} onClick={check}>
+        Nach Updates suchen
       </Button>
     </div>
   );
