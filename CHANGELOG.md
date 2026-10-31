@@ -22,6 +22,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Flügel als Zubehör**: Engelsflügel und Drachenflügel.
 
 ### Client-Mod
+- **Lichtlevel-Overlay** (Render): zeigt auf dem Boden rund um dich das Lichtlevel als Zahl und Farbe. Rot = hier spawnen Monster jederzeit, gelb = nur nachts oder bei Gewitter, grün = genug Licht. Die Grenzen kommen aus der Dimension, wie bei Minecraft selbst, also stimmen auch Nether und End. Reichweite, Höhe, Anzeige (Farbe, Zahl oder beides), Block- oder Himmelslicht, Form (Fläche, Rahmen, Kreuz) und Deckkraft sind einstellbar, standardmäßig nur Spawn-Plätze. Nichts ist durch Wände zu sehen. Eigene Taste (ohne Standardbelegung) zum Umschalten. Gilt für normale Monster, nicht für Schleime, Ertrunkene oder Spawner.
 - **Glas**: Spieler als Figuren aus Glas, jedes Körperteil eine klare Scheibe mit hellem Rand und Glanzlicht, die eigene Figur mit weißem Leuchten. Für dich, für andere Spieler oder beide.
 - **Amboss-Planer**: Gegenstand aus dem Inventar oder aus allen verzauberbaren Gegenständen wählen, die gewünschten Verzauberungen anklicken (nur passende, und nur solche, die zueinander passen) und die günstigste Reihenfolge sehen, in der die Bücher untereinander und mit dem Gegenstand im Amboss kombiniert werden: mit Leveln pro Schritt, Gesamt-Level und XP. Öffnet über den Knopf „Planer“ am Amboss oder eine eigene Taste.
 - **Plan anheften**: Im Amboss-Planer lässt sich eine Reihenfolge anheften; sie steht dann als Karte links neben dem Amboss.

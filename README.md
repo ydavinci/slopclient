@@ -55,6 +55,7 @@ installiert 0.5.6 einmal von Hand.
 - eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche
 - **HUD-Editor** mit Snapping und vielen Modulen: FPS, CPS, Keystrokes, Koordinaten, Rüstung, Tränke, Ping, Kompass, Item-Zähler, Combo, Reichweite, Cooldowns, Bossleiste …
 - **Zoom** (C), **Freelook** (Alt), Helligkeit, Fadenkreuz, Toggle Sprint, Glow, eigene Schriften, Config-Profile
+- **Lichtlevel-Overlay**: zeigt auf dem Boden, wo Monster spawnen können (rot immer, gelb nachts, grün sicher)
 - **Server-Regeln**: Server können einzelne Module abschalten
 
 ### Kosmetik
