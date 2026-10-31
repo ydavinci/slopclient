@@ -157,8 +157,8 @@ enum ContentCommand {
     Disable { instance: String, name: String },
     /// Show available updates
     Updates { instance: String },
-    /// Install all available updates
-    Update { instance: String },
+    /// Install available updates: all, or only the named ones (name, file name or slug)
+    Update { instance: String, names: Vec<String> },
     /// Recognize manually added files on Modrinth (and CurseForge with a key)
     Identify { instance: String },
     /// CurseForge files that need a manual download; picks up downloaded ones
@@ -720,7 +720,7 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
         | ContentCommand::Enable { instance, .. }
         | ContentCommand::Disable { instance, .. }
         | ContentCommand::Updates { instance }
-        | ContentCommand::Update { instance }
+        | ContentCommand::Update { instance, .. }
         | ContentCommand::Identify { instance }
         | ContentCommand::Blocked { instance, .. } => instance.clone(),
     };
@@ -814,8 +814,11 @@ async fn content_command(paths: &Paths, cmd: ContentCommand) -> anyhow::Result<(
                 );
             }
         }
-        ContentCommand::Update { .. } => {
-            let updates = manager.check_updates().await?;
+        ContentCommand::Update { names, .. } => {
+            let mut updates = manager.check_updates().await?;
+            if !names.is_empty() {
+                updates.retain(|u| names.iter().any(|n| u.entry.matches(n)));
+            }
             if updates.is_empty() {
                 println!("everything is up to date");
                 return Ok(());

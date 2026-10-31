@@ -4,6 +4,7 @@
 //! - `task-progress` `{ taskId, event }` for long operations started with a task id
 //! - `game-log` `{ instanceId, line, stderr }` for every line the game prints
 //! - `game-state` `{ instanceId, running, exitCode }` when a game starts or stops
+//! - `updates-changed` (no payload) when the known content updates of an instance changed
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
@@ -24,6 +25,7 @@ use slopclient_core::{
     content::{
         BlockedFile, ContentEntry, ContentManager, ContentType, InstallReport, UpdateInfo,
         curseforge::CurseForge,
+        update_cache::{self, UpdateCache, UpdateTarget},
         modrinth::{self, SearchQuery, SearchResult},
         mrpack::{self, ExportOptions, PackSource},
     },
@@ -60,6 +62,8 @@ struct AppState {
     /// What the running games do, for the Discord status.
     playing: std::sync::Mutex<Vec<Playing>>,
     started_at: u64,
+    /// Results of update checks per instance (only in memory).
+    updates: UpdateCache,
 }
 
 /// A running game as the Discord status shows it.
@@ -395,10 +399,15 @@ async fn create_instance(
 }
 
 #[tauri::command]
-async fn save_instance(state: State<'_, AppState>, instance: Instance) -> CmdResult<()> {
+async fn save_instance(app: AppHandle, state: State<'_, AppState>, instance: Instance) -> CmdResult<()> {
     // Never let the UI move an instance to another directory.
-    Instance::load(&state.paths, &instance.id).map_err(err)?;
-    instance.save(&state.paths).map_err(err)
+    let old = Instance::load(&state.paths, &instance.id).map_err(err)?;
+    instance.save(&state.paths).map_err(err)?;
+    // Other versions are compatible with another Minecraft or loader version.
+    if old.mc_version != instance.mc_version || old.loader != instance.loader {
+        invalidate_updates(&app, &state, &instance.id);
+    }
+    Ok(())
 }
 
 /// Takes over options, servers, configs or packs from another instance.
@@ -414,11 +423,13 @@ async fn duplicate_instance(state: State<'_, AppState>, id: String, name: String
 }
 
 #[tauri::command]
-async fn delete_instance(state: State<'_, AppState>, id: String) -> CmdResult<()> {
+async fn delete_instance(app: AppHandle, state: State<'_, AppState>, id: String) -> CmdResult<()> {
     if state.games.lock().await.contains_key(&id) {
         return Err("Die Instanz läuft gerade.".into());
     }
-    Instance::delete(&state.paths, &id).map_err(err)
+    Instance::delete(&state.paths, &id).map_err(err)?;
+    invalidate_updates(&app, &state, &id);
+    Ok(())
 }
 
 /// Custom icon as a data URL, or none for the colour tile.
@@ -648,9 +659,11 @@ fn percent_decode(s: &str) -> CmdResult<String> {
 
 /// Adds a dropped mod, resource pack or shader pack; returns the detected kind.
 #[tauri::command]
-async fn content_add_local(state: State<'_, AppState>, request: tauri::ipc::Request<'_>) -> CmdResult<ContentType> {
+async fn content_add_local(app: AppHandle, state: State<'_, AppState>, request: tauri::ipc::Request<'_>) -> CmdResult<ContentType> {
     let (v, bytes) = raw_upload(&request, &["x-instance", "x-file-name"])?;
-    manager(&state, &v[0]).await?.add_local(&v[1], bytes).await.map_err(err)
+    let kind = manager(&state, &v[0]).await?.add_local(&v[1], bytes).await.map_err(err)?;
+    invalidate_updates(&app, &state, &v[0]);
+    Ok(kind)
 }
 
 // ---------- worlds & screenshots ----------
@@ -839,21 +852,23 @@ async fn content_install(
 ) -> CmdResult<InstallReport> {
     let manager = manager(&state, &id).await?;
     let progress = progress_for(&app, &task_id);
-    match source.as_deref() {
+    let report = match source.as_deref() {
         Some("curseforge") => manager.install_curseforge(&project, &progress).await,
         _ => manager.install(&project, &progress).await,
-    }
-    .map_err(err)
+    };
+    invalidate_updates(&app, &state, &id);
+    report.map_err(err)
 }
 
 /// Sodium, Lithium, FerriteCore and Iris in one go.
 #[tauri::command]
 async fn content_install_preset(app: AppHandle, state: State<'_, AppState>, id: String, task_id: String) -> CmdResult<InstallReport> {
     let manager = manager(&state, &id).await?;
-    manager
+    let report = manager
         .install_many(&slopclient_core::content::PERFORMANCE_PRESET, &progress_for(&app, &task_id))
-        .await
-        .map_err(err)
+        .await;
+    invalidate_updates(&app, &state, &id);
+    report.map_err(err)
 }
 
 #[tauri::command]
@@ -863,18 +878,23 @@ async fn content_blocked(state: State<'_, AppState>, id: String) -> CmdResult<Ve
 
 /// Picks up manually downloaded CurseForge files from the Downloads folder.
 #[tauri::command]
-async fn content_resolve_blocked(state: State<'_, AppState>, id: String) -> CmdResult<Vec<BlockedFile>> {
-    let (_, remaining) = manager(&state, &id)
+async fn content_resolve_blocked(app: AppHandle, state: State<'_, AppState>, id: String) -> CmdResult<Vec<BlockedFile>> {
+    let (found, remaining) = manager(&state, &id)
         .await?
         .resolve_blocked(&[])
         .await
         .map_err(err)?;
+    if found > 0 {
+        invalidate_updates(&app, &state, &id);
+    }
     Ok(remaining)
 }
 
 #[tauri::command]
-async fn content_remove(state: State<'_, AppState>, id: String, file_name: String) -> CmdResult<()> {
-    manager(&state, &id).await?.remove(&file_name).await.map_err(err)?;
+async fn content_remove(app: AppHandle, state: State<'_, AppState>, id: String, file_name: String) -> CmdResult<()> {
+    let removed = manager(&state, &id).await?.remove(&file_name).await.map_err(err)?;
+    state.updates.forget(&id, removed.kind, &removed.file_name);
+    let _ = app.emit("updates-changed", ());
     Ok(())
 }
 
@@ -893,25 +913,87 @@ async fn content_set_enabled(
     Ok(())
 }
 
-#[tauri::command]
-async fn content_updates(state: State<'_, AppState>, id: String) -> CmdResult<Vec<UpdateInfo>> {
-    manager(&state, &id).await?.check_updates().await.map_err(err)
+/// Tells the instance list and content tab to reload the known updates.
+fn invalidate_updates(app: &AppHandle, state: &AppState, id: &str) {
+    state.updates.invalidate(id);
+    let _ = app.emit("updates-changed", ());
 }
 
+/// Updates of an instance: from the cache when younger than 30 minutes (unless
+/// `force`), otherwise asks Modrinth/CurseForge and remembers the result.
+async fn known_updates(app: &AppHandle, state: &AppState, manager: &ContentManager<'_>, id: &str, force: bool) -> CmdResult<Vec<UpdateInfo>> {
+    if !force && let Some(updates) = state.updates.fresh(id, now()) {
+        return Ok(updates);
+    }
+    let token = state.updates.begin(id);
+    let updates = manager.check_updates().await.map_err(err)?;
+    if state.updates.store(id, token, updates.clone(), now()) {
+        let _ = app.emit("updates-changed", ());
+    }
+    Ok(updates)
+}
+
+#[tauri::command]
+async fn content_updates(app: AppHandle, state: State<'_, AppState>, id: String, force: Option<bool>) -> CmdResult<Vec<UpdateInfo>> {
+    let manager = manager(&state, &id).await?;
+    known_updates(&app, &state, &manager, &id, force.unwrap_or(true)).await
+}
+
+/// Installs the known updates of an instance, or only those of `only`. The new
+/// versions are always the ones the backend found.
 #[tauri::command]
 async fn content_apply_updates(
     app: AppHandle,
     state: State<'_, AppState>,
     id: String,
     task_id: String,
+    only: Option<Vec<UpdateTarget>>,
 ) -> CmdResult<usize> {
+    if state.games.lock().await.contains_key(&id) {
+        return Err("Schließ zuerst das Spiel. Solange es läuft, lassen sich seine Dateien nicht ersetzen.".into());
+    }
+    // One update run per instance at a time: they all rewrite content.lock.json.
+    let busy = state.updates.instance_lock(&id);
+    let _guard = busy.lock().await;
     let manager = manager(&state, &id).await?;
-    let updates = manager.check_updates().await.map_err(err)?;
-    manager
-        .apply_updates(&updates, &progress_for(&app, &task_id))
-        .await
-        .map_err(err)?;
-    Ok(updates.len())
+    let updates = known_updates(&app, &state, &manager, &id, false).await?;
+    let current = manager.list().await.map_err(err)?;
+    let refreshed = update_cache::refresh_entries(updates.clone(), &current);
+    // Files changed since the check (e.g. updated elsewhere) have no update any more.
+    let stale: Vec<UpdateInfo> = updates
+        .into_iter()
+        .filter(|u| !refreshed.iter().any(|r| r.entry.kind == u.entry.kind && r.entry.file_name == u.entry.file_name))
+        .collect();
+    state.updates.remove_done(&id, &stale);
+    let chosen = update_cache::select(refreshed, only.as_deref());
+    if let Err(e) = manager.apply_updates(&chosen, &progress_for(&app, &task_id)).await {
+        // Some files may already be replaced: check again next time.
+        invalidate_updates(&app, &state, &id);
+        return Err(err(e));
+    }
+    state.updates.remove_done(&id, &chosen);
+    let _ = app.emit("updates-changed", ());
+    Ok(chosen.len())
+}
+
+/// Number of known updates per instance, for the instance list.
+#[tauri::command]
+async fn updates_overview(state: State<'_, AppState>) -> CmdResult<HashMap<String, usize>> {
+    Ok(state.updates.counts())
+}
+
+/// Looks for updates of every instance one after another, quietly (offline is fine).
+async fn check_all_updates(app: AppHandle) {
+    let state = app.state::<AppState>();
+    if !Settings::load(&state.paths).map(|s| s.check_updates_on_start()).unwrap_or(true) {
+        return;
+    }
+    let Ok(instances) = Instance::list(&state.paths) else { return };
+    for instance in instances {
+        let id = instance.id.clone();
+        let manager = ContentManager::new(&state.paths, instance, state.concurrency()).with_curseforge(state.curseforge_key());
+        let _ = known_updates(&app, &state, &manager, &id, true).await;
+    }
 }
 
 /// Description, gallery and links of a project for the launcher's project page.
@@ -1264,6 +1346,12 @@ pub fn run() {
         .setup(|app| {
             let state = app.state::<AppState>();
             state.refresh_presence();
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                // Let the window come up first.
+                tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                check_all_updates(handle).await;
+            });
             Ok(())
         })
         .manage(AppState {
@@ -1274,6 +1362,7 @@ pub fn run() {
             stopping: Mutex::new(Default::default()),
             playing: std::sync::Mutex::new(Vec::new()),
             started_at: now(),
+            updates: UpdateCache::default(),
         })
         .invoke_handler(tauri::generate_handler![
             get_overview,
@@ -1335,6 +1424,7 @@ pub fn run() {
             content_set_enabled,
             content_updates,
             content_apply_updates,
+            updates_overview,
             search,
             project_details,
             version_changelog,

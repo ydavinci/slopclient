@@ -52,6 +52,8 @@ pub struct Settings {
     pub discord_presence: Option<bool>,
     /// Leave the server address out of the Discord status.
     pub discord_hide_server: bool,
+    /// Look for content updates of all instances when the launcher starts; none means on.
+    pub check_updates_on_start: Option<bool>,
     /// Hat from `cosmetics/extras.json`.
     pub hat: Option<String>,
     /// Pet from `cosmetics/extras.json`.
@@ -105,6 +107,10 @@ impl Settings {
 
     /// Discord application id from `SLOPCLIENT_DISCORD_APP_ID`, then the build-time
     /// value, then SlopClient's own app; none while Rich Presence is switched off.
+    pub fn check_updates_on_start(&self) -> bool {
+        self.check_updates_on_start.unwrap_or(true)
+    }
+
     pub fn discord_app_id(&self) -> Option<String> {
         if !self.discord_presence.unwrap_or(true) {
             return None;
