@@ -41,6 +41,7 @@ use slopclient_core::{
 };
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
+use tauri_plugin_updater::UpdaterExt;
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     sync::Mutex,
@@ -999,6 +1000,90 @@ async fn updates_overview(state: State<'_, AppState>) -> CmdResult<HashMap<Strin
     Ok(state.updates.counts())
 }
 
+// ---------- launcher updates ----------
+
+/// A newer SlopClient release (from `latest.json` of the newest GitHub release).
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LauncherUpdate {
+    version: String,
+    current_version: String,
+    /// Release notes from CHANGELOG.md (Markdown).
+    notes: Option<String>,
+    /// RFC 3339.
+    date: Option<String>,
+}
+
+async fn find_launcher_update(app: &AppHandle) -> Result<Option<tauri_plugin_updater::Update>, String> {
+    let updater = app.updater().map_err(update_error)?;
+    updater.check().await.map_err(update_error)
+}
+
+fn update_error(e: tauri_plugin_updater::Error) -> String {
+    format!("Update-Prüfung fehlgeschlagen: {e}")
+}
+
+fn launcher_update_info(update: &tauri_plugin_updater::Update) -> LauncherUpdate {
+    LauncherUpdate {
+        version: update.version.clone(),
+        current_version: update.current_version.clone(),
+        notes: update.body.clone().filter(|b| !b.trim().is_empty()),
+        date: update.raw_json.get("pub_date").and_then(|d| d.as_str()).map(str::to_owned),
+    }
+}
+
+/// Looks for a newer launcher version (the UI asks at start and every 6 hours). Errors
+/// (offline, rate limit) go to the caller; debug builds never report an update.
+#[tauri::command]
+async fn launcher_update_check(app: AppHandle) -> CmdResult<Option<LauncherUpdate>> {
+    if cfg!(debug_assertions) {
+        return Ok(None);
+    }
+    Ok(find_launcher_update(&app).await?.as_ref().map(launcher_update_info))
+}
+
+/// Downloads the update, checks its signature and starts the installer, which closes
+/// the launcher and starts the new version. Refuses while a game is running.
+#[tauri::command]
+async fn launcher_update_install(app: AppHandle, state: State<'_, AppState>, task_id: String) -> CmdResult<()> {
+    if !state.games.lock().await.is_empty() {
+        return Err("Schließ zuerst Minecraft, dann wird das Update installiert.".into());
+    }
+    let update = find_launcher_update(&app)
+        .await?
+        .ok_or("SlopClient ist schon auf dem neuesten Stand.")?;
+    let progress = progress_for(&app, &task_id);
+    progress(Progress::Stage { name: format!("SlopClient {} herunterladen", update.version) });
+    let mut bytes = 0u64;
+    let report = progress.clone();
+    update
+        .download_and_install(
+            move |chunk, total| {
+                bytes += chunk as u64;
+                report(Progress::Download {
+                    finished: 0,
+                    total: 1,
+                    bytes,
+                    total_bytes: total.unwrap_or(0),
+                });
+            },
+            move || progress(Progress::Stage { name: "Update installieren".into() }),
+        )
+        .await
+        .map_err(|e| match e {
+            tauri_plugin_updater::Error::Minisign(_)
+            | tauri_plugin_updater::Error::SignatureUtf8(_)
+            | tauri_plugin_updater::Error::Base64(_)
+            | tauri_plugin_updater::Error::SignedVersionMismatch { .. }
+            | tauri_plugin_updater::Error::MissingSignedVersion => {
+                "Das Update ist nicht korrekt signiert und wurde nicht installiert.".to_owned()
+            }
+            e => format!("Update fehlgeschlagen: {e}"),
+        })?;
+    // Windows: the installer has taken over and ends the launcher. Elsewhere restart.
+    app.restart();
+}
+
 /// Looks for updates of every instance one after another, quietly (offline is fine).
 async fn check_all_updates(app: AppHandle) {
     let state = app.state::<AppState>();
@@ -1453,6 +1538,7 @@ pub fn run() {
     builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let state = app.state::<AppState>();
             state.refresh_presence();
@@ -1552,6 +1638,8 @@ pub fn run() {
             store_stats,
             store_dedupe,
             store_gc,
+            launcher_update_check,
+            launcher_update_install,
             search,
             project_details,
             version_changelog,

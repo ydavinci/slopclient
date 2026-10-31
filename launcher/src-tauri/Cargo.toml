@@ -16,6 +16,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
 dirs.workspace = true
 base64 = "0.22"
 serde.workspace = true

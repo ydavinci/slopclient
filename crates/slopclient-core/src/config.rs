@@ -57,6 +57,10 @@ pub struct Settings {
     /// Keep mods, resource packs and shaders once in the content store and hard link
     /// them into instances; none means on.
     pub shared_content: Option<bool>,
+    /// Look for a new launcher version at start and every 6 hours; none means on.
+    pub launcher_update_check: Option<bool>,
+    /// Install a launcher update found at start without asking.
+    pub launcher_auto_install: bool,
     /// Hat from `cosmetics/extras.json`.
     pub hat: Option<String>,
     /// Pet from `cosmetics/extras.json`.
@@ -116,6 +120,10 @@ impl Settings {
 
     pub fn check_updates_on_start(&self) -> bool {
         self.check_updates_on_start.unwrap_or(true)
+    }
+
+    pub fn launcher_update_check(&self) -> bool {
+        self.launcher_update_check.unwrap_or(true)
     }
 
     pub fn discord_app_id(&self) -> Option<String> {
