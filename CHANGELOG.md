@@ -7,6 +7,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 ### Client-Mod
 - **Musik**: Zeigt, was Spotify, Cider, Apple Music oder ein anderer Musikplayer gerade spielt, mit Cover, Fortschritt und Tasten für Abspielen/Pause, nächsten und vorherigen Titel. Gelesen wird die Windows-Mediensteuerung, ohne Anmeldung; Browser und Videoplayer zählen nie, ein YouTube-Video taucht also nicht auf.
 - **Song über dem Namen**: Mit „Teilen“ sehen andere SlopClient-Spieler deinen Song über deinem Nametag, du ihren über ihrem. Geteilt wird nur, solange Musik läuft; der Server merkt ihn sich nur im Speicher, höchstens zweieinhalb Minuten ohne Update.
+- Einzelne Buchstaben in der scharfen Schrift (z. B. S, r, h) standen je nach Position einen Pixel höher als ihre Nachbarn. Der Text sitzt jetzt auf einer Linie.
 
 ### Cosmetics-Server
 - `PUT`/`DELETE /v1/listening` und `POST /v1/listening/lookup` für die geteilten Songs. Der Launcher-Session-Token bleibt dabei im Launcher-Programm und erreicht das Spiel nie.
