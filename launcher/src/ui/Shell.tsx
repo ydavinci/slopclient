@@ -1,4 +1,4 @@
-import { Check, CircleCheck, Compass, House, Info, LayoutGrid, LogIn, Minus, Settings, Shirt, Square, Trash2, TriangleAlert, X } from "lucide-react";
+import { Check, CircleCheck, Compass, House, Images, Info, LayoutGrid, LogIn, Minus, Settings, Shirt, Square, Trash2, TriangleAlert, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, appWindow } from "../lib/ipc";
@@ -47,6 +47,7 @@ const NAV: { page: Route["page"]; label: string; icon: ReactNode }[] = [
   { page: "instances", label: "Instanzen", icon: <LayoutGrid className="size-[18px]" /> },
   { page: "browse", label: "Entdecken", icon: <Compass className="size-[18px]" /> },
   { page: "cosmetics", label: "Kosmetik", icon: <Shirt className="size-[18px]" /> },
+  { page: "screenshots", label: "Screenshots", icon: <Images className="size-[18px]" /> },
 ];
 
 /** Floating category rail, the client's category switcher. */

@@ -67,3 +67,11 @@ export function initials(name: string): string {
   const words = name.replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/);
   return (words.length > 1 ? words[0][0] + words[1][0] : name.slice(0, 2)).toUpperCase();
 }
+
+/** "840 KB", "2,4 MB", binary units with a German decimal comma. */
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 ** 2) return `${(n / 1024).toFixed(0)} KB`;
+  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1).replace(".", ",")} MB`;
+  return `${(n / 1024 ** 3).toFixed(2).replace(".", ",")} GB`;
+}

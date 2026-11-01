@@ -2,19 +2,14 @@ import { Archive, Camera, ChevronDown, FolderOpen, Globe2, Package, Play, Plus, 
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../lib/ipc";
-import { relativeTime } from "../lib/format";
+import { formatBytes, relativeTime } from "../lib/format";
 import { useLaunch, useStore } from "../lib/store";
 import type { Datapack, Instance, Screenshot, Server, ServerStatus, World } from "../lib/types";
 import { Button, Chip, EASE, EmptyState, IconButton, Spinner, Toggle, rise, stagger } from "../ui/kit";
+import { ScreenshotTile } from "../ui/ScreenshotTile";
+import { ScreenshotViewer } from "../ui/ScreenshotViewer";
 
 const MODES: Record<string, string> = { survival: "Überleben", creative: "Kreativ", adventure: "Abenteuer", spectator: "Zuschauer" };
-
-export function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 ** 2) return `${(n / 1024).toFixed(0)} KB`;
-  if (n < 1024 ** 3) return `${(n / 1024 ** 2).toFixed(1).replace(".", ",")} MB`;
-  return `${(n / 1024 ** 3).toFixed(2).replace(".", ",")} GB`;
-}
 
 /**
  * Wraps a list in a drop target: dragging files over it shows a glowing outline
@@ -432,6 +427,7 @@ function Datapacks({ instance, world, onChanged }: { instance: Instance; world: 
 export function ScreenshotsTab({ instance }: { instance: Instance }) {
   const { toast } = useStore();
   const [shots, setShots] = useState<Screenshot[] | null>(null);
+  const [viewing, setViewing] = useState<number | null>(null);
 
   const load = useCallback(() => {
     api.screenshots(instance.id).then(setShots).catch((e) => toast(String(e), "error"));
@@ -460,7 +456,7 @@ export function ScreenshotsTab({ instance }: { instance: Instance }) {
   return (
     <div className="h-full overflow-auto px-8 pt-5 pb-6">
       <div className="mb-3 flex items-center gap-3">
-        <p className="mr-auto text-[13px] text-muted">{shots ? `${shots.length} Screenshots. Klick öffnet das Bild, F2 im Spiel macht neue.` : " "}</p>
+        <p className="mr-auto text-[13px] text-muted">{shots ? `${shots.length} Screenshots. Klick öffnet den Viewer, F2 im Spiel macht neue.` : " "}</p>
         <Button size="sm" icon={<FolderOpen className="size-3.5" />} onClick={openFolder}>
           Ordner
         </Button>
@@ -473,70 +469,22 @@ export function ScreenshotsTab({ instance }: { instance: Instance }) {
         <EmptyState icon={<Camera className="size-5" />} title="Noch keine Screenshots" text="Drück im Spiel F2. Deine Screenshots erscheinen dann hier als Galerie." />
       ) : (
         <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
-          {shots.map((s) => (
-            <Shot key={s.fileName} instanceId={instance.id} shot={s} onDelete={() => remove(s)} />
+          {shots.map((s, i) => (
+            <ScreenshotTile key={s.fileName} instanceId={instance.id} shot={s} onOpen={() => setViewing(i)} onDelete={() => remove(s)} />
           ))}
         </motion.div>
       )}
+      <AnimatePresence>
+        {viewing !== null && shots && (
+          <ScreenshotViewer
+            shots={shots.map((s) => ({ ...s, instanceId: instance.id }))}
+            index={Math.min(viewing, shots.length - 1)}
+            onIndex={setViewing}
+            onClose={() => setViewing(null)}
+            onDeleted={(s) => setShots((list) => list?.filter((x) => x.fileName !== s.fileName) ?? null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
-  );
-}
-
-function Shot({ instanceId, shot, onDelete }: { instanceId: string; shot: Screenshot; onDelete: () => void }) {
-  const { toast } = useStore();
-  const [url, setUrl] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState(false);
-  const el = useRef<HTMLDivElement>(null);
-
-  // Deleting asks for a second click within a few seconds.
-  useEffect(() => {
-    if (!confirm) return;
-    const t = setTimeout(() => setConfirm(false), 3000);
-    return () => clearTimeout(t);
-  }, [confirm]);
-
-  // Thumbnails load once the tile scrolls into view.
-  useEffect(() => {
-    const node = el.current;
-    if (!node) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        io.disconnect();
-        api.screenshotThumb(instanceId, shot.fileName).then(setUrl).catch(() => setUrl(""));
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(node);
-    return () => io.disconnect();
-  }, [instanceId, shot.fileName]);
-
-  return (
-    <motion.div ref={el} variants={rise} className="group glass relative overflow-hidden rounded-[14px]">
-      <button className="block aspect-video w-full overflow-hidden bg-black/40" onClick={() => api.openPath(shot.path).catch((e) => toast(String(e), "error"))} aria-label={`${shot.fileName} öffnen`}>
-        {url ? (
-          <motion.img initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: EASE }} src={url} alt="" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
-        ) : (
-          <div className="size-full animate-pulse bg-white/[0.03]" />
-        )}
-      </button>
-      <div className="flex items-center gap-2 px-3 py-2">
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-mono text-[11.5px]">{shot.fileName.replace(/\.png$/i, "")}</div>
-          <div className="text-[11px] text-muted">
-            {relativeTime(shot.takenAt)} · {formatBytes(shot.sizeBytes)}
-          </div>
-        </div>
-        {confirm ? (
-          <Button size="sm" variant="danger" onClick={onDelete}>
-            Löschen
-          </Button>
-        ) : (
-          <IconButton label="Screenshot löschen" className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100" onClick={() => setConfirm(true)}>
-            <Trash2 className="size-3.5" />
-          </IconButton>
-        )}
-      </div>
-    </motion.div>
   );
 }

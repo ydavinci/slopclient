@@ -46,6 +46,16 @@ let mockShots = Array.from({ length: 9 }, (_, i) => ({
   takenAt: now - i * 40000 - 600,
   sizeBytes: 2_400_000 + i * 180_000,
 }));
+/** Stand-in full-size screenshot for the browser preview: the same scene, larger, with a sun. */
+export function mockShotImage(name: string): string {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const hue = 190 + (h % 80);
+  const sun = 300 + (h % 1200);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"><defs><linearGradient id="g" x2="0" y2="1"><stop offset="0" stop-color="hsl(${hue} 60% 62%)"/><stop offset=".62" stop-color="hsl(${hue + 20} 45% 78%)"/><stop offset=".63" stop-color="hsl(110 35% 34%)"/><stop offset="1" stop-color="hsl(30 30% 22%)"/></linearGradient></defs><rect width="1920" height="1080" fill="url(#g)"/><circle cx="${sun}" cy="230" r="70" fill="#fff7d6"/><rect x="${sun - 400}" y="560" width="120" height="120" fill="hsl(110 30% 28%)"/><rect x="${sun + 200}" y="600" width="80" height="80" fill="hsl(30 25% 30%)"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 /** Stand-in thumbnails: a sky-to-ground gradient per screenshot. */
 function shotThumb(name: string): string {
   let h = 0;
@@ -450,6 +460,14 @@ export async function mockCall(cmd: string, args: Record<string, unknown> = {}):
       return delay(shotThumb(String(args.name)), 300 + Math.random() * 500);
     case "screenshot_delete":
       mockShots = mockShots.filter((s) => s.fileName !== args.name);
+      return delay(null);
+    case "screenshots_all":
+      return delay(
+        mockShots
+          .map((s, i) => ({ ...s, instanceId: instances[i % 3].id, instanceName: instances[i % 3].name }))
+          .sort((a, b) => b.takenAt - a.takenAt),
+      );
+    case "screenshot_reveal":
       return delay(null);
     default:
       return delay(null);
