@@ -114,6 +114,50 @@ public final class Restyle {
 		Ui.rect(g, x + (w - tw) / 2f, y + 1, tw, h - 2, tw / 2, Theme.alpha(0xFFFFFF, 0.28 + 0.3 * hv));
 	}
 
+	/** Header or footer separator: one hairline where the texture's light edge was. */
+	public static void separator(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+		float hl = Ui.hairline(g);
+		Ui.rect(g, x, y + (h - hl) / 2f, w, hl, 0, 0x24FFFFFF);
+	}
+
+	/** Tab of a tab bar ("Welt erstellen"): a pill, accent wash and chroma underline when selected. */
+	public static void tab(GuiGraphicsExtractor g, AbstractWidget w, boolean selected) {
+		double hv = hover(w, w.isActive() && w.isHoveredOrFocused());
+		double sel = Ui.anim("restyle.tab." + System.identityHashCode(w), selected);
+		double a = w.isActive() ? 1 : 0.45;
+		float x = w.getX() + 2, y = w.getY() + 3, tw = w.getWidth() - 4, th = w.getHeight() - 6, r = th / 2f;
+		Ui.rect(g, x, y, tw, th, r, Theme.alpha(Theme.RAISED, (0.35 + 0.3 * hv + 0.3 * sel) * a));
+		if (sel > 0.01) Ui.rect(g, x, y, tw, th, r, Theme.alpha(Theme.ACCENT, 0.18 * sel * a));
+		Ui.outline(g, x, y, tw, th, r, Theme.alpha(Theme.lerp(0xFFFFFFFF, Theme.ACCENT_2, Math.max(hv, sel)), (0.08 + 0.25 * hv + 0.3 * sel) * a));
+		if (sel > 0.01) {
+			float uw = (tw - 2 * r) * (float) sel;
+			Ui.chroma(g, x + (tw - uw) / 2f, y + th - 2, uw, 1.5f, 0.75f, sel * a, 0);
+		}
+		int color = w.isActive() ? (selected ? 0xFFFFFFFF : 0xFFC9CBD6) : 0xFF8A8C96;
+		String label = Ui.fit(w.getMessage().getString(), 8, tw - 8);
+		Ui.text(g, label, x + (tw - Ui.width(label, 8)) / 2f, y + (th - 10) / 2f, 8, color);
+	}
+
+	/** Advancements: the glass panel behind the tree, drawn before the tree so it stays under it. */
+	public static void advancementPanel(GuiGraphicsExtractor g, int x, int y) {
+		Ui.glass(g, x, y, 252, 140, 10, 1);
+		g.fill(x + 9, y + 18, x + 9 + 234, y + 18 + 113, 0xFF000000);
+	}
+
+	/** Advancements: hairline around the tree and the title, on top of the tree. */
+	public static void advancementFrame(GuiGraphicsExtractor g, int x, int y, String title) {
+		Ui.outline(g, x + 9, y + 18, 234, 113, 0, 0x29FFFFFF);
+		Ui.text(g, Ui.fit(title, 8.5f, 234), x + 10, y + 5.5f, 8.5f, 0xFFFFFFFF);
+	}
+
+	/** Advancement tab: glass, the selected one brighter with an accent edge. */
+	public static void advancementTab(GuiGraphicsExtractor g, int x, int y, int w, int h, boolean selected) {
+		float r = 7;
+		Ui.rect(g, x + 1, y + 1, w - 2, h - 2, r, Theme.alpha(Theme.PANEL_SOLID, selected ? 0.92 : 0.7));
+		if (selected) Ui.rect(g, x + 1, y + 1, w - 2, h - 2, r, Theme.alpha(Theme.ACCENT, 0.16));
+		Ui.outline(g, x + 1, y + 1, w - 2, h - 2, r, selected ? Theme.alpha(Theme.ACCENT_2, 0.6) : Theme.alpha(0xFFFFFF, 0.12));
+	}
+
 	/** Screen background: the launcher shader on the title side, the blurred world in game. */
 	public static boolean background(GuiGraphicsExtractor g, Runnable blurWorld) {
 		Minecraft mc = Minecraft.getInstance();
