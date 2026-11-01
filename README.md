@@ -57,7 +57,7 @@ installiert 0.5.7 einmal von Hand.
 
 ### Client-Mod (Fabric/Quilt, Minecraft 26.3)
 
-- eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche, **Config-Profile**
+- eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche über Module und Einstellungen, einstellbarer Größe und **Config-Profilen**
 - **HUD-Editor** mit Snapping und vielen Elementen: FPS, CPS, Keystrokes, Koordinaten, Geschwindigkeit, Rüstung, Tränke, Ping, Server-IP, Uhrzeit, Kompass, Item-Zähler, Combo, Reichweite, Cooldowns, Bossleiste, Arbeitsspeicher, Biom, Tag, Stoppuhr, Resourcepacks, Modul-Liste
 - **Bibliothekar**: Schaust du auf ein Lesepult, stehen die Bücher des Bibliothekars samt Preis daneben
 - **Ansicht**: Zoom (C), Freelook (Alt), Helligkeit, eigenes Fadenkreuz, Block-Umriss, Hit-Color, Low Fire, eigener Nametag, Glow für sichtbare Spieler

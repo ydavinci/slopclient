@@ -34,6 +34,8 @@ public final class Config {
 	private final Path clientFile = dir.resolve("client.json");
 	/** ClickGUI panel positions by category name. */
 	public final Map<String, int[]> panels = new HashMap<>();
+	/** Size of the ClickGUI relative to Minecraft's GUI scale (0.6 to 1.5). */
+	public float guiScale = 1f;
 	private String profile = DEFAULT_PROFILE;
 
 	public String profile() {
@@ -66,6 +68,7 @@ public final class Config {
 			if (Files.isRegularFile(clientFile)) {
 				JsonObject root = JsonParser.parseString(Files.readString(clientFile)).getAsJsonObject();
 				if (root.has("profile")) profile = sanitize(root.get("profile").getAsString());
+				if (root.has("guiScale")) guiScale = clampGuiScale(root.get("guiScale").getAsFloat());
 				if (root.has("panels")) {
 					for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("panels").entrySet()) {
 						JsonArray arr = e.getValue().getAsJsonArray();
@@ -77,6 +80,11 @@ public final class Config {
 			SlopClient.LOG.warn("Could not read {}", clientFile, e);
 		}
 		loadProfile(modules, profile, true);
+	}
+
+	public static float clampGuiScale(float scale) {
+		if (!Float.isFinite(scale)) return 1f;
+		return Math.round(Math.max(0.6f, Math.min(1.5f, scale)) * 10) / 10f;
 	}
 
 	/** Moves the single-file config of SlopClient 0.1.0 into the default profile. */
@@ -162,6 +170,7 @@ public final class Config {
 
 		JsonObject client = new JsonObject();
 		client.addProperty("profile", profile);
+		client.addProperty("guiScale", guiScale);
 		JsonObject panelJson = new JsonObject();
 		panels.forEach((name, pos) -> {
 			JsonArray arr = new JsonArray();

@@ -19,8 +19,8 @@ final class Chrome {
 	/** The SlopClient "S" mark (design/logo/glyph-512.png). */
 	private static final net.minecraft.resources.Identifier LOGO = net.minecraft.resources.Identifier.fromNamespaceAndPath(SlopClient.ID, "textures/gui/logo.png");
 
-	/** Glass watermark pill like the launcher's title bar: logo, name, version, player, Minecraft, clock. */
-	static void titleBar(GuiGraphicsExtractor g, Minecraft mc, double k, String... extra) {
+	/** Glass watermark pill like the launcher's title bar: logo, name, version, player, Minecraft, clock. Returns its right edge. */
+	static int titleBar(GuiGraphicsExtractor g, Minecraft mc, double k, String... extra) {
 		int x = PAD - (int) Math.round((1 - k) * 12), y = 10, h = 20;
 		String[] base = {
 			"v" + SlopClient.VERSION,
@@ -44,6 +44,7 @@ final class Chrome {
 			Draw.text(g, p, cx + 13, y + 6, Theme.alpha(Theme.MUTED, k));
 			cx += 13 + Draw.width(p);
 		}
+		return x + w;
 	}
 
 	/** The launcher's spring toggle: chroma track when on, white knob. */
