@@ -4,6 +4,10 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 
 ## Unveröffentlicht
 
+### Launcher
+- **Screenshots** (neuer Bereich in der Seitenleiste): die Bilder aller Instanzen in einer Galerie, nach Tagen gruppiert, mit Filter pro Instanz, Suche und Sortierung. Neue Bilder erscheinen, sobald ein Spiel endet.
+- **Screenshot-Viewer**: Klick auf ein Bild öffnet es groß über dem Launcher, auch im Screenshots-Tab einer Instanz. Mausrad oder Doppelklick zoomt bis 800 %, gezoomt lässt sich das Bild ziehen. Pfeiltasten, Pfeile am Rand und ein Filmstreifen unten blättern. Dazu: Kopieren in die Zwischenablage (Strg+C), Im Ordner zeigen, mit dem Standardprogramm öffnen, Löschen (Entf, zweimal zum Bestätigen).
+
 ### Client-Mod
 - **Musik**: Zeigt, was Spotify, Cider, Apple Music oder ein anderer Musikplayer gerade spielt, mit Cover, Fortschritt und Tasten für Abspielen/Pause, nächsten und vorherigen Titel. Gelesen wird die Windows-Mediensteuerung, ohne Anmeldung; Browser und Videoplayer zählen nie, ein YouTube-Video taucht also nicht auf.
 - **Song über dem Namen**: Mit „Teilen“ sehen andere SlopClient-Spieler deinen Song über deinem Nametag, du ihren über ihrem. Geteilt wird nur, solange Musik läuft; der Server merkt ihn sich nur im Speicher, höchstens zweieinhalb Minuten ohne Update.
@@ -16,6 +20,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
   - Modus „Automatisch“: Nochmal Leertaste in der Luft legt die Elytra an. Gezählt wird nicht der Sprung vom Boden selbst. Das Gleiten startet, sobald du fällst. Drückst du noch im Steigen, wartet der Tausch bis zum höchsten Punkt, damit es dich nicht nach oben zieht.
   - „Nach Landung zurück“ (Standard an) zieht nach dem Gleiten die Brustplatte wieder an. Wer die Elytra am Boden anlegt, behält sie.
   - Genommen wird die Elytra mit der meisten Haltbarkeit, eine fast kaputte nie. Getauscht wird mit normalen Inventar-Klicks, Server können das Modul abschalten.
+- **Screenshot-Galerie im Spiel**: die Screenshots der Instanz als Raster mit Vorschaubildern, im Stil von ClickGUI und Amboss-Planer. Ein Klick öffnet den Viewer mit Zoom per Mausrad, Ziehen, Pfeiltasten, „Im Ordner zeigen“ und Löschen. Öffnen über „Screenshots“ unten in der ClickGUI oder eine eigene Taste (ohne Standardbelegung).
 
 ### Cosmetics-Server
 - `PUT`/`DELETE /v1/listening` und `POST /v1/listening/lookup` für die geteilten Songs. Der Launcher-Session-Token bleibt dabei im Launcher-Programm und erreicht das Spiel nie.

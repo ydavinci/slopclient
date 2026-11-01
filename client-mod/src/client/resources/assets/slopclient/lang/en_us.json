@@ -10,5 +10,6 @@
 	"key.slopclient.music.toggle": "Music: play/pause",
 	"key.slopclient.music.next": "Music: next track",
 	"key.slopclient.music.previous": "Music: previous track",
-	"key.slopclient.elytra_swap": "Swap elytra and chestplate"
+	"key.slopclient.elytra_swap": "Swap elytra and chestplate",
+	"key.slopclient.screenshot_gallery": "Open screenshot gallery"
 }

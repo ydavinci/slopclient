@@ -474,6 +474,11 @@ public final class ClickGuiScreen extends Screen {
 		x -= w;
 		buttons.add(new FooterButton(hud, "HUD-Elemente verschieben und skalieren", x, y, w, h,
 			b -> minecraft.gui.setScreen(new HudEditorScreen(this))));
+		String shots = "Screenshots";
+		w = Draw.width(shots) + 16;
+		x -= w + 4;
+		buttons.add(new FooterButton(shots, "Deine Screenshots dieser Instanz ansehen", x, y, w, h,
+			b -> minecraft.gui.setScreen(new ScreenshotGalleryScreen(this))));
 		String size = "Größe " + Math.round(config.guiScale * 100) + " %";
 		w = Draw.width(size) + 16;
 		x -= w + 4;
