@@ -31,7 +31,11 @@
 		"restyle.EditBoxRestyleMixin",
 		"restyle.AbstractSelectionListRestyleMixin",
 		"restyle.AbstractScrollAreaRestyleMixin",
-		"restyle.ScreenRestyleMixin"
+		"restyle.ScreenRestyleMixin",
+		"restyle.SeparatorRestyleMixin",
+		"restyle.MenuTabButtonRestyleMixin",
+		"restyle.AdvancementsScreenRestyleMixin",
+		"restyle.AdvancementTabTypeRestyleMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }
