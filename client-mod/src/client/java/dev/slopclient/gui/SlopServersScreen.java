@@ -734,6 +734,8 @@ public final class SlopServersScreen extends Screen {
 	private void drawStyled(GuiGraphicsExtractor g, Component text, float x, float y, float size, float maxW, double k) {
 		float[] cx = {x};
 		float end = x + maxW;
+		// Servers centre their MOTD for vanilla's wide list with leading spaces; the row starts at the name instead.
+		started = false;
 		text.visit((style, part) -> {
 			int color = colorOf(style);
 			StringBuilder run = new StringBuilder();
@@ -757,6 +759,9 @@ public final class SlopServersScreen extends Screen {
 		}, Style.EMPTY);
 	}
 
+	/** Whether the current MOTD line has drawn visible text yet (leading spaces are dropped until then). */
+	private boolean started;
+
 	private static final int[] LEGACY = {0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFFFAA00, 0xFFAAAAAA,
 		0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF};
 
@@ -769,6 +774,11 @@ public final class SlopServersScreen extends Screen {
 		if (run.isEmpty()) return true;
 		String s = run.toString();
 		run.setLength(0);
+		if (!started) {
+			s = s.stripLeading();
+			if (s.isEmpty()) return true;
+			started = true;
+		}
 		// Very dark MOTD colours would vanish on the dark glass.
 		int c = Theme.lerp(color, 0xFFFFFFFF, luminance(color) < 0.25 ? 0.45 : 0);
 		if (cx[0] + Ui.width(s, size) <= end) {
