@@ -18,6 +18,7 @@ ICONS = [
     "trash-2", "pencil", "refresh-cw", "wifi", "wifi-off", "signal", "users", "skull", "sword",
     "log-out", "save", "trophy", "chart-column", "share-2", "globe", "sparkles", "pickaxe",
     "box", "copy", "check", "circle-alert", "info", "external-link", "archive", "grip-vertical",
+    "bug", "message-square", "flag",
 ]
 
 def main():
