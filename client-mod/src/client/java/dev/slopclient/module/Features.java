@@ -445,8 +445,11 @@ public final class Features {
 
 	/** Replaces the vanilla title screen with the SlopClient one. */
 	public static final class TitleScreenModule extends Module {
+		/** The ESC menu in the launcher look as well (vanilla when off). */
+		public final dev.slopclient.setting.BoolSetting pauseMenu = add(new dev.slopclient.setting.BoolSetting("ESC-Menü", true));
+
 		public TitleScreenModule() {
-			super("Titelbildschirm", "SlopClient-Startbildschirm statt Vanilla", Category.COMFORT, true);
+			super("Titelbildschirm", "SlopClient-Startbildschirm und ESC-Menü statt Vanilla", Category.COMFORT, true);
 		}
 
 		@Override

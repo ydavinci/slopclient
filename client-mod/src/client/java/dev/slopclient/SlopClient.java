@@ -29,6 +29,8 @@ public final class SlopClient implements ClientModInitializer {
 
 	private static ModuleManager modules;
 	private static Config config;
+	/** When the current world or server was joined (epoch ms), for the ESC menu's play time. */
+	public static long joinedAt = System.currentTimeMillis();
 	private static KeyMapping clickGuiKey;
 
 	public static ModuleManager modules() {
@@ -119,6 +121,7 @@ public final class SlopClient implements ClientModInitializer {
 
 		// Remembered for "Spielen" on the title screen: the world or server joined last.
 		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> mc.execute(() -> {
+			joinedAt = System.currentTimeMillis();
 			String[] last = null;
 			var server = mc.getSingleplayerServer();
 			if (server != null) {
