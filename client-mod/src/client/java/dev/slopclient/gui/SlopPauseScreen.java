@@ -2,6 +2,7 @@ package dev.slopclient.gui;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.slopclient.SlopClient;
+import dev.slopclient.mixin.SpriteIconButtonAccessor;
 import dev.slopclient.render.Theme;
 import dev.slopclient.ui.Icon;
 import dev.slopclient.ui.Kit;
@@ -17,6 +18,7 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -281,9 +283,9 @@ public final class SlopPauseScreen extends Screen {
 	private static String iconFor(String key) {
 		if (key == null) return null;
 		return switch (key) {
-			case "menu.sendFeedback" -> Icon.INFO;
-			case "menu.reportBugs" -> Icon.CIRCLE_ALERT;
-			case "menu.playerReporting" -> Icon.USERS;
+			case "menu.sendFeedback" -> Icon.MESSAGE_SQUARE;
+			case "menu.reportBugs" -> Icon.BUG;
+			case "menu.playerReporting" -> Icon.FLAG;
 			case "menu.server_links" -> Icon.EXTERNAL_LINK;
 			default -> null;
 		};
@@ -298,16 +300,22 @@ public final class SlopPauseScreen extends Screen {
 		double k = intro(0);
 		float top = Float.MAX_VALUE, left = Float.MAX_VALUE, right = 0;
 		boolean titleDrawn = false;
+		float[] tooltip = null;
+		String tooltipText = "";
 		int i = 0;
 		for (var child : vanilla.children()) {
 			if (!(child instanceof AbstractWidget w) || !w.visible) continue;
 			float x = w.getX(), y = w.getY() + (float) (1 - k) * 6, bw = w.getWidth(), bh = w.getHeight();
 			String key = key(w), label = w.getMessage().getString();
 			if (!(w instanceof AbstractButton)) {
-				// Text widgets (the "Spielmenü" title): centred bold text.
-				if (!label.isBlank()) {
+				if (label.isBlank()) continue;
+				if ("menu.game".equals(key) || "menu.paused".equals(key)) {
+					// The "Spielmenü" title: centred bold text.
 					Ui.bold(g, label, x + (bw - Ui.boldWidth(label, 11)) / 2, y + (bh - 13.75f) / 2, 11, Theme.alpha(Theme.TEXT, k));
 					titleDrawn = true;
+				} else {
+					// Other text (e.g. the tip in the corner): small, wrapped to its box.
+					drawWrapped(g, label, x, w.getY(), bw, bh, k);
 				}
 				continue;
 			}
@@ -330,9 +338,21 @@ public final class SlopPauseScreen extends Screen {
 			}
 			int textColor = RETURN.equals(key) ? 0xFFFFFFFF : Theme.lerp(Theme.TEXT, 0xFFFFFFFF, hv);
 			String icon = iconFor(key);
-			if (bw <= 24 && icon != null) {
-				float s = Math.min(12, bh - 6);
-				Ui.icon(g, icon, x + (bw - s) / 2, y + (bh - s) / 2, s, Theme.alpha(textColor, a));
+			if (bw <= 24) {
+				// Icon buttons: Lucide for vanilla's, the button's own sprite for mods'.
+				if (icon != null) {
+					float s = Math.min(11, bh - 8);
+					Ui.icon(g, icon, x + (bw - s) / 2, y + (bh - s) / 2, s, Theme.alpha(textColor, a));
+				} else if (w instanceof SpriteIconButtonAccessor sprite) {
+					int sw = sprite.slopclient$spriteWidth(), sh = sprite.slopclient$spriteHeight();
+					g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite.slopclient$sprite().get(w.isActive(), hover),
+						Math.round(x + (bw - sw) / 2), Math.round(y + (bh - sh) / 2), sw, sh, Theme.alpha(0xFFFFFF, a));
+				} else {
+					String initial = label.isBlank() ? "?" : label.substring(0, 1).toUpperCase(Locale.ROOT);
+					Ui.text(g, initial, x + (bw - Ui.width(initial, 8.5f)) / 2, y + (bh - 10.6f) / 2, 8.5f, Theme.alpha(textColor, a));
+				}
+				if (hover && !label.isBlank()) tooltip = new float[] {x + bw / 2, y};
+				if (hover) tooltipText = label;
 			} else {
 				float size = bh < 18 ? 7.5f : 8.5f;
 				String fitted = Ui.fit(label.isBlank() ? "…" : label, size, bw - 8);
@@ -340,9 +360,50 @@ public final class SlopPauseScreen extends Screen {
 			}
 			if (w.isActive()) hits.add(new Hit(x, y, bw, bh, () -> press(w)));
 		}
+		if (tooltip != null) drawTooltipAbove(g, tooltipText, tooltip[0], tooltip[1]);
 		if (!titleDrawn && top != Float.MAX_VALUE) {
 			String title = "Spielmenü";
 			Ui.bold(g, title, (left + right - Ui.boldWidth(title, 11)) / 2, top - 22, 11, Theme.alpha(Theme.TEXT, k));
+		}
+	}
+
+	/** Label of a hovered icon button, centred above it. */
+	private void drawTooltipAbove(GuiGraphicsExtractor g, String label, float centreX, float top) {
+		float size = 7.5f, w = Ui.width(label, size) + 14, h = 16;
+		float x = Math.max(4, Math.min(width - 4 - w, centreX - w / 2)), y = top - h - 4;
+		Ui.shadow(g, x, y, w, h, 6, 6, 2, 0x66000000);
+		Ui.rect(g, x, y, w, h, 6, Theme.alpha(Theme.PANEL_SOLID, 0.96));
+		Ui.outline(g, x, y, w, h, 6, Theme.LINE_2);
+		Ui.text(g, label, x + 7, y + (h - size * 1.25f) / 2, size, Theme.TEXT);
+	}
+
+	/**
+	 * Text in a vanilla text widget's box, word-wrapped at a small size. Aligned like the
+	 * box sits: right when it hugs the right edge (vanilla's tip), else centred.
+	 */
+	private void drawWrapped(GuiGraphicsExtractor g, String text, float x, float y, float w, float h, double k) {
+		float size = 7.5f, line = 10;
+		List<String> lines = new ArrayList<>();
+		for (String paragraph : text.split("\\n")) {
+			StringBuilder current = new StringBuilder();
+			for (String word : paragraph.split(" ")) {
+				String next = current.isEmpty() ? word : current + " " + word;
+				if (Ui.width(next, size) > w && !current.isEmpty()) {
+					lines.add(current.toString());
+					current = new StringBuilder(word);
+				} else {
+					current = new StringBuilder(next);
+				}
+			}
+			lines.add(current.toString());
+		}
+		boolean right = x + w > width - 24;
+		float ty = y + h - lines.size() * line;
+		for (String l : lines) {
+			float lw = Ui.width(l, size);
+			float lx = right ? x + w - lw : x + (w - lw) / 2;
+			Ui.text(g, l, lx, ty, size, Theme.alpha(Theme.MUTED, k));
+			ty += line;
 		}
 	}
 

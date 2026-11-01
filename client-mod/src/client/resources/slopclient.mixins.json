@@ -21,6 +21,7 @@
 		"OptionInstanceAccessor",
 		"OptionsMixin",
 		"OverlayTextureAccessor",
+		"SpriteIconButtonAccessor",
 		"ScreenEffectRendererMixin",
 		"ScreenshotMixin",
 		"SkyRendererMixin"

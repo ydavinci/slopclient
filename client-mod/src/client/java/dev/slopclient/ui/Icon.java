@@ -48,6 +48,9 @@ public final class Icon {
 	public static final String EXTERNAL_LINK = "\ue0b9";
 	public static final String ARCHIVE = "\ue041";
 	public static final String GRIP_VERTICAL = "\ue0eb";
+	public static final String BUG = "\ue20c";
+	public static final String MESSAGE_SQUARE = "\ue117";
+	public static final String FLAG = "\ue0d1";
 
 	private Icon() {
 	}
