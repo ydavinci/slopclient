@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 
 /**
@@ -32,6 +33,7 @@ public final class Restyle {
 		if (screen == null || excluded(screen)) return false;
 		// Einzelspieler follows its own setting: "Klassisch" keeps the look even with "Andere Menüs" off.
 		if (screen instanceof SelectWorldScreen) return !module.worldsStyle.is("Vanilla");
+		if (screen instanceof JoinMultiplayerScreen) return !module.serversStyle.is("Vanilla");
 		return module.restyle.on();
 	}
 

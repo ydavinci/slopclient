@@ -457,6 +457,8 @@ public final class Features {
 		 * in the launcher look (also when "Andere Menüs" is off), "Vanilla" leaves it untouched.
 		 */
 		public final dev.slopclient.setting.ModeSetting worldsStyle = add(new dev.slopclient.setting.ModeSetting("Einzelspieler", "Modern", "Modern", "Klassisch", "Vanilla"));
+		/** Mehrspieler: the same three views as Einzelspieler. */
+		public final dev.slopclient.setting.ModeSetting serversStyle = add(new dev.slopclient.setting.ModeSetting("Mehrspieler", "Modern", "Modern", "Klassisch", "Vanilla"));
 		public final dev.slopclient.setting.ModeSetting worldsSort = add(new dev.slopclient.setting.ModeSetting("Welten sortieren", "Zuletzt gespielt", "Zuletzt gespielt", "Name", "Größe"));
 
 		public TitleScreenModule() {

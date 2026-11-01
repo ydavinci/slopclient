@@ -165,7 +165,7 @@ public final class SlopWorldsScreen extends Screen {
 	 * Cuts anti-aliased round corners into the icon itself (radius as a fraction of its
 	 * width), so it sits in the row like the launcher's instance icons.
 	 */
-	private static void roundCorners(NativeImage image, float fraction) {
+	static void roundCorners(NativeImage image, float fraction) {
 		int w = image.getWidth(), h = image.getHeight();
 		float r = fraction * w;
 		int span = (int) Math.ceil(r);

@@ -3,7 +3,9 @@ package dev.slopclient.mixin;
 import dev.slopclient.SlopClient;
 import dev.slopclient.gui.SlopPauseScreen;
 import dev.slopclient.gui.SlopTitleScreen;
+import dev.slopclient.gui.SlopServersScreen;
 import dev.slopclient.gui.SlopWorldsScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.screens.PauseScreen;
@@ -45,6 +47,10 @@ public abstract class GuiMixin {
 		// Einzelspieler as the launcher-style world page.
 		if (screen.getClass() == SelectWorldScreen.class && SlopClient.modules().titleScreen.worldsStyle.is("Modern")) {
 			return new SlopWorldsScreen(((SelectWorldScreenAccessor) screen).slopclient$lastScreen());
+		}
+		// Mehrspieler as the launcher-style server page.
+		if (screen.getClass() == JoinMultiplayerScreen.class && SlopClient.modules().titleScreen.serversStyle.is("Modern")) {
+			return new SlopServersScreen(((JoinMultiplayerScreenAccessor) screen).slopclient$lastScreen());
 		}
 		return screen;
 	}

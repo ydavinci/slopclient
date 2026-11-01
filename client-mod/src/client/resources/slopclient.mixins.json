@@ -21,6 +21,7 @@
 		"OptionInstanceAccessor",
 		"OptionsMixin",
 		"OverlayTextureAccessor",
+		"JoinMultiplayerScreenAccessor",
 		"SelectWorldScreenAccessor",
 		"SpriteIconButtonAccessor",
 		"ScreenEffectRendererMixin",
