@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Versionen gelten für beide zusammen.
 
-## Unveröffentlicht
+## 0.6.0
 
 ### Launcher
 - **Screenshots** (neuer Bereich in der Seitenleiste): die Bilder aller Instanzen in einer Galerie, nach Tagen gruppiert, mit Filter pro Instanz, Suche und Sortierung. Neue Bilder erscheinen, sobald ein Spiel endet.
