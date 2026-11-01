@@ -117,6 +117,7 @@ pub(crate) async fn admin_hide(State(s): State<Shared>, headers: HeaderMap, Path
 
 pub(crate) async fn delete_account(State(s): State<Shared>, headers: HeaderMap) -> ApiResult<StatusCode> {
     let uuid = account(&s, &headers)?;
+    crate::listening::forget(&s, &uuid);
     let db = s.db();
     let hashes: Vec<String> = db
         .prepare("SELECT hash FROM capes WHERE owner = ?1")?

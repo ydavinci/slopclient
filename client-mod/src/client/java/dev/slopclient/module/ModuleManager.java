@@ -35,6 +35,7 @@ public final class ModuleManager {
 	public final dev.slopclient.hud.InfoHud.BossBar bossBar = new dev.slopclient.hud.InfoHud.BossBar();
 	public final dev.slopclient.hud.InfoHud.Stopwatch stopwatch = new dev.slopclient.hud.InfoHud.Stopwatch();
 	public final dev.slopclient.hud.InfoHud.Librarian librarian = new dev.slopclient.hud.InfoHud.Librarian();
+	public final dev.slopclient.hud.MusicHud music = new dev.slopclient.hud.MusicHud();
 
 	public ModuleManager() {
 		add(new HudModules.Watermark());
@@ -61,6 +62,7 @@ public final class ModuleManager {
 		add(stopwatch);
 		add(new dev.slopclient.hud.InfoHud.Packs());
 		add(librarian);
+		add(music);
 	}
 
 	private <M extends Module> M add(M module) {

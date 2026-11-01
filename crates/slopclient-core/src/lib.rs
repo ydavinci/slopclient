@@ -22,6 +22,7 @@ pub mod java;
 pub mod launch;
 pub mod links;
 pub mod mclogs;
+pub mod media;
 pub mod meta;
 mod nbt;
 pub mod paths;

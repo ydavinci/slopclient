@@ -6,5 +6,8 @@
 	"key.slopclient.screenshot": "Letzten Screenshot zeigen",
 	"key.slopclient.stopwatch": "Stoppuhr starten/anhalten",
 	"key.slopclient.anvil": "Amboss-Planer öffnen",
-	"key.slopclient.light_overlay": "Lichtlevel-Overlay umschalten"
+	"key.slopclient.light_overlay": "Lichtlevel-Overlay umschalten",
+	"key.slopclient.music.toggle": "Musik: Abspielen/Pause",
+	"key.slopclient.music.next": "Musik: Nächster Titel",
+	"key.slopclient.music.previous": "Musik: Vorheriger Titel"
 }

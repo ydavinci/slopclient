@@ -1517,6 +1517,13 @@ async fn modpack_export(
     .map_err(err)
 }
 
+/// The music helper the client mod starts (`--media-helper`, see slopclient_core::media).
+pub fn media_helper() {
+    if let Ok(paths) = Paths::from_env() {
+        let _ = slopclient_core::media::run(&paths);
+    }
+}
+
 pub fn run() {
     let paths = Paths::from_env().expect("data directory");
     paths.ensure().expect("create data directory");

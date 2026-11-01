@@ -11,6 +11,7 @@
 		"CloudRendererMixin",
 		"EntityMixin",
 		"EntityRendererMixin",
+		"EntityRendererInvoker",
 		"FontProviderMixin",
 		"GuiMixin",
 		"HudMixin",

@@ -20,7 +20,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
  * `screenshots/` before quitting. Then it shows the modules, pets, cape and elytra.
  */
 final class SelfTest {
-	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, ANVIL, SPIRAL, PETALS, ABGRUND, GLASS_ARM, ANVIL_OPEN, PINNED, TRADE, LECTERN, COLLECTION, DONE }
+	private enum Step { TITLE, CLICKGUI, HUD_EDITOR, WORLD_LOADING, CAPE, MODULES, MODULES_FRONT, INFO_HUD, PETS, CAPE_SIDE, ELYTRA, ELYTRA_SIDE, SKY, SKY_UP, TRAIL, TRAIL_GOLD, GLASS_FRONT, GLASS_BACK, ANVIL, SPIRAL, PETALS, ABGRUND, GLASS_ARM, ANVIL_OPEN, PINNED, TRADE, LECTERN, COLLECTION, MUSIC, DONE }
 
 	private static Step step;
 	private static int wait;
@@ -100,6 +100,19 @@ final class SelfTest {
 					mc.options.setCameraType(CameraType.FIRST_PERSON);
 					mc.player.setXRot(-8);
 					next(Step.SKY, 100);
+					return;
+				}
+				// -Dslopclient.selftest.focus=musik: the music HUD with what the music app plays (sharing
+				// stays off), and a test song above the own nametag.
+				if ("musik".equals(System.getProperty("slopclient.selftest.focus"))) {
+					var m = SlopClient.modules();
+					m.nametags.setEnabled(true);
+					m.music.share.set(false);
+					m.music.setEnabled(true);
+					dev.slopclient.music.Listening.putForTest(mc.player.getUUID(), new dev.slopclient.music.Listening.Song("Blinding Lights", "The Weeknd"));
+					mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+					mc.player.setXRot(5);
+					next(Step.MUSIC, 80);
 					return;
 				}
 				if ("kosmetik".equals(System.getProperty("slopclient.selftest.focus"))) {
@@ -348,6 +361,10 @@ final class SelfTest {
 				mc.player.setXRot(item[0].equals("hat") ? 8 : 12);
 				// Walking pets need a moment to catch up and settle beside the player.
 				next(Step.COLLECTION, item[0].equals("pet") ? 50 : 25);
+			}
+			case MUSIC -> {
+				shot(mc, "31-music");
+				next(Step.DONE, 10);
 			}
 			case LECTERN -> {
 				shot(mc, "28-lectern");

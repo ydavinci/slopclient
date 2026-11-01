@@ -37,6 +37,7 @@ mod auth;
 mod capes;
 mod catalogue;
 mod limits;
+mod listening;
 mod moderation;
 mod web;
 
@@ -108,6 +109,8 @@ pub struct AppState {
     web_logins: Mutex<HashMap<String, web::Login>>,
     /// Skins fetched for the web preview, per uuid (see `web`).
     skins: Mutex<HashMap<String, web::CachedSkin>>,
+    /// Songs players share, per uuid (see `listening`); never written to disk.
+    listening: Mutex<HashMap<String, listening::Listening>>,
     limiter: Limiter,
     upload_slots: tokio::sync::Semaphore,
     http: reqwest::Client,
@@ -247,6 +250,7 @@ pub fn open(config: Config) -> std::io::Result<Shared> {
         challenges: Mutex::new(HashMap::new()),
         web_logins: Mutex::new(HashMap::new()),
         skins: Mutex::new(HashMap::new()),
+        listening: Mutex::new(HashMap::new()),
         limiter: Limiter::default(),
         upload_slots: tokio::sync::Semaphore::new(UPLOAD_SLOTS),
         http: http().build().expect("http client"),
@@ -275,6 +279,7 @@ pub fn router(state: Shared) -> Router {
             Router::new()
                 .route("/v1/cosmetics/{uuid}", get(capes::cosmetics_of))
                 .route("/v1/cosmetics/lookup", post(capes::lookup))
+                .route("/v1/listening/lookup", post(listening::lookup))
                 .route("/v1/capes/mine", get(capes::mine))
                 .route("/files/{file}", get(capes::file)),
         ))
@@ -285,6 +290,7 @@ pub fn router(state: Shared) -> Router {
                 .route("/v1/auth/logout", post(auth::logout))
                 .route("/v1/capes/active", put(capes::set_active))
                 .route("/v1/extras", put(capes::set_extras))
+                .route("/v1/listening", put(listening::set).delete(listening::clear))
                 .route("/v1/capes/{id}", delete(capes::remove))
                 .route("/v1/reports", post(moderation::report))
                 .route("/v1/account", delete(moderation::delete_account))

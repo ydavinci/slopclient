@@ -84,6 +84,10 @@ public final class SlopClient implements ClientModInitializer {
 			new KeyMapping("key.slopclient.screenshot", InputConstants.UNKNOWN.getValue(), category));
 		modules.stopwatch.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.stopwatch", InputConstants.UNKNOWN.getValue(), category)));
+		modules.music.bind(
+			KeyMappingHelper.registerKeyMapping(new KeyMapping("key.slopclient.music.toggle", InputConstants.UNKNOWN.getValue(), category)),
+			KeyMappingHelper.registerKeyMapping(new KeyMapping("key.slopclient.music.next", InputConstants.UNKNOWN.getValue(), category)),
+			KeyMappingHelper.registerKeyMapping(new KeyMapping("key.slopclient.music.previous", InputConstants.UNKNOWN.getValue(), category)));
 		modules.anvilPlanner.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.anvil", InputConstants.UNKNOWN.getValue(), category)));
 		modules.lightOverlay.bind(KeyMappingHelper.registerKeyMapping(
@@ -122,6 +126,8 @@ public final class SlopClient implements ClientModInitializer {
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {
 			modules.brightness.restore();
+			// Closing its input makes the music helper clear the shared song and quit.
+			dev.slopclient.music.MusicHelper.stop();
 			save();
 		});
 

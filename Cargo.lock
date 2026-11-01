@@ -4060,6 +4060,7 @@ dependencies = [
  "sha1",
  "thiserror 2.0.21",
  "tokio",
+ "windows",
  "windows-sys 0.59.0",
  "zip 2.6.1",
 ]

@@ -259,6 +259,8 @@ pub async fn prepare(
             .chain(settings.hat.as_ref().map(|h| format!("-Dslopclient.hat={h}")))
             .chain(settings.pet.as_ref().map(|p| format!("-Dslopclient.pet={p}")))
             .chain(settings.accessory.as_ref().map(|a| format!("-Dslopclient.accessory={a}")))
+            // The music module starts this program with --media-helper (launcher or CLI).
+            .chain(std::env::current_exe().ok().map(|exe| format!("-Dslopclient.helper={}", exe.display())))
             .chain(instance.java.jvm_args.iter().cloned())
             .collect(),
         resolution: None,

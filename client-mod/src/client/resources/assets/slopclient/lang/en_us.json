@@ -6,5 +6,8 @@
 	"key.slopclient.screenshot": "Show latest screenshot",
 	"key.slopclient.stopwatch": "Start/stop stopwatch",
 	"key.slopclient.anvil": "Open anvil planner",
-	"key.slopclient.light_overlay": "Toggle light level overlay"
+	"key.slopclient.light_overlay": "Toggle light level overlay",
+	"key.slopclient.music.toggle": "Music: play/pause",
+	"key.slopclient.music.next": "Music: next track",
+	"key.slopclient.music.previous": "Music: previous track"
 }

@@ -412,6 +412,45 @@ async fn accessory_is_worn_and_kept_by_old_clients() {
     assert_eq!(put(json!({ "hat": null, "pet": null, "accessory": "nope" })).await.unwrap().status(), 400);
 }
 
+#[tokio::test]
+async fn listening_is_shared_cleaned_and_cleared() {
+    let env = start().await;
+    let (alice, uuid) = env.sign_in("Alice").await;
+    let lookup = || async {
+        env.http
+            .post(format!("{}/v1/listening/lookup", env.base))
+            .json(&json!({ "uuids": [uuid.clone(), "00000000-0000-0000-0000-000000000000"] }))
+            .send()
+            .await
+            .unwrap()
+            .json::<Value>()
+            .await
+            .unwrap()
+    };
+    assert_eq!(lookup().await, json!([]));
+    // Without a sign-in nothing can be set.
+    let anon = env.http.put(format!("{}/v1/listening", env.base)).json(&json!({ "title": "x" })).send().await.unwrap();
+    assert_eq!(anon.status(), 401);
+    let put = env
+        .http
+        .put(format!("{}/v1/listening", env.base))
+        .bearer_auth(&alice)
+        .json(&json!({ "title": "  Blinding\u{7}Lights ", "artist": "The Weeknd" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(put.status(), 204);
+    let found = lookup().await;
+    assert_eq!(found[0]["title"], "BlindingLights");
+    assert_eq!(found[0]["artist"], "The Weeknd");
+    assert_eq!(found.as_array().unwrap().len(), 1);
+    // An empty title is refused; deleting stops sharing.
+    let empty = env.http.put(format!("{}/v1/listening", env.base)).bearer_auth(&alice).json(&json!({ "title": " " })).send().await.unwrap();
+    assert_eq!(empty.status(), 400);
+    env.http.delete(format!("{}/v1/listening", env.base)).bearer_auth(&alice).send().await.unwrap();
+    assert_eq!(lookup().await, json!([]));
+}
+
 // ---------- catalogue for clients ----------
 
 #[tokio::test]

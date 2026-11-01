@@ -293,6 +293,14 @@ enum InstanceCommand {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Started by the client mod for its music module (see slopclient_core::media), before
+    // the argument parser, which knows no such command. The helper keeps its own runtime,
+    // so it runs outside this one.
+    if std::env::args().nth(1).as_deref() == Some("--media-helper") {
+        let paths = Paths::from_env()?;
+        std::thread::spawn(move || slopclient_core::media::run(&paths)).join().expect("media helper")?;
+        return Ok(());
+    }
     let cli = Cli::parse();
     let paths = Paths::from_env()?;
     paths.ensure()?;
