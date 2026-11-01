@@ -37,7 +37,7 @@ public abstract class GuiMixin {
 		if (screen == null || !SlopClient.ready() || !SlopClient.modules().titleScreen.enabled()) return screen;
 		if (screen.getClass() == TitleScreen.class) return new SlopTitleScreen();
 		// The ESC menu; "pause without menu" (F3+Esc) stays vanilla.
-		if (screen.getClass() == PauseScreen.class && ((PauseScreen) screen).showsPauseMenu() && SlopClient.modules().titleScreen.pauseMenu.on()) {
+		if (screen.getClass() == PauseScreen.class && ((PauseScreen) screen).showsPauseMenu() && !SlopClient.modules().titleScreen.pauseStyle.is("Vanilla")) {
 			return new SlopPauseScreen();
 		}
 		return screen;

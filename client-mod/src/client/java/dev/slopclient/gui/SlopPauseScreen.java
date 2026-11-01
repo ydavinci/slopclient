@@ -22,7 +22,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 
 /**
- * The ESC menu in the launcher look: the glass sidebar (Spiel, Screenshots, Module,
+ * The ESC menu in the launcher look, in two layouts ("ESC-Menü" setting of the title
+ * screen module, switchable in the menu itself):
+ *
+ * <p><b>Klassisch</b>: vanilla's structure, every button where vanilla puts it, drawn
+ * in the launcher look.
+ *
+ * <p><b>Modern</b>: the glass sidebar (Spiel, Screenshots, Module,
  * Einstellungen; Welten and Server only from the title screen), the world or server
  * name large with chips (players, ping, play time, position) and the menu as buttons.
  *
@@ -91,10 +97,19 @@ public final class SlopPauseScreen extends Screen {
 		g.fillGradient(0, 0, width, height, 0x7009080E, 0xC009080E);
 	}
 
+	private static boolean classic() {
+		return SlopClient.modules().titleScreen.pauseStyle.is("Klassisch");
+	}
+
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(g, mouseX, mouseY, partialTick);
 		hits = new ArrayList<>();
+		if (classic()) {
+			drawClassic(g, mouseX, mouseY);
+			drawStyleSwitch(g, Kit.playerPill(g, width, intro(0.1)) + 6, mouseX, mouseY);
+			return;
+		}
 		List<Kit.Entry> entries = List.of(
 			new Kit.Entry("Spiel", Icon.PLAY, true, true, null),
 			new Kit.Entry("Welten (im Hauptmenü)", Icon.EARTH, false, false, null),
@@ -105,7 +120,7 @@ public final class SlopPauseScreen extends Screen {
 		AbstractWidget leave = disconnectWidget();
 		Kit.Entry bottom = leave == null ? null : new Kit.Entry(leaveLabel(), Icon.LOG_OUT, false, true, () -> press(leave));
 		String[] tooltip = Kit.rail(g, "pause", entries, bottom, height, mouseX, mouseY, intro(0), hits);
-		Kit.playerPill(g, width, intro(0.1));
+		drawStyleSwitch(g, Kit.playerPill(g, width, intro(0.1)) + 6, mouseX, mouseY);
 		drawPage(g, mouseX, mouseY);
 		Kit.tooltip(g, tooltip);
 	}
@@ -247,6 +262,87 @@ public final class SlopPauseScreen extends Screen {
 			if (label.isBlank()) label = "Mod-Knopf";
 			if (cx + Kit.pillWidth(label) > x + room) break;
 			cx += Kit.pill(g, "pause.pill." + (i++), label, cx, y, w.isActive(), mx, my, k, hits, () -> press(w)) + 5;
+		}
+	}
+
+	/** Pill under the player pill that flips between the classic and the modern layout. */
+	private void drawStyleSwitch(GuiGraphicsExtractor g, float y, int mx, int my) {
+		String label = classic() ? "Ansicht: Klassisch" : "Ansicht: Modern";
+		float x = width - 12 - Kit.pillWidth(label);
+		Kit.pill(g, "pause.style", label, x, y, true, mx, my, intro(0.2), hits, () -> {
+			SlopClient.modules().titleScreen.pauseStyle.cycle(classic() ? 1 : -1);
+			SlopClient.save();
+		});
+	}
+
+	// ---------- classic layout ----------
+
+	/** Icons for vanilla's small icon buttons (feedback, bug report, player report, server links). */
+	private static String iconFor(String key) {
+		if (key == null) return null;
+		return switch (key) {
+			case "menu.sendFeedback" -> Icon.INFO;
+			case "menu.reportBugs" -> Icon.CIRCLE_ALERT;
+			case "menu.playerReporting" -> Icon.USERS;
+			case "menu.server_links" -> Icon.EXTERNAL_LINK;
+			default -> null;
+		};
+	}
+
+	/**
+	 * Vanilla's pause menu as it is laid out (every widget at its own place, mods' buttons
+	 * included), drawn in the launcher look: chroma "Zurück zum Spiel", glass buttons,
+	 * Sora labels, the leave button red on hover.
+	 */
+	private void drawClassic(GuiGraphicsExtractor g, int mx, int my) {
+		double k = intro(0);
+		float top = Float.MAX_VALUE, left = Float.MAX_VALUE, right = 0;
+		boolean titleDrawn = false;
+		int i = 0;
+		for (var child : vanilla.children()) {
+			if (!(child instanceof AbstractWidget w) || !w.visible) continue;
+			float x = w.getX(), y = w.getY() + (float) (1 - k) * 6, bw = w.getWidth(), bh = w.getHeight();
+			String key = key(w), label = w.getMessage().getString();
+			if (!(w instanceof AbstractButton)) {
+				// Text widgets (the "Spielmenü" title): centred bold text.
+				if (!label.isBlank()) {
+					Ui.bold(g, label, x + (bw - Ui.boldWidth(label, 11)) / 2, y + (bh - 13.75f) / 2, 11, Theme.alpha(Theme.TEXT, k));
+					titleDrawn = true;
+				}
+				continue;
+			}
+			top = Math.min(top, y);
+			left = Math.min(left, x);
+			right = Math.max(right, x + bw);
+			boolean hover = w.isActive() && Kit.over(x, y, bw, bh, mx, my);
+			double hv = Ui.anim("pause.classic." + (i++) + key, hover);
+			double a = k * (w.isActive() ? 1 : 0.45);
+			float r = Math.min(8, bh / 2.5f);
+			if (RETURN.equals(key)) {
+				Ui.shadow(g, x, y, bw, bh, r, 10, 3, Theme.alpha(Theme.ACCENT, (0.4 + 0.25 * hv) * a));
+				Ui.chroma(g, x, y, bw, bh, r, a, 0.1 * hv);
+			} else {
+				boolean danger = DISCONNECT.contains(key);
+				int tint = danger ? Theme.lerp(Theme.RAISED, 0xFF3A1820, hv) : Theme.RAISED;
+				Ui.rect(g, x, y, bw, bh, r, Theme.alpha(tint, (0.72 + 0.23 * hv) * a));
+				int line = danger ? Theme.lerp(0xFFFFFFFF, Theme.ERR, hv) : Theme.lerp(0xFFFFFFFF, Theme.ACCENT_2, hv);
+				Ui.outline(g, x, y, bw, bh, r, Theme.alpha(line, (0.09 + 0.3 * hv) * a));
+			}
+			int textColor = RETURN.equals(key) ? 0xFFFFFFFF : Theme.lerp(Theme.TEXT, 0xFFFFFFFF, hv);
+			String icon = iconFor(key);
+			if (bw <= 24 && icon != null) {
+				float s = Math.min(12, bh - 6);
+				Ui.icon(g, icon, x + (bw - s) / 2, y + (bh - s) / 2, s, Theme.alpha(textColor, a));
+			} else {
+				float size = bh < 18 ? 7.5f : 8.5f;
+				String fitted = Ui.fit(label.isBlank() ? "…" : label, size, bw - 8);
+				Ui.text(g, fitted, x + (bw - Ui.width(fitted, size)) / 2, y + (bh - size * 1.25f) / 2, size, Theme.alpha(textColor, a));
+			}
+			if (w.isActive()) hits.add(new Hit(x, y, bw, bh, () -> press(w)));
+		}
+		if (!titleDrawn && top != Float.MAX_VALUE) {
+			String title = "Spielmenü";
+			Ui.bold(g, title, (left + right - Ui.boldWidth(title, 11)) / 2, top - 22, 11, Theme.alpha(Theme.TEXT, k));
 		}
 	}
 
