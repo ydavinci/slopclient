@@ -395,7 +395,7 @@ public final class SlopTitleScreen extends Screen {
 		return tex == null ? null : tex.textureLocation();
 	}
 
-	private static String ago(long millis) {
+	static String ago(long millis) {
 		if (millis <= 0) return "nie gespielt";
 		long s = (System.currentTimeMillis() - millis) / 1000;
 		if (s < 90) return "gerade eben";

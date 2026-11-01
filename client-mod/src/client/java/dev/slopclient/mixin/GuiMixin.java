@@ -3,6 +3,8 @@ package dev.slopclient.mixin;
 import dev.slopclient.SlopClient;
 import dev.slopclient.gui.SlopPauseScreen;
 import dev.slopclient.gui.SlopTitleScreen;
+import dev.slopclient.gui.SlopWorldsScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -39,6 +41,10 @@ public abstract class GuiMixin {
 		// The ESC menu; "pause without menu" (F3+Esc) stays vanilla.
 		if (screen.getClass() == PauseScreen.class && ((PauseScreen) screen).showsPauseMenu() && !SlopClient.modules().titleScreen.pauseStyle.is("Vanilla")) {
 			return new SlopPauseScreen();
+		}
+		// Einzelspieler as the launcher-style world page.
+		if (screen.getClass() == SelectWorldScreen.class && SlopClient.modules().titleScreen.worldsStyle.is("Modern")) {
+			return new SlopWorldsScreen(((SelectWorldScreenAccessor) screen).slopclient$lastScreen());
 		}
 		return screen;
 	}

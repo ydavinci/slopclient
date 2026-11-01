@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 
 /**
  * Vanilla and mod screens in the launcher look ("Klassisch"): the layout stays theirs,
@@ -26,9 +27,12 @@ public final class Restyle {
 	public static boolean active() {
 		if (!SlopClient.ready()) return false;
 		var module = SlopClient.modules().titleScreen;
-		if (!module.enabled() || !module.restyle.on()) return false;
+		if (!module.enabled()) return false;
 		Screen screen = Minecraft.getInstance().gui.screen();
-		return screen != null && !excluded(screen);
+		if (screen == null || excluded(screen)) return false;
+		// Einzelspieler follows its own setting: "Klassisch" keeps the look even with "Andere Menüs" off.
+		if (screen instanceof SelectWorldScreen) return !module.worldsStyle.is("Vanilla");
+		return module.restyle.on();
 	}
 
 	private static boolean excluded(Screen screen) {

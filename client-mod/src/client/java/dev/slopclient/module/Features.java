@@ -452,6 +452,12 @@ public final class Features {
 		/** Vanilla and mod menus (options, statistics, ModMenu …) in the launcher look; video settings stay vanilla. */
 		public final dev.slopclient.setting.BoolSetting restyle = add(new dev.slopclient.setting.BoolSetting("Andere Menüs", true));
 		public final dev.slopclient.setting.ModeSetting pauseStyle = add(new dev.slopclient.setting.ModeSetting("ESC-Menü", "Klassisch", "Klassisch", "Modern", "Vanilla"));
+		/**
+		 * Einzelspieler: "Modern" is the launcher-style world page, "Klassisch" vanilla's list
+		 * in the launcher look (also when "Andere Menüs" is off), "Vanilla" leaves it untouched.
+		 */
+		public final dev.slopclient.setting.ModeSetting worldsStyle = add(new dev.slopclient.setting.ModeSetting("Einzelspieler", "Modern", "Modern", "Klassisch", "Vanilla"));
+		public final dev.slopclient.setting.ModeSetting worldsSort = add(new dev.slopclient.setting.ModeSetting("Welten sortieren", "Zuletzt gespielt", "Zuletzt gespielt", "Name", "Größe"));
 
 		public TitleScreenModule() {
 			super("Titelbildschirm", "SlopClient-Startbildschirm und ESC-Menü statt Vanilla", Category.COMFORT, true);

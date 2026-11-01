@@ -109,6 +109,19 @@ public final class SlopClient implements ClientModInitializer {
 			net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register((s, g, mx, my, delta) ->
 				dev.slopclient.gui.PinnedPlanCard.draw(g, left, top, w, h));
 		});
+		// "Ansicht: Klassisch" on vanilla's world list switches to the world page.
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
+			if (screen.getClass() != net.minecraft.client.gui.screens.worldselection.SelectWorldScreen.class) return;
+			var module = modules.titleScreen;
+			if (!module.enabled() || !module.worldsStyle.is("Klassisch")) return;
+			net.minecraft.client.gui.screens.Screen parent = ((dev.slopclient.mixin.SelectWorldScreenAccessor) screen).slopclient$lastScreen();
+			net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen).add(net.minecraft.client.gui.components.Button.builder(
+				net.minecraft.network.chat.Component.literal("Ansicht: Klassisch"), b -> {
+					module.worldsStyle.set("Modern");
+					save();
+					mc.gui.setScreen(new dev.slopclient.gui.SlopWorldsScreen(parent));
+				}).bounds(w - 100, 6, 94, 16).build());
+		});
 		// Combo and reach watch the player's own hits.
 		net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) ->
 			level.isClientSide() ? dev.slopclient.hud.InfoHud.Hits.attacked(entity) : net.minecraft.world.InteractionResult.PASS);
