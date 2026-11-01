@@ -13,7 +13,7 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - Lange Modul- und Einstellungsnamen überlappen nicht mehr mit Schalter und „+“, sie werden passend verkleinert, etwa beim Lichtlevel-Overlay.
 - **Elytra-Swap** (ClickGUI → Komfort): tauscht Elytra und Brustplatte.
   - Modus „Taste“: Die Taste „Elytra und Brustplatte tauschen“ (in den Steuerungs-Einstellungen, ohne Standardbelegung) tauscht hin und her.
-  - Modus „Automatisch“: Leertaste in der Luft legt die Elytra an, und du gleitest sofort los.
+  - Modus „Automatisch“: Nochmal Leertaste in der Luft legt die Elytra an. Gezählt wird nicht der Sprung vom Boden selbst. Das Gleiten startet, sobald du fällst. Drückst du noch im Steigen, wartet der Tausch bis zum höchsten Punkt, damit es dich nicht nach oben zieht.
   - „Nach Landung zurück“ (Standard an) zieht nach dem Gleiten die Brustplatte wieder an. Wer die Elytra am Boden anlegt, behält sie.
   - Genommen wird die Elytra mit der meisten Haltbarkeit, eine fast kaputte nie. Getauscht wird mit normalen Inventar-Klicks, Server können das Modul abschalten.
 
