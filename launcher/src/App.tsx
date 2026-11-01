@@ -6,6 +6,7 @@ import { Cosmetics } from "./pages/Cosmetics";
 import { Home } from "./pages/Home";
 import { InstanceDetail } from "./pages/InstanceDetail";
 import { Instances } from "./pages/Instances";
+import { Screenshots } from "./pages/Screenshots";
 import { SettingsPage } from "./pages/SettingsPage";
 import { Modals } from "./ui/Modals";
 import { ProjectView } from "./ui/ProjectView";
@@ -26,6 +27,8 @@ function Page() {
       return <Browse target={route.target} />;
     case "cosmetics":
       return <Cosmetics />;
+    case "screenshots":
+      return <Screenshots />;
     case "settings":
       return <SettingsPage />;
   }

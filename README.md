@@ -50,6 +50,7 @@ installiert 0.5.7 einmal von Hand.
 - **Modpacks**: `.mrpack` und CurseForge-ZIP importieren, Instanzen als `.mrpack` exportieren
 - **Umzug aus Prism Launcher, PolyMC und MultiMC** inklusive Welten und Configs
 - **Welten, Screenshots und Server** pro Instanz: Datapacks pro Welt, Backup als ZIP, Server-Liste mit Ping, „Beitreten“ startet direkt auf dem Server
+- **Screenshot-Galerie** über alle Instanzen mit Viewer (Zoom, Blättern, Kopieren, Löschen), dieselbe Galerie auch im Spiel
 - **Crash-Analyse**: erkennt u. a. zu wenig RAM, falsches Java, kaputte oder doppelte Mods und nennt die Ursache; Logs mit einem Klick über mclo.gs teilen (ohne Zugangsdaten)
 - **Selbst-Update**: neue Releases mit Änderungen, signiert geprüft und mit einem Klick installiert
 - **Discord-Status** mit Instanz und Server (abschaltbar)

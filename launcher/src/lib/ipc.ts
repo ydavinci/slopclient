@@ -3,11 +3,12 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl as openerOpenUrl } from "@tauri-apps/plugin-opener";
 import { open as dialogOpen, save as dialogSave } from "@tauri-apps/plugin-dialog";
-import { mockCall, mockEmitter } from "./mock";
+import { mockCall, mockEmitter, mockShotImage } from "./mock";
 import type { ExtrasCatalogue, ExtrasChoice } from "./extras";
 import type {
   Account,
   LauncherUpdate,
+  InstanceScreenshot,
   BlockedFile,
   CapeInfo,
   ContentEntry,
@@ -101,6 +102,10 @@ export const api = {
   screenshots: (id: string) => call<Screenshot[]>("screenshots_list", { id }),
   screenshotThumb: (id: string, name: string) => call<string>("screenshot_thumb", { id, name }),
   screenshotDelete: (id: string, name: string) => call<void>("screenshot_delete", { id, name }),
+  /** Screenshots of every instance, newest first. */
+  screenshotsAll: () => call<InstanceScreenshot[]>("screenshots_all"),
+  /** Shows the file selected in Explorer. */
+  screenshotReveal: (id: string, name: string) => call<void>("screenshot_reveal", { id, name }),
   instanceDir: (id: string) => call<string>("instance_dir", { id }),
   instanceIcon: (id: string) => call<string | null>("instance_icon", { id }),
   setInstanceIcon: (id: string, bytes: number[]) => call<Instance>("set_instance_icon", { id, bytes }),
@@ -191,6 +196,14 @@ export const api = {
 export function onEvent<T>(name: string, handler: (payload: T) => void): Promise<UnlistenFn> {
   if (isTauri) return listen<T>(name, (e) => handler(e.payload));
   return Promise.resolve(mockEmitter.on(name, handler as (p: unknown) => void));
+}
+
+/** Full-size screenshot, served by the launcher's `shot` protocol (no base64 through IPC). */
+export function screenshotUrl(instanceId: string, fileName: string): string {
+  if (!isTauri) return mockShotImage(fileName);
+  const path = `${encodeURIComponent(instanceId)}/${encodeURIComponent(fileName)}`;
+  // WebView2 maps custom protocols to http://<scheme>.localhost.
+  return navigator.userAgent.includes("Windows") ? `http://shot.localhost/${path}` : `shot://localhost/${path}`;
 }
 
 export function openUrl(url: string) {

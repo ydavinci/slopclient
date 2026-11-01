@@ -89,6 +89,12 @@ export interface Screenshot {
   sizeBytes: number;
 }
 
+/** A screenshot with its instance (the gallery across all instances). */
+export interface InstanceScreenshot extends Screenshot {
+  instanceId: string;
+  instanceName: string;
+}
+
 /** Minecraft versions the bundled client mod supports (mirrors slopclient-core client_mod::SUPPORTED_MC). */
 export const CLIENT_MOD_MC = ["26.3"];
 
