@@ -77,11 +77,19 @@ public final class Draw {
 		return null;
 	}
 
-	/** The font that replaces Minecraft's default everywhere, or null (module off, "Minecraft" chosen, or only menus). */
+	private static final FontDescription SORA = new FontDescription.Resource(Identifier.fromNamespaceAndPath(SlopClient.ID, "sora"));
+
+	/**
+	 * The font that replaces Minecraft's default, or null. "Überall im Spiel" uses the chosen
+	 * font everywhere; menus restyled in the launcher look ({@link dev.slopclient.ui.Restyle})
+	 * use it, or Sora, while they are open.
+	 */
 	public static FontDescription gameFont() {
-		if (!SlopClient.ready() || !SlopClient.modules().uiFont.everywhere.on()) return null;
+		if (!SlopClient.ready()) return null;
 		FontDescription[] font = current();
-		return font == null ? null : font[0];
+		if (SlopClient.modules().uiFont.everywhere.on() && font != null) return font[0];
+		if (dev.slopclient.ui.Restyle.active()) return font != null ? font[0] : SORA;
+		return null;
 	}
 
 	/** Text as a component in the current UI font. */

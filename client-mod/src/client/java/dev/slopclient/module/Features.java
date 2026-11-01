@@ -449,6 +449,8 @@ public final class Features {
 		 * The ESC menu: "Klassisch" keeps vanilla's layout in the launcher look, "Modern" is
 		 * the launcher-style page with sidebar, "Vanilla" leaves it alone.
 		 */
+		/** Vanilla and mod menus (options, statistics, ModMenu …) in the launcher look; video settings stay vanilla. */
+		public final dev.slopclient.setting.BoolSetting restyle = add(new dev.slopclient.setting.BoolSetting("Andere Menüs", true));
 		public final dev.slopclient.setting.ModeSetting pauseStyle = add(new dev.slopclient.setting.ModeSetting("ESC-Menü", "Klassisch", "Klassisch", "Modern", "Vanilla"));
 
 		public TitleScreenModule() {

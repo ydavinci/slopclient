@@ -24,7 +24,14 @@
 		"SpriteIconButtonAccessor",
 		"ScreenEffectRendererMixin",
 		"ScreenshotMixin",
-		"SkyRendererMixin"
+		"SkyRendererMixin",
+		"restyle.AbstractButtonRestyleMixin",
+		"restyle.AbstractSliderButtonRestyleMixin",
+		"restyle.CheckboxRestyleMixin",
+		"restyle.EditBoxRestyleMixin",
+		"restyle.AbstractSelectionListRestyleMixin",
+		"restyle.AbstractScrollAreaRestyleMixin",
+		"restyle.ScreenRestyleMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }
