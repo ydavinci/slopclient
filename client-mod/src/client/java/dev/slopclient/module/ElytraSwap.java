@@ -15,8 +15,9 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * Swaps the elytra and the chestplate. Mode "Taste": the key swaps. Mode
- * "Automatisch": pressing jump in mid-air puts the elytra on and starts gliding
- * at once, like jumping with it already worn. Either way the chestplate can come
+ * "Automatisch": a second jump press in mid-air (not the one that
+ * jumps off the ground) puts the elytra on and starts gliding as soon as the player
+ * falls, so a press while still rising doesn't lift them. Either way the chestplate can come
  * back by itself after landing.
  *
  * <p>The swap uses normal inventory clicks (the same as doing it by hand in the
@@ -35,7 +36,13 @@ public final class ElytraSwap extends Module {
 	/** Ticks on the ground before the chestplate goes back on (a short bounce keeps the elytra). */
 	private static final int LANDED_TICKS = 3;
 
+	/** Ticks spent in the air before a jump press counts for the automatic mode. */
+	private static final int MIN_AIR_TICKS = 2;
+
 	private KeyMapping key;
+	private int airTicks;
+	/** Jump was pressed in mid-air; the elytra goes on once the player starts falling. */
+	private boolean armed;
 	private boolean jumpWasDown;
 	private int cooldown;
 	private int landed;
@@ -61,6 +68,7 @@ public final class ElytraSwap extends Module {
 
 	@Override
 	protected void onDisable() {
+		armed = false;
 		ours = false;
 		chestplateSlot = -1;
 	}
@@ -92,9 +100,15 @@ public final class ElytraSwap extends Module {
 		boolean jumpPressed = jumpDown && !jumpWasDown;
 		jumpWasDown = jumpDown;
 
-		if (mode.is(AUTO) && jumpPressed && !wearingElytra(player) && mayGlideNow(player) && canSwap(mc) && toElytra(mc, false)) {
-			// Vanilla already handled this jump press without an elytra; start gliding now.
-			if (player.tryToStartFallFlying()) {
+		// The press that jumps off the ground ends its tick in the air already; only a
+		// second press, made while airborne before it, counts.
+		if (mode.is(AUTO) && jumpPressed && airTicks >= MIN_AIR_TICKS && !wearingElytra(player) && mayGlideNow(player)) armed = true;
+		airTicks = player.onGround() ? 0 : airTicks + 1;
+		if (armed && (!mayGlideNow(player) || wearingElytra(player))) armed = false;
+		// Gliding off while still rising lifts you a bit; wait for the top of the jump.
+		if (armed && player.getDeltaMovement().y < 0 && canSwap(mc)) {
+			armed = false;
+			if (toElytra(mc, false) && player.tryToStartFallFlying()) {
 				player.connection.send(new ServerboundPlayerCommandPacket(player, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
 			}
 		}
