@@ -82,6 +82,8 @@ public final class SlopClient implements ClientModInitializer {
 			new KeyMapping("key.slopclient.freelook", InputConstants.KEY_LALT, category)));
 		KeyMapping screenshotKey = KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.screenshot", InputConstants.UNKNOWN.getValue(), category));
+		KeyMapping galleryKey = KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.slopclient.screenshot_gallery", InputConstants.UNKNOWN.getValue(), category));
 		modules.stopwatch.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.stopwatch", InputConstants.UNKNOWN.getValue(), category)));
 		modules.music.bind(
@@ -117,6 +119,9 @@ public final class SlopClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (screenshotKey.consumeClick()) modules.screenshots.openLatest();
+			while (galleryKey.consumeClick()) {
+				if (mc.gui.screen() == null) mc.gui.setScreen(new dev.slopclient.gui.ScreenshotGalleryScreen(null));
+			}
 			while (clickGuiKey.consumeClick()) {
 				if (mc.gui.screen() == null) mc.gui.setScreen(new ClickGuiScreen(null));
 			}

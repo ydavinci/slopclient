@@ -20,8 +20,8 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Screenshot manager: after F2 a card with the picture slides in at the bottom right.
- * The "open screenshot" key shows the latest one in Explorer; the full gallery is the
- * launcher's Screenshots tab.
+ * The "open screenshot" key shows the latest one in Explorer; the gallery is
+ * {@link ScreenshotGalleryScreen} (ClickGUI or its own key) and the launcher's Screenshots page.
  */
 public final class ScreenshotPreview extends Module {
 	private static final Identifier ID = Identifier.fromNamespaceAndPath(SlopClient.ID, "screenshot_preview");
