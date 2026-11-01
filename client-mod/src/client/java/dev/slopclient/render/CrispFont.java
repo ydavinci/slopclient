@@ -116,6 +116,15 @@ public final class CrispFont {
 		Matrix3x2f m = new Matrix3x2f(g.pose());
 		float poseScale = (float) Math.hypot(m.m00(), m.m01());
 		float px = (float) Minecraft.getInstance().getWindow().getGuiScale() * poseScale;
+		// Snap the origin to a physical pixel. Glyph quads sit at whole pixels from it; an origin
+		// at a fractional pixel (often exactly .5) let nearest sampling round each glyph its own
+		// way, so single letters (S, r, h) stood one pixel higher than their neighbours.
+		float gs = (float) Minecraft.getInstance().getWindow().getGuiScale();
+		float sx = (m.m00() * x + m.m10() * y + m.m20()) * gs, sy = (m.m01() * x + m.m11() * y + m.m21()) * gs;
+		if (poseScale > 0) {
+			x += (Math.round(sx) - sx) / gs / poseScale;
+			y += (Math.round(sy) - sy) / gs / poseScale;
+		}
 		int pixelSize = Math.max(4, Math.round(size * px));
 		Atlas atlas = atlases.computeIfAbsent(pixelSize, Atlas::new);
 		float scale = STBTruetype.stbtt_ScaleForMappingEmToPixels(info, pixelSize);
