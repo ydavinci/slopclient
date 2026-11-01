@@ -122,6 +122,19 @@ public final class SlopClient implements ClientModInitializer {
 					mc.gui.setScreen(new dev.slopclient.gui.SlopWorldsScreen(parent));
 				}).bounds(w - 100, 6, 94, 16).build());
 		});
+		// The same switch on vanilla's server list.
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
+			if (screen.getClass() != net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen.class) return;
+			var module = modules.titleScreen;
+			if (!module.enabled() || !module.serversStyle.is("Klassisch")) return;
+			net.minecraft.client.gui.screens.Screen parent = ((dev.slopclient.mixin.JoinMultiplayerScreenAccessor) screen).slopclient$lastScreen();
+			net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen).add(net.minecraft.client.gui.components.Button.builder(
+				net.minecraft.network.chat.Component.literal("Ansicht: Klassisch"), b -> {
+					module.serversStyle.set("Modern");
+					save();
+					mc.gui.setScreen(new dev.slopclient.gui.SlopServersScreen(parent));
+				}).bounds(w - 100, 6, 94, 16).build());
+		});
 		// Combo and reach watch the player's own hits.
 		net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) ->
 			level.isClientSide() ? dev.slopclient.hud.InfoHud.Hits.attacked(entity) : net.minecraft.world.InteractionResult.PASS);
