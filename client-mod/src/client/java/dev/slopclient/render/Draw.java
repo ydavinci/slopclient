@@ -39,8 +39,12 @@ public final class Draw {
 	private static final float LINE = 9;
 
 	private static Choice choice() {
-		if (!SlopClient.ready() || !SlopClient.modules().uiFont.active()) return null;
-		String name = SlopClient.modules().uiFont.font.get();
+		if (!SlopClient.ready()) return null;
+		// SlopClient's menus always use a crisp font like the launcher: the chosen one, or
+		// Sora when the module is off or set to "Minecraft". The HUD keeps the choice.
+		boolean menu = Minecraft.getInstance().gui.screen() != null;
+		String name = SlopClient.modules().uiFont.active() ? SlopClient.modules().uiFont.font.get() : "Minecraft";
+		if (menu && name.equals("Minecraft")) name = "Sora";
 		for (String[] f : FONTS) {
 			if (!f[0].equals(name) || f[1] == null) continue;
 			return CHOICES.computeIfAbsent(f[1], id -> {
@@ -91,41 +95,15 @@ public final class Draw {
 		return font == null ? c : c.copy().withStyle(st -> st.withFont(font[display ? 1 : 0]));
 	}
 
-	/** Filled rectangle with corners cut to an approximate radius (0 to 4 px). */
+	/** Filled rectangle with rounded, anti-aliased corners of radius `r` GUI pixels. */
 	public static void round(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int color) {
-		if (w <= 0 || h <= 0) return;
-		r = Math.min(r, Math.min(w, h) / 2);
-		if (r <= 0) {
-			g.fill(x, y, x + w, y + h, color);
-			return;
-		}
-		g.fill(x, y + r, x + w, y + h - r, color);
-		for (int i = 0; i < r; i++) {
-			double dy = r - i - 0.5;
-			int inset = (int) Math.round(r - Math.sqrt(r * r - dy * dy));
-			g.fill(x + inset, y + i, x + w - inset, y + i + 1, color);
-			g.fill(x + inset, y + h - i - 1, x + w - inset, y + h - i, color);
-		}
+		// Drawn in physical pixels with anti-aliased corners (the launcher look), see Ui.
+		dev.slopclient.ui.Ui.rect(g, x, y, w, h, r, color);
 	}
 
-	/** 1 px border that follows the corners of {@link #round}. */
+	/** Hairline border (one physical pixel) that follows the corners of {@link #round}. */
 	public static void roundOutline(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int color) {
-		r = Math.min(r, Math.min(w, h) / 2);
-		g.fill(x + r, y, x + w - r, y + 1, color);
-		g.fill(x + r, y + h - 1, x + w - r, y + h, color);
-		g.fill(x, y + r, x + 1, y + h - r, color);
-		g.fill(x + w - 1, y + r, x + w, y + h - r, color);
-		int prev = r;
-		for (int i = 0; i < r; i++) {
-			double dy = r - i - 0.5;
-			int inset = (int) Math.round(r - Math.sqrt(r * r - dy * dy));
-			int end = Math.max(inset + 1, prev);
-			g.fill(x + inset, y + i, x + end, y + i + 1, color);
-			g.fill(x + w - end, y + i, x + w - inset, y + i + 1, color);
-			g.fill(x + inset, y + h - i - 1, x + end, y + h - i, color);
-			g.fill(x + w - end, y + h - i - 1, x + w - inset, y + h - i, color);
-			prev = inset;
-		}
+		dev.slopclient.ui.Ui.outline(g, x, y, w, h, r, color);
 	}
 
 	/**
@@ -158,12 +136,9 @@ public final class Draw {
 		}
 	}
 
-	/** Soft glow around a box (stacked translucent rounds), like a CSS box-shadow. */
+	/** Soft glow around a box, like a CSS box-shadow. */
 	public static void glow(GuiGraphicsExtractor g, int x, int y, int w, int h, int spread, int color, double strength) {
-		for (int i = spread; i >= 1; i--) {
-			double a = strength * (1 - i / (double) (spread + 1)) / spread * 2.2;
-			round(g, x - i, y - i + 2, w + 2 * i, h + 2 * i, 6 + i, Theme.alpha(color, a));
-		}
+		dev.slopclient.ui.Ui.shadow(g, x, y, w, h, 6, spread, 2, Theme.alpha(color, Math.min(1, strength * 1.4)));
 	}
 
 	/** Pill with a hairline border and muted text, the launcher's Chip. Returns its width. */
@@ -194,15 +169,7 @@ public final class Draw {
 	 * (the launcher's primary button fill).
 	 */
 	public static void chromaFill(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, double alpha, double brighten) {
-		r = Math.min(r, Math.min(w, h) / 2);
-		for (int dx = 0; dx < w; dx++) {
-			// Corner inset of this column.
-			double edge = dx < r ? r - dx - 0.5 : dx >= w - r ? dx - (w - r) + 0.5 : 0;
-			int inset = edge > 0 ? (int) Math.round(r - Math.sqrt(Math.max(0, r * r - edge * edge))) : 0;
-			int c = Theme.chroma(-dx / (double) w * 0.5);
-			if (brighten > 0) c = Theme.lerp(c, 0xFFFFFFFF, brighten);
-			g.fill(x + dx, y + inset, x + dx + 1, y + h - inset, Theme.alpha(c, alpha));
-		}
+		dev.slopclient.ui.Ui.chroma(g, x, y, w, h, r, alpha, brighten);
 	}
 
 	/** Glass panel: translucent fill plus hairline border. */
