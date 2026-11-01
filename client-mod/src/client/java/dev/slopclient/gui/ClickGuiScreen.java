@@ -19,8 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -48,6 +48,7 @@ public final class ClickGuiScreen extends Screen {
 	/** Modules the search opened and the user closed again; forgotten when the query changes. */
 	private final Set<String> collapsed = new HashSet<>();
 	private String query = "";
+	private EditBox search;
 	/** Folded words of the query; every one must match somewhere in a module. */
 	private List<String> words = List.of();
 
@@ -98,6 +99,17 @@ public final class ClickGuiScreen extends Screen {
 
 	@Override
 	protected void init() {
+		search = new EditBox(font, 0, 0, 100, 10, Component.literal("Module suchen"));
+		search.setBordered(false);
+		search.setMaxLength(QUERY_MAX);
+		search.setTextColor(Theme.TEXT);
+		search.setHint(Component.literal("Module suchen …"));
+		// Always focused: typing anywhere goes into the search.
+		search.setCanLoseFocus(false);
+		search.setValue(query);
+		search.setResponder(this::setQuery);
+		addWidget(search);
+		setInitialFocus(search);
 		Category[] cats = Category.values();
 		int vw = vw();
 		int cols = Math.max(1, Math.min(cats.length, (vw - 16 + GAP) / (PANEL_W + GAP)));
@@ -172,6 +184,11 @@ public final class ClickGuiScreen extends Screen {
 	/** `word` in `folded`, also when typed without the umlaut's e ("hute" finds "Hüte"). */
 	private static boolean loose(String folded, String word) {
 		return folded.contains(word) || folded.replace("ae", "a").replace("oe", "o").replace("ue", "u").contains(word);
+	}
+
+	/** Empties the search; the edit box's responder resets the filter. */
+	private void clearSearch() {
+		search.setValue("");
 	}
 
 	private void setQuery(String q) {
@@ -288,24 +305,21 @@ public final class ClickGuiScreen extends Screen {
 		g.fill(x + 15, y + 13, x + 17, y + 15, ic);
 
 		int tx = x + 21;
-		if (!active) {
-			Draw.text(g, "Module suchen …", tx, y + 6, Theme.alpha(Theme.DIM, k));
-			return;
-		}
-		int n = hits().size();
-		String count = n == 0 ? "keine Treffer" : n == 1 ? "1 Treffer" : n + " Treffer";
-		// Clear button at the far right, the hit count before it.
 		int clearX = x + w - 13;
-		boolean overClear = Draw.inside(mx, my, clearX - 4, y + 2, 14, 16);
-		Draw.text(g, "x", clearX, y + 6, overClear ? Theme.TEXT : Theme.MUTED);
-		int cw = Math.round(Draw.width(count) * 0.75f);
-		Draw.scaledText(g, count, clearX - 6 - cw, y + 7.5f, 0.75f, n == 0 ? Theme.ERR : Theme.DIM, false);
-		String shownQuery = ellipsizeStart(query, clearX - 12 - cw - tx);
-		Draw.text(g, shownQuery, tx, y + 6, Theme.TEXT);
-		if ((System.currentTimeMillis() / 500) % 2 == 0) {
-			int cx = tx + Draw.width(shownQuery) + 1;
-			g.fill(cx, y + 5, cx + 1, y + 15, Theme.ACCENT_2);
+		int textEnd = x + w - 6;
+		if (active) {
+			int n = hits().size();
+			String count = n == 0 ? "keine Treffer" : n == 1 ? "1 Treffer" : n + " Treffer";
+			// Clear button at the far right, the hit count before it.
+			boolean overClear = Draw.inside(mx, my, clearX - 4, y + 2, 14, 16);
+			Draw.text(g, "x", clearX, y + 6, overClear ? Theme.TEXT : Theme.MUTED);
+			int cw = Math.round(Draw.width(count) * 0.75f);
+			Draw.scaledText(g, count, clearX - 6 - cw, y + 7.5f, 0.75f, n == 0 ? Theme.ERR : Theme.DIM, false);
+			textEnd = clearX - 12 - cw;
 		}
+		// The vanilla edit box does the typing (SDL3 only sends text to a focused text field), we draw around it.
+		search.setRectangle(Math.max(20, textEnd - tx), 10, tx, y + 6);
+		search.extractRenderState(g, mx, my, 0);
 	}
 
 	private void drawPanel(GuiGraphicsExtractor g, Category c, int x, int y, int mx, int my, int index) {
@@ -518,7 +532,9 @@ public final class ClickGuiScreen extends Screen {
 		// Search field (screen coordinates): the "x" clears it, the rest just takes the click.
 		int[] sb = searchBox();
 		if (Draw.inside(event.x(), event.y(), sb[0], sb[1], sb[2], sb[3])) {
-			if (!query.isEmpty() && event.x() >= sb[0] + sb[2] - 18) setQuery("");
+			if (!query.isEmpty() && event.x() >= sb[0] + sb[2] - 18) clearSearch();
+			else super.mouseClicked(event, doubleClick);
+			setFocused(search);
 			return true;
 		}
 
@@ -632,12 +648,7 @@ public final class ClickGuiScreen extends Screen {
 		int key = event.key();
 		if (!query.isEmpty()) {
 			if (key == InputConstants.KEY_ESCAPE) {
-				setQuery("");
-				return true;
-			}
-			if (key == InputConstants.KEY_BACKSPACE) {
-				// Ctrl+Backspace clears the whole query.
-				setQuery(event.hasControlDownWithQuirk() ? "" : query.substring(0, query.length() - 1));
+				clearSearch();
 				return true;
 			}
 			if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
@@ -646,23 +657,12 @@ public final class ClickGuiScreen extends Screen {
 				return true;
 			}
 		}
-		// The menu key closes, but not while a query is typed (it may contain that letter).
+		// The menu key closes, but not while a query is typed (it may be a letter key).
 		if (SlopClient.clickGuiKey().matches(event) && query.isEmpty()) {
 			onClose();
 			return true;
 		}
 		return super.keyPressed(event);
-	}
-
-	@Override
-	public boolean charTyped(CharacterEvent event) {
-		if (event.isAllowedChatCharacter() && query.length() < QUERY_MAX) {
-			String c = event.codepointAsString();
-			// A leading space does nothing useful.
-			if (!(query.isEmpty() && c.isBlank())) setQuery(query + c);
-			return true;
-		}
-		return false;
 	}
 
 	// ---------- text ----------
@@ -674,11 +674,4 @@ public final class ClickGuiScreen extends Screen {
 		return s.substring(0, end) + "…";
 	}
 
-	/** Keeps the end of a long query visible (where the cursor is). */
-	private static String ellipsizeStart(String s, int maxWidth) {
-		if (Draw.width(s) <= maxWidth) return s;
-		int start = 0;
-		while (start < s.length() && Draw.width("…" + s.substring(start)) > maxWidth) start++;
-		return "…" + s.substring(start);
-	}
 }
