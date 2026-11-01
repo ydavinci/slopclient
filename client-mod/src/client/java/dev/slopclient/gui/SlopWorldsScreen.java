@@ -56,7 +56,7 @@ import net.minecraft.world.level.storage.LevelSummary;
  * Backups go to {@code .minecraft/backups}, as vanilla's "Backup erstellen".
  */
 public final class SlopWorldsScreen extends Screen {
-	private static final float ROW_H = 30, ROW_GAP = 3, BAR_H = 26, TOOL_H = 22;
+	private static final float ROW_H = 30, ROW_GAP = 3, BAR_H = 26, TOOL_H = 22, ICON_RADIUS = 6;
 	private static final String[] SORTS = {"Zuletzt gespielt", "Name", "Größe"};
 	/** Folder sizes survive reopening the screen; a world's size is measured once per session. */
 	private static final Map<String, Long> SIZES = new ConcurrentHashMap<>();
@@ -153,9 +153,36 @@ public final class SlopWorldsScreen extends Screen {
 		if (path == null || !Files.isRegularFile(path)) return;
 		try (InputStream in = Files.newInputStream(path)) {
 			FaviconTexture tex = icons.computeIfAbsent(w.getLevelId(), id -> FaviconTexture.forWorld(minecraft.getTextureManager(), id));
-			tex.upload(NativeImage.read(in));
+			NativeImage image = NativeImage.read(in);
+			roundCorners(image, ICON_RADIUS / (ROW_H - 8));
+			tex.upload(image);
 		} catch (Exception e) {
 			// No icon then; the row shows a tile.
+		}
+	}
+
+	/**
+	 * Cuts anti-aliased round corners into the icon itself (radius as a fraction of its
+	 * width), so it sits in the row like the launcher's instance icons.
+	 */
+	private static void roundCorners(NativeImage image, float fraction) {
+		int w = image.getWidth(), h = image.getHeight();
+		float r = fraction * w;
+		int span = (int) Math.ceil(r);
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				boolean cornerX = x < span || x >= w - span, cornerY = y < span || y >= h - span;
+				if (!cornerX || !cornerY) continue;
+				// Distance of the pixel centre from the corner circle's centre.
+				float cx = x < span ? r : w - r, cy = y < span ? r : h - r;
+				float dx = Math.abs(x + 0.5f - cx), dy = Math.abs(y + 0.5f - cy);
+				if ((x < span ? x + 0.5f > cx : x + 0.5f < cx) || (y < span ? y + 0.5f > cy : y + 0.5f < cy)) continue;
+				float coverage = Math.max(0, Math.min(1, r + 0.5f - (float) Math.sqrt(dx * dx + dy * dy)));
+				if (coverage >= 1) continue;
+				int pixel = image.getPixel(x, y);
+				int alpha = Math.round((pixel >>> 24) * coverage);
+				image.setPixel(x, y, (alpha << 24) | (pixel & 0xFFFFFF));
+			}
 		}
 	}
 
@@ -329,9 +356,7 @@ public final class SlopWorldsScreen extends Screen {
 			new Kit.Entry("Einstellungen", Icon.SETTINGS, false, true, () -> minecraft.gui.setScreen(new OptionsScreen(this, minecraft.options))));
 		String[] tooltip = Kit.rail(g, "worlds", entries, new Kit.Entry("Zurück", Icon.CHEVRON_LEFT, false, true, this::onClose), height, mouseX, mouseY, intro(0), hits);
 
-		float pillBottom = Kit.playerPill(g, width, intro(0.1));
-		String style = "Ansicht: Modern";
-		Kit.pill(g, "worlds.style", style, width - 12 - Kit.pillWidth(style), pillBottom + 6, true, mouseX, mouseY, intro(0.2), hits, this::switchToClassic);
+		Kit.playerPill(g, width, intro(0.1));
 
 		float left = Kit.contentLeft(), right = width - 16;
 		drawHeader(g, left);
@@ -382,7 +407,7 @@ public final class SlopWorldsScreen extends Screen {
 		float x = left + sw + 10;
 		float segW = 0;
 		for (String s : SORTS) segW += Ui.width(s, 7.5f) + 16;
-		boolean segFits = x + segW + 4 + 90 < right;
+		boolean segFits = x + segW + 4 + Ui.width("Neue Welt", 8) + 32 + 16 < right;
 		if (segFits) {
 			Ui.rect(g, x, y, segW + 4, TOOL_H, TOOL_H / 2, Theme.alpha(Theme.PANEL_SOLID, 0.6 * k));
 			Ui.outline(g, x, y, segW + 4, TOOL_H, TOOL_H / 2, Theme.alpha(0xFFFFFF, 0.08 * k));
@@ -403,10 +428,13 @@ public final class SlopWorldsScreen extends Screen {
 			}
 		}
 
-		// "Neue Welt" on the right.
+		// "Neue Welt" on the right, the view switch left of it (in the same row, so nothing overlaps).
 		String label = "Neue Welt";
 		float bw = Ui.width(label, 8) + 32;
 		button(g, "worlds.create", label, Icon.PLUS, right - bw, y, bw, TOOL_H, Style.PRIMARY, true, mx, my, k, this::create);
+		String style = "Ansicht: Modern";
+		float px = right - bw - 8 - Kit.pillWidth(style);
+		if (px > x + (segFits ? segW + 12 : 0)) Kit.pill(g, "worlds.style", style, px, y + (TOOL_H - 18) / 2, true, mx, my, k, hits, this::switchToClassic);
 	}
 
 	private enum Style { PRIMARY, GLASS, DANGER }
@@ -521,7 +549,7 @@ public final class SlopWorldsScreen extends Screen {
 		if (tex != null) {
 			g.blit(RenderPipelines.GUI_TEXTURED, tex.textureLocation(), Math.round(ix), Math.round(iy), 0, 0, Math.round(is), Math.round(is), 64, 64, 64, 64, Theme.alpha(0xFFFFFF, (w.isDisabled() ? 0.5 : 1) * k));
 		} else {
-			Ui.rect(g, ix, iy, is, is, 6, Theme.alpha(Theme.chroma(-(Math.abs(id.hashCode()) % 100) / 100.0), 0.75 * k));
+			Ui.rect(g, ix, iy, is, is, ICON_RADIUS, Theme.alpha(Theme.chroma(-(Math.abs(id.hashCode()) % 100) / 100.0), 0.75 * k));
 			Ui.icon(g, Icon.EARTH, ix + (is - 12) / 2, iy + (is - 12) / 2, 12, Theme.alpha(0xFFFFFF, k));
 		}
 
