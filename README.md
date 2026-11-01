@@ -40,30 +40,41 @@ installiert 0.5.7 einmal von Hand.
 
 ### Launcher
 
-- **Instanzen** für jede Minecraft-Version mit Fabric, Quilt, NeoForge oder Forge (1.13+), Gruppen, Kopieren, eigene Icons, Spielzeit, Desktop-Verknüpfung
+- **Instanzen** für jede Minecraft-Version mit Fabric, Quilt, NeoForge oder Forge (1.13+): Gruppen, Kopieren, eigene Icons, Spielzeit, Desktop-Verknüpfung, Befehle vor dem Start und nach dem Beenden
+- **Mod-Loader aktualisieren**: Loader und Version bestehender Instanzen ändern, mit Hinweis, wenn es eine neuere stabile Version gibt
 - **Java automatisch**: die passende Runtime (8 / 17 / 21 / 25) kommt direkt von Mojang
-- **Mods, Resourcepacks und Shader** von Modrinth und CurseForge: Suche passend zur Instanz, Abhängigkeiten, Updates mit Changelog, Drag & Drop eigener Dateien
+- **Mods, Resourcepacks und Shader** von Modrinth und CurseForge: Suche passend zur Instanz, Abhängigkeiten, Drag & Drop eigener Dateien (werden erkannt und bekommen Updates), Performance-Paket (Sodium, Lithium, FerriteCore, Iris) mit einem Klick
+- **Updates mit einem Klick**: Der Launcher sucht im Hintergrund nach Updates. Instanzen zeigen „N Updates“, jeder Inhalt bekommt einen eigenen „Update“-Knopf, und vor „Alle aktualisieren“ gibt es die Changelogs.
+- **Mods nur einmal speichern**: Mods, Resourcepacks und Shader liegen einmal in einem gemeinsamen Speicher, die Instanzen bekommen Hardlinks darauf. Was eine Instanz schon hat, lädt keine andere neu. Dazu „Doppelte Dateien zusammenführen“ für ältere Instanzen.
+- **Geteilte Spieleinstellungen**: Instanzen einer Gruppe teilen sich Grafik, Steuerung, Sound und Tastenbelegung (`options.txt` und Co.).
 - **Modpacks**: `.mrpack` und CurseForge-ZIP importieren, Instanzen als `.mrpack` exportieren
 - **Umzug aus Prism Launcher, PolyMC und MultiMC** inklusive Welten und Configs
-- **Welten, Screenshots und Server** pro Instanz; „Beitreten“ startet direkt auf dem Server
+- **Welten, Screenshots und Server** pro Instanz: Datapacks pro Welt, Backup als ZIP, Server-Liste mit Ping, „Beitreten“ startet direkt auf dem Server
 - **Crash-Analyse**: erkennt u. a. zu wenig RAM, falsches Java, kaputte oder doppelte Mods und nennt die Ursache; Logs mit einem Klick über mclo.gs teilen (ohne Zugangsdaten)
+- **Selbst-Update**: neue Releases mit Änderungen, signiert geprüft und mit einem Klick installiert
 - **Discord-Status** mit Instanz und Server (abschaltbar)
-- **Microsoft-Login** per Device Code; Tokens werden mit Windows DPAPI verschlüsselt gespeichert
+- **Microsoft-Login** per Device Code, mehrere Accounts; Tokens werden mit Windows DPAPI verschlüsselt gespeichert
 
 ### Client-Mod (Fabric/Quilt, Minecraft 26.3)
 
-- eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche
-- **HUD-Editor** mit Snapping und vielen Modulen: FPS, CPS, Keystrokes, Koordinaten, Rüstung, Tränke, Ping, Kompass, Item-Zähler, Combo, Reichweite, Cooldowns, Bossleiste …
-- **Zoom** (C), **Freelook** (Alt), Helligkeit, Fadenkreuz, Toggle Sprint, Glow, eigene Schriften, Config-Profile
+- eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche, **Config-Profile**
+- **HUD-Editor** mit Snapping und vielen Elementen: FPS, CPS, Keystrokes, Koordinaten, Geschwindigkeit, Rüstung, Tränke, Ping, Server-IP, Uhrzeit, Kompass, Item-Zähler, Combo, Reichweite, Cooldowns, Bossleiste, Arbeitsspeicher, Biom, Tag, Stoppuhr, Resourcepacks, Modul-Liste
+- **Bibliothekar**: Schaust du auf ein Lesepult, stehen die Bücher des Bibliothekars samt Preis daneben
+- **Ansicht**: Zoom (C), Freelook (Alt), Helligkeit, eigenes Fadenkreuz, Block-Umriss, Hit-Color, Low Fire, eigener Nametag, Glow für sichtbare Spieler
 - **Lichtlevel-Overlay**: zeigt auf dem Boden, wo Monster spawnen können (rot immer, gelb nachts, grün sicher)
+- **Skybox**: der Shader des Launchers als Himmel
+- **Amboss-Planer**: günstigste Reihenfolge, um Verzauberungsbücher im Amboss zu kombinieren, mit Leveln pro Schritt; der Plan lässt sich neben dem Amboss anheften
+- **Komfort**: Toggle Sprint, Auto-Werkzeug beim Abbauen, Chat mit Uhrzeit und gebündelten Wiederholungen, Scoreboard anpassen, Screenshot-Vorschau nach F2
+- **Eigene Schriften** für Menüs, HUD und auf Wunsch das ganze Spiel
 - **Server-Regeln**: Server können einzelne Module abschalten
 
 ### Kosmetik
 
-- **Cape-Studio**: eigene, auch animierte Capes aus Bildern und GIFs, mit 3D-Vorschau
-- **Hüte und Begleiter**: sechs Hüte, 16 Begleiter (auf der Schulter, fliegend oder laufend)
+- **Cape-Studio**: eigene, auch animierte Capes aus Bildern und GIFs, mit 3D-Vorschau; das Motiv läuft über die Ränder, auf der Elytra in Flügelform
+- **Hüte, Begleiter und Zubehör**: zehn Hüte, 22 Begleiter (auf der Schulter, fliegend oder laufend, darunter ein Mini-Me mit deinem Skin) und Zubehör wie Katanas und Flügel
+- Nur im Client, für dich: **Trail** hinter dir in mehreren Stilen (Funken, Spirale, Komet, Blüten, Seelen, Noten, Herzen) und **Glas**, Spieler als Figuren aus Glas in sechs Varianten
 - **Skins**: Bibliothek mit 3D-Vorschau, direkt auf den Minecraft-Account hochladen
-- **Online sichtbar**: über den Cosmetics-Server sehen andere SlopClient-Spieler deine Kosmetik. Standard ist der SlopClient-Server; einen eigenen trägst du unter *Einstellungen → Kosmetik online* ein.
+- **Online sichtbar**: über den Cosmetics-Server sehen andere SlopClient-Spieler deine Kosmetik. Standard ist der SlopClient-Server; einen eigenen trägst du unter *Einstellungen → Kosmetik online* ein. Im Browser lässt sich alles auch ohne Launcher verwalten (Webinterface des Servers).
 
 **Fair Play:** SlopClient bietet HUD, Komfort, Performance und Kosmetik, aber keine Vorteile im Kampf.
 
@@ -150,9 +161,9 @@ Plan und Design: [PLAN.md](PLAN.md), [DESIGN.md](DESIGN.md). Änderungen: [CHANG
 
 ### Release
 
-Versionsnummer in `Cargo.toml`, `client-mod/gradle.properties`, `launcher/package.json` und
-`launcher/src-tauri/tauri.conf.json` anheben (dazu `Cargo.lock` und `launcher/package-lock.json`), Abschnitt im `CHANGELOG.md` ergänzen, dann einen Tag `v<version>` pushen.
-Der Workflow baut alles, veröffentlicht das GitHub-Release und das Docker-Image.
+Version an vier Stellen anheben, `## Unveröffentlicht` im `CHANGELOG.md` umbenennen, Tag `v<version>` pushen. Der
+Workflow baut alles, signiert den Launcher für das Selbst-Update und veröffentlicht das GitHub-Release und das
+Docker-Image. Die Schritte im Einzelnen und die Signatur-Secrets: [RELEASING.md](RELEASING.md).
 
 ## Lizenz
 
