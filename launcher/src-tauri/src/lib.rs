@@ -17,7 +17,7 @@ use slopclient_core::{
     crash::{self, CrashReport},
     discord,
     icon, mclogs,
-    screenshots::{self, Screenshot},
+    screenshots::{self, InstanceScreenshot, Screenshot},
     worlds::{self, Datapack, World},
     servers::{self, Server, ServerStatus},
     skins::{self, Skin, SkinEntry, Variant},
@@ -812,6 +812,51 @@ async fn screenshot_delete(state: State<'_, AppState>, id: String, name: String)
     screenshots::delete(&state.paths, &instance, &name).map_err(err)
 }
 
+/// Screenshots of all instances, newest first (the Screenshots page).
+#[tauri::command]
+async fn screenshots_all(state: State<'_, AppState>) -> CmdResult<Vec<InstanceScreenshot>> {
+    let paths = state.paths.clone();
+    tokio::task::spawn_blocking(move || screenshots::list_all(&paths))
+        .await
+        .map_err(err)?
+        .map_err(err)
+}
+
+/// Shows the screenshot selected in Explorer.
+#[tauri::command]
+async fn screenshot_reveal(state: State<'_, AppState>, id: String, name: String) -> CmdResult<()> {
+    let instance = Instance::load(&state.paths, &id).map_err(err)?;
+    let path = screenshots::path(&state.paths, &instance, &name).map_err(err)?;
+    tauri_plugin_opener::reveal_item_in_dir(path).map_err(err)
+}
+
+/// `shot://localhost/<instance id>/<file name>` (on Windows `http://shot.localhost/...`):
+/// the full screenshot for the viewer, without base64 through IPC. Only files that
+/// `screenshots::read` accepts are served.
+fn serve_screenshot(app: &AppHandle, request: &tauri::http::Request<Vec<u8>>) -> tauri::http::Response<Vec<u8>> {
+    let respond = |status: u16, kind: &str, body: Vec<u8>| {
+        tauri::http::Response::builder()
+            .status(status)
+            .header("Content-Type", kind)
+            // The page fetches it for "copy to clipboard", from the app's own origin.
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Cache-Control", "no-cache")
+            .body(body)
+            .unwrap_or_default()
+    };
+    let parts: Vec<String> = request.uri().path().trim_start_matches('/').split('/').map(screenshots::decode_url_part).collect();
+    let [id, name] = parts.as_slice() else {
+        return respond(400, "text/plain", b"expected /<instance>/<file>".to_vec());
+    };
+    let state = app.state::<AppState>();
+    let found = Instance::load(&state.paths, id).and_then(|instance| screenshots::read(&state.paths, &instance, name));
+    match found {
+        Ok(bytes) => respond(200, "image/png", bytes),
+        Err(e) => respond(404, "text/plain", e.to_string().into_bytes()),
+    }
+}
+
+
 // ---------- accounts ----------
 
 #[tauri::command]
@@ -1546,6 +1591,10 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .register_asynchronous_uri_scheme_protocol("shot", |ctx, request, responder| {
+            let app = ctx.app_handle().clone();
+            tauri::async_runtime::spawn_blocking(move || responder.respond(serve_screenshot(&app, &request)));
+        })
         .setup(|app| {
             let state = app.state::<AppState>();
             state.refresh_presence();
@@ -1615,6 +1664,8 @@ pub fn run() {
             screenshots_list,
             screenshot_thumb,
             screenshot_delete,
+            screenshots_all,
+            screenshot_reveal,
             instance_icon,
             set_instance_icon,
             clear_instance_icon,
