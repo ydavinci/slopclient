@@ -117,6 +117,22 @@ public final class SlopClient implements ClientModInitializer {
 		});
 		ServerRules.register();
 
+		// Remembered for "Spielen" on the title screen: the world or server joined last.
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> mc.execute(() -> {
+			String[] last = null;
+			var server = mc.getSingleplayerServer();
+			if (server != null) {
+				var folder = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toAbsolutePath().normalize().getFileName();
+				if (folder != null) last = new String[] {"world", folder.toString(), server.getWorldData().getLevelName(), ""};
+			} else if (mc.getCurrentServer() != null && !mc.getCurrentServer().isRealm()) {
+				var data = mc.getCurrentServer();
+				last = new String[] {"server", data.ip, data.name, ""};
+			}
+			if (last == null) return;
+			last[3] = Long.toString(System.currentTimeMillis());
+			config.lastPlayed = last;
+			save();
+		}));
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			while (screenshotKey.consumeClick()) modules.screenshots.openLatest();
 			while (galleryKey.consumeClick()) {
