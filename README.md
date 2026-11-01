@@ -66,6 +66,7 @@ installiert 0.5.7 einmal von Hand.
 - **Amboss-Planer**: günstigste Reihenfolge, um Verzauberungsbücher im Amboss zu kombinieren, mit Leveln pro Schritt; der Plan lässt sich neben dem Amboss anheften
 - **Komfort**: Toggle Sprint, Auto-Werkzeug beim Abbauen, Chat mit Uhrzeit und gebündelten Wiederholungen, Scoreboard anpassen, Screenshot-Vorschau nach F2
 - **Eigene Schriften** für Menüs, HUD und auf Wunsch das ganze Spiel
+- **Elytra-Swap**: tauscht Elytra und Brustplatte per Taste oder automatisch beim Springen in der Luft, nach der Landung zurück
 - **Server-Regeln**: Server können einzelne Module abschalten
 
 ### Kosmetik
