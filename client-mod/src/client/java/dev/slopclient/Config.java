@@ -36,6 +36,8 @@ public final class Config {
 	public final Map<String, int[]> panels = new HashMap<>();
 	/** Size of the ClickGUI relative to Minecraft's GUI scale (0.6 to 1.5). */
 	public float guiScale = 1f;
+	/** What was played last, for the title screen's "Spielen": null or {"world"|"server", id or address, name, epoch ms}. */
+	public String[] lastPlayed;
 	private String profile = DEFAULT_PROFILE;
 
 	public String profile() {
@@ -69,6 +71,13 @@ public final class Config {
 				JsonObject root = JsonParser.parseString(Files.readString(clientFile)).getAsJsonObject();
 				if (root.has("profile")) profile = sanitize(root.get("profile").getAsString());
 				if (root.has("guiScale")) guiScale = clampGuiScale(root.get("guiScale").getAsFloat());
+				if (root.has("lastPlayed")) {
+					JsonArray last = root.getAsJsonArray("lastPlayed");
+					if (last.size() == 4) {
+						lastPlayed = new String[4];
+						for (int i = 0; i < 4; i++) lastPlayed[i] = last.get(i).getAsString();
+					}
+				}
 				if (root.has("panels")) {
 					for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("panels").entrySet()) {
 						JsonArray arr = e.getValue().getAsJsonArray();
@@ -171,6 +180,11 @@ public final class Config {
 		JsonObject client = new JsonObject();
 		client.addProperty("profile", profile);
 		client.addProperty("guiScale", guiScale);
+		if (lastPlayed != null) {
+			JsonArray last = new JsonArray();
+			for (String s : lastPlayed) last.add(s);
+			client.add("lastPlayed", last);
+		}
 		JsonObject panelJson = new JsonObject();
 		panels.forEach((name, pos) -> {
 			JsonArray arr = new JsonArray();

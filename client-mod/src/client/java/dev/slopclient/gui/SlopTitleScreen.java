@@ -384,7 +384,7 @@ public final class SlopTitleScreen extends Screen {
 		if (icon > 0) {
 			double ki = intro(0.15);
 			int s = Math.round(iconSize);
-			g.blit(RenderPipelines.GUI_TEXTURED, InstanceIconTexture.ID, Math.round(x), Math.round(y + (nameH - s) / 2 + (1 - ki) * 8), 0, 0, s, s, icon, icon, icon, icon, Theme.alpha(0xFFFFFF, ki));
+			g.blit(RenderPipelines.GUI_TEXTURED, InstanceIconTexture.ID, Math.round(x), Math.round(y + (nameH - s) / 2 + (float) (1 - ki) * 8), 0, 0, s, s, icon, icon, icon, icon, Theme.alpha(0xFFFFFF, ki));
 			x += iconSize + size * 0.3f;
 		}
 		for (int i = 0; i < instanceName.length(); i++) {

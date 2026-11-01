@@ -20,6 +20,9 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
   - Modus „Automatisch“: Nochmal Leertaste in der Luft legt die Elytra an. Gezählt wird nicht der Sprung vom Boden selbst. Das Gleiten startet, sobald du fällst. Drückst du noch im Steigen, wartet der Tausch bis zum höchsten Punkt, damit es dich nicht nach oben zieht.
   - „Nach Landung zurück“ (Standard an) zieht nach dem Gleiten die Brustplatte wieder an. Wer die Elytra am Boden anlegt, behält sie.
   - Genommen wird die Elytra mit der meisten Haltbarkeit, eine fast kaputte nie. Getauscht wird mit normalen Inventar-Klicks, Server können das Modul abschalten.
+- **Hauptmenü im Launcher-Stil**: links eine Glas-Seitenleiste mit Icons (Start, Welten, Server, Screenshots, Module, Einstellungen, Beenden), rechts die Startseite wie im Launcher: großer Instanzname, Chips, „Spielen“ und Karten der zuletzt gespielten Welten und Server. „Spielen“ setzt die Welt oder den Server fort, die du zuletzt gespielt hast.
+- **Glattere Menüs überall**: Ecken, Rahmen und Schatten werden jetzt in echter Bildschirmauflösung gezeichnet, mit geglätteten Rundungen und 1-Pixel-Linien statt Treppenstufen. Das gilt auch für ClickGUI, HUD-Editor, Amboss-Planer und Screenshot-Galerie. SlopClient-Menüs nutzen immer eine scharfe Schrift (Sora), auch wenn im Modul „Schrift“ Minecraft gewählt ist. Das HUD behält die Wahl.
+- Nach „Abbrechen“ in „Neue Welt erstellen“ (Einzelspieler ohne Welten) kam der Vanilla-Titelbildschirm. Behoben (#11).
 - **Screenshot-Galerie im Spiel**: die Screenshots der Instanz als Raster mit Vorschaubildern, im Stil von ClickGUI und Amboss-Planer. Ein Klick öffnet den Viewer mit Zoom per Mausrad, Ziehen, Pfeiltasten, „Im Ordner zeigen“ und Löschen. Öffnen über „Screenshots“ unten in der ClickGUI oder eine eigene Taste (ohne Standardbelegung).
 
 ### Cosmetics-Server
