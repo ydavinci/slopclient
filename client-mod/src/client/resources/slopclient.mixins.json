@@ -35,7 +35,8 @@
 		"restyle.SeparatorRestyleMixin",
 		"restyle.MenuTabButtonRestyleMixin",
 		"restyle.AdvancementsScreenRestyleMixin",
-		"restyle.AdvancementTabTypeRestyleMixin"
+		"restyle.AdvancementTabTypeRestyleMixin",
+		"restyle.GenericMessageScreenRestyleMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }
