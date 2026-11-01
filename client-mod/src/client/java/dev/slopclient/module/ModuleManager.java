@@ -31,6 +31,7 @@ public final class ModuleManager {
 	public final dev.slopclient.gui.ScreenshotPreview screenshots = add(new dev.slopclient.gui.ScreenshotPreview());
 	public final Features.AnvilPlanner anvilPlanner = add(new Features.AnvilPlanner());
 	public final Features.AutoTool autoTool = add(new Features.AutoTool());
+	public final ElytraSwap elytraSwap = add(new ElytraSwap());
 	public final Features.TitleScreenModule titleScreen = add(new Features.TitleScreenModule());
 	public final dev.slopclient.hud.InfoHud.BossBar bossBar = new dev.slopclient.hud.InfoHud.BossBar();
 	public final dev.slopclient.hud.InfoHud.Stopwatch stopwatch = new dev.slopclient.hud.InfoHud.Stopwatch();

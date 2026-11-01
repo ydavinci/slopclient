@@ -11,6 +11,11 @@ Alle nennenswerten Änderungen an SlopClient (Launcher und Client-Mod). Die Vers
 - **Modul-Suche in der ClickGUI**: Ein Suchfeld oben rechts. Einfach lostippen, dann zeigen die Panels nur noch passende Module, Treffer sind markiert. Gesucht wird in Namen, Beschreibungen, Kategorien und Einstellungen. Passt eine Einstellung, klappt das Modul von selbst auf. Umlaute dürfen fehlen („grosse“ findet „Größe“). Bei genau einem Treffer schaltet Enter das Modul um, Esc leert die Suche.
 - **ClickGUI-Größe einstellbar**: Mit „Größe“ unten rechts lässt sich das Menü zwischen 60 und 150 % skalieren (Klick: größer, Rechtsklick: kleiner). Die Größe wird gespeichert.
 - Lange Modul- und Einstellungsnamen überlappen nicht mehr mit Schalter und „+“, sie werden passend verkleinert, etwa beim Lichtlevel-Overlay.
+- **Elytra-Swap** (ClickGUI → Komfort): tauscht Elytra und Brustplatte.
+  - Modus „Taste“: Die Taste „Elytra und Brustplatte tauschen“ (in den Steuerungs-Einstellungen, ohne Standardbelegung) tauscht hin und her.
+  - Modus „Automatisch“: Leertaste in der Luft legt die Elytra an, und du gleitest sofort los.
+  - „Nach Landung zurück“ (Standard an) zieht nach dem Gleiten die Brustplatte wieder an. Wer die Elytra am Boden anlegt, behält sie.
+  - Genommen wird die Elytra mit der meisten Haltbarkeit, eine fast kaputte nie. Getauscht wird mit normalen Inventar-Klicks, Server können das Modul abschalten.
 
 ### Cosmetics-Server
 - `PUT`/`DELETE /v1/listening` und `POST /v1/listening/lookup` für die geteilten Songs. Der Launcher-Session-Token bleibt dabei im Launcher-Programm und erreicht das Spiel nie.

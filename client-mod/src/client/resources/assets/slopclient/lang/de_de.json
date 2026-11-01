@@ -9,5 +9,6 @@
 	"key.slopclient.light_overlay": "Lichtlevel-Overlay umschalten",
 	"key.slopclient.music.toggle": "Musik: Abspielen/Pause",
 	"key.slopclient.music.next": "Musik: Nächster Titel",
-	"key.slopclient.music.previous": "Musik: Vorheriger Titel"
+	"key.slopclient.music.previous": "Musik: Vorheriger Titel",
+	"key.slopclient.elytra_swap": "Elytra und Brustplatte tauschen"
 }

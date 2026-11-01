@@ -92,6 +92,8 @@ public final class SlopClient implements ClientModInitializer {
 			new KeyMapping("key.slopclient.anvil", InputConstants.UNKNOWN.getValue(), category)));
 		modules.lightOverlay.bind(KeyMappingHelper.registerKeyMapping(
 			new KeyMapping("key.slopclient.light_overlay", InputConstants.UNKNOWN.getValue(), category)));
+		modules.elytraSwap.bind(KeyMappingHelper.registerKeyMapping(
+			new KeyMapping("key.slopclient.elytra_swap", InputConstants.UNKNOWN.getValue(), category)));
 		net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.COLLECT_SUBMITS.register(modules.lightOverlay::render);
 		// The planner's button above the anvil, where the books are combined.
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
@@ -119,6 +121,7 @@ public final class SlopClient implements ClientModInitializer {
 				if (mc.gui.screen() == null) mc.gui.setScreen(new ClickGuiScreen(null));
 			}
 			modules.lightOverlay.pollKey(mc);
+			modules.elytraSwap.pollKey(mc);
 			modules.tick(mc);
 			Presence.tick(mc);
 			dev.slopclient.hud.InfoHud.Hits.tick(mc);
