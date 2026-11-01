@@ -6,12 +6,12 @@ import dev.slopclient.render.InstanceIconTexture;
 import dev.slopclient.render.MenuShader;
 import dev.slopclient.render.Theme;
 import dev.slopclient.ui.Icon;
+import dev.slopclient.ui.Kit;
+import dev.slopclient.ui.Kit.Hit;
 import dev.slopclient.ui.Ui;
 import java.io.InputStream;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,9 +49,8 @@ import net.minecraft.world.level.storage.LevelSummary;
  * own page yet open the matching vanilla screen.
  */
 public final class SlopTitleScreen extends Screen {
-	private static final Identifier LOGO = Identifier.fromNamespaceAndPath(SlopClient.ID, "textures/gui/logo.png");
-	private static final java.util.Set<String> HIDDEN_MODS = java.util.Set.of("minecraft", "java", "fabricloader", "mixinextras");
-	private static final float RAIL_X = 10, RAIL_W = 40, ITEM = 28, CARD_W = 150, CARD_H = 40, BTN_H = 34;
+		private static final java.util.Set<String> HIDDEN_MODS = java.util.Set.of("minecraft", "java", "fabricloader", "mixinextras");
+	private static final float CARD_W = 150, CARD_H = 40, BTN_H = Kit.BTN_H;
 	/** Centred layout, chosen in the launcher (Einstellungen → Design). */
 	private static final boolean CENTERED = "center".equals(System.getProperty("slopclient.layout"));
 
@@ -65,13 +64,6 @@ public final class SlopTitleScreen extends Screen {
 		Nav(String label, String icon) {
 			this.label = label;
 			this.icon = icon;
-		}
-	}
-
-	/** Something clickable laid out this frame. */
-	private record Hit(float x, float y, float w, float h, Runnable action) {
-		boolean contains(double mx, double my) {
-			return mx >= x && mx < x + w && my >= y && my < y + h;
 		}
 	}
 
@@ -258,81 +250,24 @@ public final class SlopTitleScreen extends Screen {
 		String[] tooltip = drawRail(g, mouseX, mouseY);
 		drawTopRight(g);
 		drawStart(g, mouseX, mouseY);
-		if (tooltip != null) drawTooltip(g, tooltip[0], Float.parseFloat(tooltip[1]));
+		Kit.tooltip(g, tooltip);
 	}
 
 	private static boolean over(float x, float y, float w, float h, int mx, int my) {
-		return mx >= x && mx < x + w && my >= y && my < y + h;
+		return Kit.over(x, y, w, h, mx, my);
 	}
 
-	/** The sidebar; returns {label, centre y} of a hovered entry for its tooltip. */
 	private String[] drawRail(GuiGraphicsExtractor g, int mx, int my) {
-		double k = intro(0);
-		float x = RAIL_X - (float) (1 - k) * 12, y = 10, h = height - 20;
-		Ui.glass(g, x, y, RAIL_W, h, 14, k);
-		g.blit(RenderPipelines.GUI_TEXTURED, LOGO, Math.round(x + 11), Math.round(y + 10), 0, 0, 18, 18, 18, 18, Theme.alpha(0xFFFFFF, k));
-		Ui.rect(g, x + 10, y + 35, RAIL_W - 20, Ui.hairline(g), 0, Theme.alpha(0xFFFFFF, 0.1 * k));
-
-		String[] tooltip = null;
-		float ix = x + (RAIL_W - ITEM) / 2, iy = y + 42;
-		for (Nav nav : Nav.values()) {
-			boolean hover = over(ix, iy, ITEM, ITEM, mx, my);
-			boolean active = nav == Nav.START;
-			double hv = Ui.anim("title.nav." + nav, hover);
-			if (active) {
-				Ui.rect(g, ix, iy, ITEM, ITEM, 9, Theme.alpha(Theme.ACCENT, 0.24 * k));
-				Ui.outline(g, ix, iy, ITEM, ITEM, 9, Theme.alpha(Theme.ACCENT_2, 0.32 * k));
-				Ui.chroma(g, x + 1.5f, iy + 8, 2.5f, ITEM - 16, 1.25f, k, 0);
-			} else if (hv > 0) {
-				Ui.rect(g, ix, iy, ITEM, ITEM, 9, Theme.alpha(0xFFFFFF, 0.08 * hv * k));
-			}
-			int color = active ? 0xFFFFFFFF : Theme.lerp(Theme.MUTED, Theme.TEXT, hv);
-			Ui.icon(g, nav.icon, ix + 7, iy + 7, 14, Theme.alpha(color, k));
-			hits.add(new Hit(ix, iy, ITEM, ITEM, () -> open(nav)));
-			if (hover) tooltip = new String[] {nav.label, Float.toString(iy + ITEM / 2)};
-			iy += ITEM + 6;
-		}
-
-		// Quit at the bottom.
-		float qy = y + h - ITEM - 6;
-		boolean hover = over(ix, qy, ITEM, ITEM, mx, my);
-		double hv = Ui.anim("title.nav.quit", hover);
-		if (hv > 0) Ui.rect(g, ix, qy, ITEM, ITEM, 9, Theme.alpha(Theme.ERR, 0.16 * hv * k));
-		Ui.icon(g, Icon.POWER, ix + 7, qy + 7, 14, Theme.alpha(Theme.lerp(Theme.MUTED, Theme.ERR, hv), k));
-		hits.add(new Hit(ix, qy, ITEM, ITEM, minecraft::stop));
-		if (hover) tooltip = new String[] {"Beenden", Float.toString(qy + ITEM / 2)};
-		return tooltip;
+		List<Kit.Entry> entries = new ArrayList<>();
+		for (Nav nav : Nav.values()) entries.add(new Kit.Entry(nav.label, nav.icon, nav == Nav.START, true, () -> open(nav)));
+		return Kit.rail(g, "title", entries, new Kit.Entry("Beenden", Icon.POWER, false, true, minecraft::stop), height, mx, my, intro(0), hits);
 	}
 
-	private void drawTooltip(GuiGraphicsExtractor g, String label, float centreY) {
-		float size = 8, w = Ui.width(label, size) + 16, h = 18;
-		float x = RAIL_X + RAIL_W + 8, y = centreY - h / 2;
-		Ui.shadow(g, x, y, w, h, 7, 8, 3, 0x66000000);
-		Ui.rect(g, x, y, w, h, 7, Theme.alpha(Theme.PANEL_SOLID, 0.96));
-		Ui.outline(g, x, y, w, h, 7, Theme.LINE_2);
-		Ui.text(g, label, x + 8, y + (h - size * 1.25f) / 2, size, Theme.TEXT);
-	}
-
-	/** Player and clock in a glass pill, top right; the legal notice under it. */
+	/** Player pill top right, the legal notice under it. */
 	private void drawTopRight(GuiGraphicsExtractor g) {
-		double k = intro(0.2);
-		if (k <= 0) return;
-		String name = minecraft.getUser().getName(), time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
-		float size = 8, h = 22;
-		float w = 10 + 17 + Ui.width(name, size) + 13 + Ui.width(time, size) + 10;
-		float x = width - 12 - w, y = 10;
-		Ui.rect(g, x, y, w, h, 11, Theme.alpha(Theme.PANEL_SOLID, 0.55 * k));
-		Ui.outline(g, x, y, w, h, 11, Theme.alpha(0xFFFFFF, 0.09 * k));
-		float cx = x + 10;
-		Ui.icon(g, Icon.USER, cx, y + 5, 12, Theme.alpha(Theme.ACCENT_2, k));
-		cx += 17;
-		cx += Ui.text(g, name, cx, y + (h - size * 1.25f) / 2, size, Theme.alpha(Theme.TEXT, k));
-		Ui.rect(g, cx + 6, y + 7, Ui.hairline(g), h - 14, 0, Theme.alpha(0xFFFFFF, 0.14 * k));
-		Ui.text(g, time, cx + 13, y + (h - size * 1.25f) / 2, size, Theme.alpha(Theme.MUTED, k));
-
+		float ny = Kit.playerPill(g, width, intro(0.2)) + 6;
 		double kn = intro(1.0);
 		String[] notice = {"Kein offizielles Minecraft-Produkt. Nicht von Mojang", "oder Microsoft genehmigt. Copyright Mojang AB."};
-		float ny = y + h + 6;
 		for (String line : notice) {
 			Ui.text(g, line, width - 12 - Ui.width(line, 6), ny, 6, Theme.alpha(Theme.DIM, kn));
 			ny += 8;
@@ -340,7 +275,7 @@ public final class SlopTitleScreen extends Screen {
 	}
 
 	private float contentLeft() {
-		return RAIL_X + RAIL_W + 24;
+		return Kit.contentLeft();
 	}
 
 	/** Left edge of a row of the given width: the content margin, or centred in the content area. */
@@ -401,62 +336,26 @@ public final class SlopTitleScreen extends Screen {
 		String loader = FabricLoader.getInstance().getModContainer("fabricloader")
 			.map(c -> "Fabric " + c.getMetadata().getVersion().getFriendlyString()).orElse("Fabric");
 		String[] chips = {"Bereit", "Minecraft " + SharedConstants.getCurrentVersion().name(), loader, modCount + " Mods"};
-		float size = 7.5f, gap = 5, total = 0;
-		for (int i = 0; i < chips.length; i++) total += chipWidth(chips[i], size, i == 0) + gap;
-		float x = rowX(total - gap);
+		float gap = 5, total = -gap;
+		for (int i = 0; i < chips.length; i++) total += Kit.chipWidth(chips[i], i == 0) + gap;
+		float x = rowX(total);
 		y += (float) (1 - k) * 6;
-		for (int i = 0; i < chips.length; i++) {
-			float w = chipWidth(chips[i], size, i == 0);
-			Ui.rect(g, x, y, w, 16, 8, Theme.alpha(0xFFFFFF, 0.06 * k));
-			Ui.outline(g, x, y, w, 16, 8, Theme.alpha(0xFFFFFF, 0.12 * k));
-			float tx = x + 8;
-			if (i == 0) {
-				Ui.rect(g, tx, y + 6, 4, 4, 2, Theme.alpha(Theme.ON, k));
-				tx += 8;
-			}
-			Ui.text(g, chips[i], tx, y + (16 - size * 1.25f) / 2, size, Theme.alpha(i == 0 ? Theme.TEXT : Theme.MUTED, k));
-			x += w + gap;
-		}
-	}
-
-	private static float chipWidth(String text, float size, boolean dot) {
-		return Ui.width(text, size) + 16 + (dot ? 8 : 0);
+		for (int i = 0; i < chips.length; i++) x += Kit.chip(g, chips[i], x, y, i == 0 ? Theme.ON : 0, k) + gap;
 	}
 
 	private void drawButtons(GuiGraphicsExtractor g, float y, int mx, int my) {
 		String hint = playHint();
-		float playW = Math.min(190, Math.max(118, Math.max(Ui.boldWidth("Spielen", 10), Ui.width(hint, 7)) + 46));
-		float sw = Ui.width("Einzelspieler", 9) + 42, mw = Ui.width("Mehrspieler", 9) + 42;
+		float playW = Kit.primaryWidth("Spielen", hint);
+		float sw = Kit.glassWidth("Einzelspieler"), mw = Kit.glassWidth("Mehrspieler");
 		float x = rowX(playW + 8 + sw + 6 + mw);
-
 		double k = intro(0.55);
 		if (k <= 0) return;
 		y += (float) (1 - k) * 8;
-		// The launcher's play button: chroma fill, glow and a ring just outside it.
-		boolean hover = over(x, y, playW, BTN_H, mx, my);
-		double hv = Ui.anim("title.play", hover);
-		Ui.shadow(g, x, y, playW, BTN_H, 12, 14, 4, Theme.alpha(Theme.ACCENT, (0.45 + 0.25 * hv) * k));
-		Ui.outline(g, x - 3, y - 3, playW + 6, BTN_H + 6, 15, Theme.alpha(Theme.ACCENT_2, (0.45 + 0.4 * hv) * k));
-		Ui.chroma(g, x, y, playW, BTN_H, 12, k, 0.1 * hv);
-		Ui.icon(g, Icon.PLAY, x + 12, y + (BTN_H - 14) / 2, 14, Theme.alpha(0xFFFFFF, k));
-		Ui.bold(g, "Spielen", x + 32, y + 5, 10, Theme.alpha(0xFFFFFF, k));
-		Ui.text(g, Ui.fit(hint, 7, playW - 42), x + 32, y + 19, 7, Theme.alpha(0xFFFFFF, 0.78 * k));
-		hits.add(new Hit(x, y, playW, BTN_H, this::play));
+		Kit.primary(g, "title.play", "Spielen", hint, Icon.PLAY, x, y, playW, mx, my, k, hits, this::play);
 		x += playW + 8;
-
-		x += glassButton(g, "Einzelspieler", Icon.EARTH, x, y, sw, mx, my, k, () -> open(Nav.WORLDS)) + 6;
-		glassButton(g, "Mehrspieler", Icon.SERVER, x, y, mw, mx, my, k, () -> open(Nav.SERVERS));
-	}
-
-	private float glassButton(GuiGraphicsExtractor g, String label, String icon, float x, float y, float w, int mx, int my, double k, Runnable action) {
-		boolean hover = over(x, y, w, BTN_H, mx, my);
-		double hv = Ui.anim("title.btn." + label, hover);
-		Ui.rect(g, x, y, w, BTN_H, 12, Theme.alpha(Theme.RAISED, (0.68 + 0.27 * hv) * k));
-		Ui.outline(g, x, y, w, BTN_H, 12, Theme.alpha(0xFFFFFF, (0.08 + 0.1 * hv) * k));
-		Ui.icon(g, icon, x + 12, y + (BTN_H - 13) / 2, 13, Theme.alpha(Theme.lerp(Theme.MUTED, Theme.TEXT, hv), k));
-		Ui.text(g, label, x + 30, y + (BTN_H - 9 * 1.25f) / 2, 9, Theme.alpha(Theme.TEXT, k));
-		hits.add(new Hit(x, y, w, BTN_H, action));
-		return w;
+		Kit.glass(g, "title.single", "Einzelspieler", Icon.EARTH, x, y, sw, false, mx, my, k, hits, () -> open(Nav.WORLDS));
+		x += sw + 6;
+		Kit.glass(g, "title.multi", "Mehrspieler", Icon.SERVER, x, y, mw, false, mx, my, k, hits, () -> open(Nav.SERVERS));
 	}
 
 	private void drawCards(GuiGraphicsExtractor g, List<Card> cards, float y, int mx, int my) {
