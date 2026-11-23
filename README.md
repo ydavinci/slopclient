@@ -1,111 +1,113 @@
 <p align="center">
-  <img src="design/logo/glyph-512.png" width="96" alt="SlopClient-Logo">
+  <img src="design/logo/glyph-512.png" width="96" alt="SlopClient logo">
 </p>
 
 <h1 align="center">SlopClient</h1>
 
 <p align="center">
-  Minecraft-Launcher und In-Game-Client in einem: Instanzen, Mods und Modpacks verwalten,<br>
-  dazu ein eigenes Client-Interface mit HUD, ClickGUI und Kosmetik. Fair Play, keine Cheats.
+  A Minecraft launcher and in-game client in one: manage instances, mods and modpacks,<br>
+  plus a client interface of its own with HUD, ClickGUI and cosmetics. Fair play, no cheats.
 </p>
 
 <p align="center">
-  <a href="https://github.com/ydavinci/slopclient/releases/latest"><img src="https://img.shields.io/github/v/release/ydavinci/slopclient?label=Download&color=8B5CF6" alt="Neueste Version"></a>
-  <a href="https://github.com/ydavinci/slopclient/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/ydavinci/slopclient/release.yml?label=Build" alt="Build-Status"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ydavinci/slopclient?color=555" alt="Lizenz"></a>
+  <a href="https://github.com/ydavinci/slopclient/releases/latest"><img src="https://img.shields.io/github/v/release/ydavinci/slopclient?label=Download&color=8B5CF6" alt="Latest release"></a>
+  <a href="https://github.com/ydavinci/slopclient/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/ydavinci/slopclient/release.yml?label=Build" alt="Build status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ydavinci/slopclient?color=555" alt="License"></a>
 </p>
 
 ---
 
 ## Download
 
-| Was | Datei | Für |
+| What | File | For |
 |---|---|---|
-| **Launcher** | [`SlopClient_<version>_x64-setup.exe`](https://github.com/ydavinci/slopclient/releases/latest) | Windows 10/11, enthält den Client-Mod |
-| Client-Mod einzeln | `slopclient-<version>.jar` | Fabric/Quilt, Minecraft 26.3, für andere Launcher |
-| Nur Kosmetik | `slopclient-cosmetics-mod-<version>.jar` | Capes, Hüte und Begleiter ohne den Client, in jedem Fabric-Launcher ([mehr](#nur-die-kosmetik-als-mod)) |
-| Cosmetics-Server | `ghcr.io/ydavinci/slopclient-cosmetics` | eigener Server für Capes, Hüte und Begleiter ([Anleitung](deploy/cosmetics/README.md)) |
+| **Launcher** | [`SlopClient_<version>_x64-setup.exe`](https://github.com/ydavinci/slopclient/releases/latest) | Windows 10/11, includes the client mod |
+| Client mod on its own | `slopclient-<version>.jar` | Fabric/Quilt, Minecraft 26.3, for other launchers |
+| Cosmetics only | `slopclient-cosmetics-mod-<version>.jar` | capes, hats and pets without the client, in any Fabric launcher ([more](#cosmetics-only-as-a-mod)) |
+| Cosmetics server | `ghcr.io/ydavinci/slopclient-cosmetics` | your own server for capes, hats and pets ([guide](deploy/cosmetics/README.md)) |
 
-Installer starten, mit dem Microsoft-Konto anmelden, Instanz anlegen, spielen. Der Launcher legt den Client-Mod
-automatisch in passende Instanzen (pro Instanz abschaltbar).
+Run the installer, sign in with your Microsoft account, create an instance, play. The launcher puts the client mod
+into matching instances automatically (can be turned off per instance).
 
-Ab Version 0.5.7 aktualisiert sich der Launcher selbst: Gibt es ein neues Release, erscheint oben ein Hinweis mit den
-Änderungen und „Jetzt aktualisieren“ (Einstellungen → Updates). Der Client-Mod kommt dabei mit. Wer eine ältere Version hat,
-installiert 0.5.7 einmal von Hand.
+From version 0.5.7 on, the launcher updates itself: when there is a new release, a notice with the changes and
+"Jetzt aktualisieren" (update now) appears at the top (Settings → Updates). The client mod comes along with it. If you
+have an older version, install 0.5.7 by hand once.
 
-> Der Installer ist noch nicht signiert; Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
-> Die Update-Signatur ist davon unabhängig: Der Launcher installiert nur Updates, die mit dem SlopClient-Schlüssel signiert sind.
+> The installer is not code-signed yet, so Windows SmartScreen asks on first start ("More info" → "Run anyway").
+> The update signature is separate from that: the launcher only installs updates signed with the SlopClient key.
 
-## Funktionen
+The launcher's interface is in German.
+
+## Features
 
 ### Launcher
 
-- **Instanzen** für jede Minecraft-Version mit Fabric, Quilt, NeoForge oder Forge (1.13+): Gruppen, Kopieren, eigene Icons, Spielzeit, Desktop-Verknüpfung, Befehle vor dem Start und nach dem Beenden
-- **Mod-Loader aktualisieren**: Loader und Version bestehender Instanzen ändern, mit Hinweis, wenn es eine neuere stabile Version gibt
-- **Java automatisch**: die passende Runtime (8 / 17 / 21 / 25) kommt direkt von Mojang
-- **Mods, Resourcepacks und Shader** von Modrinth und CurseForge: Suche passend zur Instanz, Abhängigkeiten, Drag & Drop eigener Dateien (werden erkannt und bekommen Updates), Performance-Paket (Sodium, Lithium, FerriteCore, Iris) mit einem Klick
-- **Updates mit einem Klick**: Der Launcher sucht im Hintergrund nach Updates. Instanzen zeigen „N Updates“, jeder Inhalt bekommt einen eigenen „Update“-Knopf, und vor „Alle aktualisieren“ gibt es die Changelogs.
-- **Mods nur einmal speichern**: Mods, Resourcepacks und Shader liegen einmal in einem gemeinsamen Speicher, die Instanzen bekommen Hardlinks darauf. Was eine Instanz schon hat, lädt keine andere neu. Dazu „Doppelte Dateien zusammenführen“ für ältere Instanzen.
-- **Geteilte Spieleinstellungen**: Instanzen einer Gruppe teilen sich Grafik, Steuerung, Sound und Tastenbelegung (`options.txt` und Co.).
-- **Modpacks**: `.mrpack` und CurseForge-ZIP importieren, Instanzen als `.mrpack` exportieren
-- **Umzug aus Prism Launcher, PolyMC und MultiMC** inklusive Welten und Configs
-- **Welten, Screenshots und Server** pro Instanz: Datapacks pro Welt, Backup als ZIP, Server-Liste mit Ping, „Beitreten“ startet direkt auf dem Server
-- **Screenshot-Galerie** über alle Instanzen mit Viewer (Zoom, Blättern, Kopieren, Löschen), dieselbe Galerie auch im Spiel
-- **Crash-Analyse**: erkennt u. a. zu wenig RAM, falsches Java, kaputte oder doppelte Mods und nennt die Ursache; Logs mit einem Klick über mclo.gs teilen (ohne Zugangsdaten)
-- **Selbst-Update**: neue Releases mit Änderungen, signiert geprüft und mit einem Klick installiert
-- **Discord-Status** mit Instanz und Server (abschaltbar)
-- **Microsoft-Login** per Device Code, mehrere Accounts; Tokens werden mit Windows DPAPI verschlüsselt gespeichert
+- **Instances** for every Minecraft version with Fabric, Quilt, NeoForge or Forge (1.13+): groups, copying, custom icons, playtime, desktop shortcut, commands before launch and after exit
+- **Update mod loaders**: change the loader and version of existing instances, with a hint when a newer stable version exists
+- **Java handled for you**: the matching runtime (8 / 17 / 21 / 25) comes straight from Mojang
+- **Mods, resource packs and shaders** from Modrinth and CurseForge: search filtered to the instance, dependencies, drag & drop of your own files (recognised and kept up to date), a performance pack (Sodium, Lithium, FerriteCore, Iris) in one click
+- **One-click updates**: the launcher checks for updates in the background. Instances show "N updates", every item gets its own "Update" button, and you see the changelogs before "Update all".
+- **Mods stored only once**: mods, resource packs and shaders live once in a shared store, and instances get hard links to them. Nothing one instance already has is downloaded again for another. Plus "merge duplicate files" for older instances.
+- **Shared game settings**: instances in a group share graphics, controls, sound and key bindings (`options.txt` and friends).
+- **Modpacks**: import `.mrpack` and CurseForge ZIPs, export instances as `.mrpack`
+- **Migration from Prism Launcher, PolyMC and MultiMC**, including worlds and configs
+- **Worlds, screenshots and servers** per instance: datapacks per world, backup as ZIP, server list with ping, "Join" launches straight into the server
+- **Screenshot gallery** across all instances with a viewer (zoom, paging, copy, delete), the same gallery in game too
+- **Crash analysis**: detects too little RAM, the wrong Java, broken or duplicate mods and more, and names the cause; share logs via mclo.gs in one click (without credentials)
+- **Self-update**: new releases with their changes, signature-checked and installed in one click
+- **Discord status** with instance and server (can be turned off)
+- **Microsoft sign-in** via device code, multiple accounts; tokens are stored encrypted with Windows DPAPI
 
-### Client-Mod (Fabric/Quilt, Minecraft 26.3)
+### Client mod (Fabric/Quilt, Minecraft 26.3)
 
-- eigener **Titelbildschirm** und **ClickGUI** (Rechts-Shift) mit Suche über Module und Einstellungen, einstellbarer Größe und **Config-Profilen**
-- **HUD-Editor** mit Snapping und vielen Elementen: FPS, CPS, Keystrokes, Koordinaten, Geschwindigkeit, Rüstung, Tränke, Ping, Server-IP, Uhrzeit, Kompass, Item-Zähler, Combo, Reichweite, Cooldowns, Bossleiste, Arbeitsspeicher, Biom, Tag, Stoppuhr, Resourcepacks, Modul-Liste
-- **Bibliothekar**: Schaust du auf ein Lesepult, stehen die Bücher des Bibliothekars samt Preis daneben
-- **Ansicht**: Zoom (C), Freelook (Alt), Helligkeit, eigenes Fadenkreuz, Block-Umriss, Hit-Color, Low Fire, eigener Nametag, Glow für sichtbare Spieler
-- **Lichtlevel-Overlay**: zeigt auf dem Boden, wo Monster spawnen können (rot immer, gelb nachts, grün sicher)
-- **Skybox**: der Shader des Launchers als Himmel
-- **Amboss-Planer**: günstigste Reihenfolge, um Verzauberungsbücher im Amboss zu kombinieren, mit Leveln pro Schritt; der Plan lässt sich neben dem Amboss anheften
-- **Komfort**: Toggle Sprint, Auto-Werkzeug beim Abbauen, Chat mit Uhrzeit und gebündelten Wiederholungen, Scoreboard anpassen, Screenshot-Vorschau nach F2
-- **Eigene Schriften** für Menüs, HUD und auf Wunsch das ganze Spiel
-- **Elytra-Swap**: tauscht Elytra und Brustplatte per Taste oder automatisch beim Springen in der Luft, nach der Landung zurück
-- **Server-Regeln**: Server können einzelne Module abschalten
+- its own **title screen** and **ClickGUI** (right shift) with search across modules and settings, adjustable size and **config profiles**
+- **HUD editor** with snapping and many elements: FPS, CPS, keystrokes, coordinates, speed, armour, potions, ping, server IP, clock, compass, item counter, combo, reach, cooldowns, boss bar, memory, biome, day, stopwatch, resource packs, module list
+- **Librarian**: look at a lectern and the librarian's books and prices show next to it
+- **View**: zoom (C), freelook (Alt), brightness, custom crosshair, block outline, hit colour, low fire, custom nametag, glow for visible players
+- **Light level overlay**: shows on the ground where mobs can spawn (red always, yellow at night, green safe)
+- **Skybox**: the launcher's shader as the sky
+- **Anvil planner**: the cheapest order to combine enchanted books in an anvil, with levels per step; the plan can be pinned next to the anvil
+- **Comfort**: toggle sprint, auto tool while mining, chat with timestamps and grouped repeats, scoreboard tweaks, screenshot preview after F2
+- **Custom fonts** for menus, the HUD and, if you like, the whole game
+- **Elytra swap**: swaps elytra and chestplate with a key or automatically when jumping in mid-air, and back after landing
+- **Server rules**: servers can turn off individual modules
 
-### Kosmetik
+### Cosmetics
 
-- **Cape-Studio**: eigene, auch animierte Capes aus Bildern und GIFs, mit 3D-Vorschau; das Motiv läuft über die Ränder, auf der Elytra in Flügelform
-- **Hüte, Begleiter und Zubehör**: zehn Hüte, 22 Begleiter (auf der Schulter, fliegend oder laufend, darunter ein Mini-Me mit deinem Skin) und Zubehör wie Katanas und Flügel
-- Nur im Client, für dich: **Trail** hinter dir in mehreren Stilen (Funken, Spirale, Komet, Blüten, Seelen, Noten, Herzen) und **Glas**, Spieler als Figuren aus Glas in sechs Varianten
-- **Skins**: Bibliothek mit 3D-Vorschau, direkt auf den Minecraft-Account hochladen
-- **Online sichtbar**: über den Cosmetics-Server sehen andere SlopClient-Spieler deine Kosmetik. Standard ist der SlopClient-Server; einen eigenen trägst du unter *Einstellungen → Kosmetik online* ein. Im Browser lässt sich alles auch ohne Launcher verwalten (Webinterface des Servers).
+- **Cape studio**: your own capes, animated too, from images and GIFs, with a 3D preview; the artwork wraps over the edges, and on the elytra it takes the shape of the wings
+- **Hats, pets and accessories**: ten hats, 22 pets (on the shoulder, flying or walking, including a mini-me with your skin) and accessories such as katanas and wings
+- Client-side only, just for you: a **trail** behind you in several styles (sparks, spiral, comet, blossoms, souls, notes, hearts) and **glass**, players as glass figures in six variants
+- **Skins**: a library with 3D preview, uploaded straight to your Minecraft account
+- **Visible online**: through the cosmetics server, other SlopClient players see your cosmetics. The SlopClient server is the default; enter your own under *Settings → Kosmetik online*. Everything can also be managed in the browser without the launcher (the server's web interface).
 
-**Fair Play:** SlopClient bietet HUD, Komfort, Performance und Kosmetik, aber keine Vorteile im Kampf.
+**Fair play:** SlopClient offers HUD, comfort, performance and cosmetics, but no advantage in combat.
 
-## Nur die Kosmetik als Mod
+## Cosmetics only, as a mod
 
-`slopclient-cosmetics-mod-<version>.jar` zeigt Capes, Hüte und Begleiter von SlopClient-Spielern auch ohne den
-SlopClient-Client, in jedem Launcher: zusammen mit [Fabric API](https://modrinth.com/mod/fabric-api) in den
-`mods`-Ordner einer Fabric-Instanz für Minecraft 26.3 legen. Du siehst dann die Kosmetik aller Spieler, die auf dem
-Cosmetics-Server angemeldet sind, auch deine eigene.
+`slopclient-cosmetics-mod-<version>.jar` shows SlopClient players' capes, hats and pets without the SlopClient
+client, in any launcher: put it together with [Fabric API](https://modrinth.com/mod/fabric-api) into the `mods`
+folder of a Fabric instance for Minecraft 26.3. You then see the cosmetics of every player signed in to the cosmetics
+server, your own included.
 
-Einstellungen stehen in `config/slopclient-cosmetics.json` (wird beim ersten Start angelegt):
+Settings live in `config/slopclient-cosmetics.json` (created on first start):
 
-| Schlüssel | Standard | Bedeutung |
+| Key | Default | Meaning |
 |---|---|---|
-| `server` | `https://cosmetics.ydavinci.me` | Cosmetics-Server; leer schaltet die Online-Kosmetik ab |
-| `capes`, `capesOfOthers` | `true` | Capes überhaupt / auch bei anderen |
-| `capesOverMojang` | `true` | SlopClient-Cape statt Mojang-Cape zeigen |
-| `animateCapes`, `capesAsElytra` | `true` | animierte Capes, Cape auch auf der Elytra |
-| `hatsAndPets`, `hatsAndPetsOfOthers` | `true` | Hüte und Begleiter / auch bei anderen |
-| `hideHatWithHelmet` | `false` | Hut ausblenden, wenn ein Helm getragen wird |
+| `server` | `https://cosmetics.ydavinci.me` | cosmetics server; empty turns online cosmetics off |
+| `capes`, `capesOfOthers` | `true` | capes at all / on other players too |
+| `capesOverMojang` | `true` | show the SlopClient cape instead of the Mojang cape |
+| `animateCapes`, `capesAsElytra` | `true` | animated capes, cape on the elytra too |
+| `hatsAndPets`, `hatsAndPetsOfOthers` | `true` | hats and pets / on other players too |
+| `hideHatWithHelmet` | `false` | hide the hat while wearing a helmet |
 
-Die eigene Kosmetik suchst du im Launcher aus oder im Browser auf der Seite des Cosmetics-Servers
-(z. B. `https://cosmetics.ydavinci.me/`, Anmeldung mit Microsoft).
-Der SlopClient-Client enthält diese Mod bereits; beide zusammen zu installieren schadet nicht.
+You pick your own cosmetics in the launcher or in the browser on the cosmetics server's page
+(e.g. `https://cosmetics.ydavinci.me/`, sign-in with Microsoft).
+The SlopClient client already includes this mod; installing both does no harm.
 
-## Eigener Cosmetics-Server
+## Your own cosmetics server
 
-Der Server (`crates/slopclient-cosmetics`) speichert Capes, Hüte und Begleiter pro Minecraft-Account.
-Anmeldung ohne Passwort über Mojangs Session-Server, Daten in SQLite. Schnellstart mit Docker:
+The server (`crates/slopclient-cosmetics`) stores capes, hats and pets per Minecraft account.
+Sign-in without a password through Mojang's session server, data in SQLite. Quick start with Docker:
 
 ```sh
 docker run -d -p 127.0.0.1:8787:8787 -v slopclient-cosmetics:/data \
@@ -113,62 +115,63 @@ docker run -d -p 127.0.0.1:8787:8787 -v slopclient-cosmetics:/data \
   ghcr.io/ydavinci/slopclient-cosmetics:latest
 ```
 
-Unter der Server-Adresse liegt ein Webinterface, in dem Spieler ihre Kosmetik ohne Launcher verwalten.
-HTTPS, Compose, Konfiguration, Webinterface, Moderation und Backups: [deploy/cosmetics/README.md](deploy/cosmetics/README.md).
+The server's address serves a web interface where players manage their cosmetics without the launcher.
+HTTPS, Compose, configuration, web interface, moderation and backups: [deploy/cosmetics/README.md](deploy/cosmetics/README.md).
 
-## Selbst bauen
+## Building it yourself
 
-Voraussetzungen: [Rust](https://rustup.rs) (stable), Node.js 22, JDK 25.
+Requirements: [Rust](https://rustup.rs) (stable), Node.js 22, JDK 25.
 
 ```sh
-# 1. Client-Mod (wird beim nächsten Schritt in den Launcher eingebettet)
+# 1. Client mod (embedded into the launcher in the next step)
 cd client-mod && ./gradlew build && cd ..
 
-# 2. Launcher: Entwicklungsmodus bzw. Installer
+# 2. Launcher: development mode or installer
 cd launcher && npm ci
 npx tauri dev
 npx tauri build          # → target/release/bundle/nsis/
 
-# CLI und Cosmetics-Server
+# CLI and cosmetics server
 cargo build --release -p slopclient-cli
 cargo build --release -p slopclient-cosmetics
 ```
 
 Tests: `cargo test --workspace`.
 
-Die 3D-Vorschau im Webinterface des Cosmetics-Servers ist der Viewer des Launchers
-(`launcher/src/webviewer/`), gebaut nach `crates/slopclient-cosmetics/src/web/viewer.js`. Nach Änderungen an
-`launcher/src/lib/extras.ts` oder `launcher/src/lib/cape.ts` in `launcher/` neu bauen: `npm run build:viewer`.
+The 3D preview in the cosmetics server's web interface is the launcher's viewer
+(`launcher/src/webviewer/`), built to `crates/slopclient-cosmetics/src/web/viewer.js`. After changes to
+`launcher/src/lib/extras.ts` or `launcher/src/lib/cape.ts`, rebuild it in `launcher/`: `npm run build:viewer`.
 
-**Neue Hüte und Begleiter** kommen nach `cosmetics/extras.json` (Begleiter-Texturen nach `cosmetics/pets/`) und
-brauchen nur ein neues Server-Release: Mod, Launcher und Webinterface holen den Katalog vom Cosmetics-Server.
-**Zubehör** aus einem Java-Blockmodell (z. B. ein Blockbench-Export) übernimmt `tools/accessories/import_java_model.py`
-in den Katalog, mit Ersteller (`--credit`) und Platzierung am Körper. Nur Modelle mit Erlaubnis des Erstellers.
+**New hats and pets** go into `cosmetics/extras.json` (pet textures into `cosmetics/pets/`) and only need a new
+server release: the mod, launcher and web interface fetch the catalogue from the cosmetics server.
+**Accessories** from a Java block model (e.g. a Blockbench export) are added to the catalogue by
+`tools/accessories/import_java_model.py`, with the creator (`--credit`) and placement on the body. Only models you
+have the creator's permission for.
 
-### Projektstruktur
+### Project layout
 
-| Ordner | Inhalt |
+| Folder | Contents |
 |---|---|
-| `crates/slopclient-core` | Kern in Rust: Versionen, Installation, Mod-Loader, Inhalte, Login, Start |
-| `crates/slopclient-cli` | Test-CLI auf dem Kern |
-| `crates/slopclient-cosmetics` | Cosmetics-Server (axum + SQLite) |
-| `launcher/` | Launcher-Oberfläche (Tauri 2 + React) |
-| `client-mod/` | In-Game-Client (Fabric) |
-| `client-mod/cosmetics/` | Kosmetik-Mod (Capes, Hüte, Begleiter), im Client enthalten und einzeln nutzbar |
-| `cosmetics/` | Katalog der Hüte und Begleiter, geteilt von Launcher, Mod und Server |
-| `deploy/cosmetics/` | Docker, Compose, systemd und Caddy für den Server |
-| `web/` | Projekt-Website (Astro) |
+| `crates/slopclient-core` | core in Rust: versions, installation, mod loaders, content, sign-in, launch |
+| `crates/slopclient-cli` | test CLI on top of the core |
+| `crates/slopclient-cosmetics` | cosmetics server (axum + SQLite) |
+| `launcher/` | launcher interface (Tauri 2 + React) |
+| `client-mod/` | in-game client (Fabric) |
+| `client-mod/cosmetics/` | cosmetics mod (capes, hats, pets), included in the client and usable on its own |
+| `cosmetics/` | catalogue of hats and pets, shared by launcher, mod and server |
+| `deploy/cosmetics/` | Docker, Compose, systemd and Caddy for the server |
+| `web/` | project website (Astro) |
 
-Plan und Design: [PLAN.md](PLAN.md), [DESIGN.md](DESIGN.md). Änderungen: [CHANGELOG.md](CHANGELOG.md).
+Plan and design: [PLAN.md](PLAN.md), [DESIGN.md](DESIGN.md). Changes: [CHANGELOG.md](CHANGELOG.md).
 
-### Release
+### Releasing
 
-Version an vier Stellen anheben, `## Unveröffentlicht` im `CHANGELOG.md` umbenennen, Tag `v<version>` pushen. Der
-Workflow baut alles, signiert den Launcher für das Selbst-Update und veröffentlicht das GitHub-Release und das
-Docker-Image. Die Schritte im Einzelnen und die Signatur-Secrets: [RELEASING.md](RELEASING.md).
+Bump the version in four places, rename `## Unveröffentlicht` in `CHANGELOG.md`, push the tag `v<version>`. The
+workflow builds everything, signs the launcher for the self-update and publishes the GitHub release and the Docker
+image. The individual steps and the signing secrets: [RELEASING.md](RELEASING.md).
 
-## Lizenz
+## License
 
 [Eclipse Public License 2.0](LICENSE).
 
-**Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.**
+**Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.**
